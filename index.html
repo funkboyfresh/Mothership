@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V5.5</title>
+    <title>Mission Control V5.6</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -14,7 +14,7 @@
         #hud { padding: 12px 20px; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.6rem; letter-spacing: 2px; color: var(--accent); z-index: 100; }
         #nav-bar { display: flex; justify-content: space-between; padding: 15px 20px; align-items: center; z-index: 100; }
         .breadcrumb { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 6px 12px; border-radius: 4px; cursor: pointer; background: transparent; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;}
+        .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 6px 12px; border-radius: 2px; cursor: pointer; background: transparent; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;}
         
         .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-direction: column; width: 100%; }
         .view-label { font-size: 0.7rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 8px; position: absolute; top: 20px; width: 100%; text-align: center; z-index: 10; }
@@ -22,18 +22,24 @@
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; width: 85%; height: 50%; z-index: 10; margin-top: 80px; }
         .sector-box { border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); }
-        .planet { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; background: var(--bg); box-shadow: 0 0 20px rgba(139, 155, 180, 0.1); cursor: pointer; color: var(--active); }
+        .planet { width: 76px; height: 76px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; background: var(--bg); box-shadow: 0 0 20px rgba(139, 155, 180, 0.1); cursor: pointer; color: var(--active); text-align: center; z-index: 50; }
 
-        .spatial-container { position: relative; width: 320px; height: 320px; display: flex; align-items: center; justify-content: center; margin-top: 60px; }
+        .spatial-container { position: relative; width: 340px; height: 340px; display: flex; align-items: center; justify-content: center; margin-top: 60px; }
         .constellation-field { position: relative; width: 100%; height: 70%; margin-top: 60px; }
         
-        .orbital-ring { position: absolute; border: 1px dashed var(--ring); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        .ring-label { position: absolute; font-size: 0.6rem; color: var(--bg); top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); padding: 4px 12px; border-radius: 12px; cursor: pointer; pointer-events: auto; font-weight: bold; letter-spacing: 1px; box-shadow: 0 0 10px rgba(139, 155, 180, 0.2); }
+        /* Updated Interactive Rings */
+        .orbital-ring { position: absolute; border: 1px dashed var(--ring); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: pointer; pointer-events: auto; }
+        .orbital-ring::before { content: ''; position: absolute; top: -15px; bottom: -15px; left: -15px; right: -15px; border-radius: 50%; } /* Larger hit area */
+        .ring-label { position: absolute; font-size: 0.55rem; color: var(--bg); top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); padding: 3px 10px; border-radius: 10px; font-weight: bold; letter-spacing: 1px; z-index: 60; pointer-events: none; }
         
-        .orbit-node { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transform: translate(-50%, -50%); z-index: 20; }
-        .node-circle { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--accent); z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; }
-        .node-circle.completed { background: var(--success); border-color: var(--success); color: var(--bg); }
-        .node-circle.completed::after { content: '✓'; font-weight: bold; }
+        /* Orbital Animation */
+        @keyframes rotate-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .orbit-wrapper { position: absolute; width: 100%; height: 100%; animation: rotate-orbit linear infinite; pointer-events: none; }
+
+        .orbit-node { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: translate(-50%, -50%); z-index: 20; }
+        .node-circle { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--accent); z-index: 2; display: flex; align-items: center; justify-content: center; }
+        .node-circle.completed { background: var(--success); border-color: var(--success); }
+        .node-circle.completed::after { content: '✓'; font-weight: bold; font-size: 0.5rem; color: var(--bg); }
         .node-label { font-size: 0.6rem; text-align: center; width: 80px; margin-top: 6px; color: var(--text); pointer-events: none; }
         
         .central-ship { width: 110px; height: 110px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); box-shadow: 0 0 30px rgba(139, 155, 180, 0.15); display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px; font-size: 0.75rem; font-weight: bold; z-index: 10; color: var(--active); }
@@ -47,14 +53,12 @@
 
         .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: var(--bg); position: absolute; bottom: 0; width: 100%; z-index: 50; }
         .mod-btn { font-size: 0.6rem; color: var(--accent); background: none; border: 1px solid var(--accent); padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .success-trigger { background: var(--accent); color: var(--bg); border: none; font-weight: bold; }
-        .success-trigger:disabled { opacity: 0.2; }
     </style>
 </head>
 <body>
     <div id="app">
         <div id="hud">
-            <span>VECTOR PRECISION ENABLED</span>
+            <span>KINETIC RADAR ONLINE</span>
             <span onclick="confirmReset()" style="cursor:pointer; opacity:0.7">FACTORY RESET</span>
         </div>
         <div id="nav-bar">
@@ -67,9 +71,7 @@
 
     <div id="success-overlay">
         <div class="hex-container">
-            <svg viewBox="0 0 100 100" class="hex-svg">
-                <polygon points="50,5 93,25 93,75 50,95 7,75 7,25" fill="none" stroke="var(--success)" stroke-width="2"/>
-            </svg>
+            <svg viewBox="0 0 100 100" class="hex-svg"><polygon points="50,5 93,25 93,75 50,95 7,75 7,25" fill="none" stroke="var(--success)" stroke-width="2"/></svg>
             <div class="hex-text">MISSION<br>COMPLETE</div>
         </div>
         <div id="success-checklist" class="checklist-log"></div>
@@ -97,9 +99,8 @@
         }
 
         function getOrbitPos(index, total, radius) {
-            const angle = (index / total) * 2 * Math.PI - (Math.PI / 2); 
-            const x = Math.cos(angle) * radius; const y = Math.sin(angle) * radius;
-            return { x, y };
+            const angle = (index / total) * 360;
+            return angle;
         }
 
         function render() {
@@ -110,7 +111,7 @@
             
             container.innerHTML = ''; footer.innerHTML = '';
             zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
-            bread.innerText = state.level === 1 ? 'GALAXY' : `${state.sector} ${state.horizon ? '> ' + state.horizon : ''} ${state.level === 4 ? '> TARGET' : ''}`;
+            bread.innerText = state.level === 1 ? 'GALAXY' : `${state.sector} ${state.horizon ? '> ' + state.horizon : ''}`;
             footer.style.display = 'none';
 
             if (state.level === 1) {
@@ -122,25 +123,42 @@
             else if (state.level === 2) {
                 container.innerHTML = `<div class="view-label">LEVEL 2</div><h1 class="view-title">Planetary Map</h1>`;
                 const spatial = document.createElement('div'); spatial.className = 'spatial-container';
-                const centerPlanet = document.createElement('div'); centerPlanet.className = 'planet'; centerPlanet.style.position = 'absolute'; centerPlanet.innerText = state.sector;
+                const centerPlanet = document.createElement('div'); centerPlanet.className = 'planet'; centerPlanet.innerText = state.sector;
                 spatial.appendChild(centerPlanet);
 
                 const ringRadii = { 'TERMINAL': 70, 'HORIZON': 120, 'TRAJECTORY': 170 };
+                const speeds = { 'TERMINAL': '15s', 'HORIZON': '25s', 'TRAJECTORY': '40s' };
+                
                 HORIZONS.forEach(h => {
                     const radius = ringRadii[h];
                     const ring = document.createElement('div'); ring.className = 'orbital-ring';
                     ring.style.width = `${radius * 2}px`; ring.style.height = `${radius * 2}px`;
-                    ring.innerHTML = `<div class="ring-label" onclick="viewHorizon('${h}')">${h}</div>`;
+                    ring.onclick = () => viewHorizon(h);
+                    
+                    const label = document.createElement('div'); label.className = 'ring-label';
+                    label.innerText = h;
+                    ring.appendChild(label);
                     spatial.appendChild(ring);
 
                     const list = state.missions[state.sector][h].filter(m => !m.captured);
+                    const wrapper = document.createElement('div'); wrapper.className = 'orbit-wrapper';
+                    wrapper.style.animationDuration = speeds[h];
+                    
                     list.forEach((m, idx) => {
-                        const pos = getOrbitPos(idx, list.length || 1, radius);
+                        const angle = (idx / list.length) * 360;
                         const node = document.createElement('div'); node.className = 'orbit-node';
-                        node.style.left = `calc(50% + ${pos.x}px)`; node.style.top = `calc(50% + ${pos.y}px)`;
-                        node.innerHTML = `<div class="node-circle" style="width:8px; height:8px;"></div>`;
-                        spatial.appendChild(node);
+                        node.style.left = `calc(50% + ${radius}px * Math.cos(${angle}deg))`; // Static offset, parent rotates
+                        node.style.top = `calc(50% + ${radius}px * Math.sin(${angle}deg))`;
+                        
+                        // Using JS for legacy Safari support on positioning
+                        const rad = angle * (Math.PI / 180);
+                        node.style.left = `calc(50% + ${Math.cos(rad) * radius}px)`;
+                        node.style.top = `calc(50% + ${Math.sin(rad) * radius}px)`;
+                        
+                        node.innerHTML = `<div class="node-circle" style="width:8px; height:8px; border-width:1px;"></div>`;
+                        wrapper.appendChild(node);
                     });
+                    spatial.appendChild(wrapper);
                 });
                 container.appendChild(spatial);
                 footer.style.display = 'flex';
@@ -150,30 +168,25 @@
                 container.innerHTML = `<div class="view-label">LEVEL 3</div><h1 class="view-title">Constellation Map</h1>`;
                 const spatial = document.createElement('div'); spatial.className = 'constellation-field';
                 const missions = state.missions[state.sector][state.horizon];
-                
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svg.style.position = 'absolute'; svg.style.top = '0'; svg.style.left = '0'; 
                 svg.style.width = '100%'; svg.style.height = '100%'; svg.style.pointerEvents = 'none';
                 spatial.appendChild(svg);
-
                 missions.forEach((m, i) => {
                     const star = document.createElement('div'); star.className = 'orbit-node';
                     star.style.left = m.x + '%'; star.style.top = m.y + '%';
                     star.onclick = () => selectMission(m.id);
                     star.innerHTML = `<div class="node-circle ${m.captured ? 'completed' : ''}"></div><div class="node-label" style="${m.captured ? 'opacity:0.5' : ''}">${m.name}</div>`;
                     spatial.appendChild(star);
-
                     if (i < missions.length - 1) {
                         const next = missions[i+1];
                         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        // Absolute centering fix
                         line.setAttribute("x1", m.x + "%"); line.setAttribute("y1", m.y + "%");
                         line.setAttribute("x2", next.x + "%"); line.setAttribute("y2", next.y + "%");
                         line.setAttribute("stroke", "var(--ring)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "4");
                         svg.appendChild(line);
                     }
                 });
-
                 container.appendChild(spatial);
                 footer.style.display = 'flex';
                 footer.innerHTML = `<button class="zoom-btn" onclick="addMissionDirect()">+ ADD STAR</button>`;
@@ -186,14 +199,12 @@
                 const pathRing = document.createElement('div'); pathRing.className = 'orbital-ring';
                 pathRing.style.width = `${subRadius * 2}px`; pathRing.style.height = `${subRadius * 2}px`;
                 spatial.appendChild(pathRing);
-
                 const ship = document.createElement('div'); ship.className = 'central-ship'; ship.innerText = activeMission.name;
                 spatial.appendChild(ship);
-
                 activeMission.subs.forEach((s, idx) => {
-                    const pos = getOrbitPos(idx, activeMission.subs.length || 1, subRadius);
+                    const angle = (idx / activeMission.subs.length) * 2 * Math.PI - (Math.PI / 2);
                     const node = document.createElement('div'); node.className = 'orbit-node';
-                    node.style.left = `calc(50% + ${pos.x}px)`; node.style.top = `calc(50% + ${pos.y}px)`;
+                    node.style.left = `calc(50% + ${Math.cos(angle) * subRadius}px)`; node.style.top = `calc(50% + ${Math.sin(angle) * subRadius}px)`;
                     node.onclick = () => { if(!activeMission.captured) toggleSub(idx); };
                     node.innerHTML = `<div class="node-circle ${s.c ? 'completed' : ''}"></div><div class="node-label" style="${s.c ? 'opacity:0.5; text-decoration:line-through' : ''}">${s.t}</div>`;
                     spatial.appendChild(node);
@@ -202,7 +213,7 @@
                 footer.style.display = 'flex';
                 if(!activeMission.captured) {
                     const allDone = activeMission.subs.length > 0 && activeMission.subs.every(s => s.c);
-                    footer.innerHTML = `<button class="mod-btn" onclick="editMission(${activeMission.id})">MODIFY</button><button class="mod-btn success-trigger" ${allDone ? '' : 'disabled'} onclick="completeMission()">LOG SUCCESS</button>`;
+                    footer.innerHTML = `<button class="mod-btn" onclick="editMission(${activeMission.id})">MODIFY</button><button class="mod-btn" ${allDone ? '' : 'disabled'} onclick="completeMission()" style="${allDone ? 'background:var(--accent);color:var(--bg)' : 'opacity:0.2'}">LOG SUCCESS</button>`;
                 } else {
                     footer.innerHTML = `<span style="color:var(--success); font-size:0.7rem; letter-spacing:2px;">MISSION ARCHIVED</span>`;
                 }
