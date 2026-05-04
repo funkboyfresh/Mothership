@@ -3,122 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Mission Control V2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        :root {
-            --bg: #1a1614; /* High Desert Night */
-            --accent: #d4a373; /* Sandstone */
-            --text: #fefae0; /* Bone */
-            --border: #4a4238;
-            --ring-now: #bc6c25;
-            --ring-soon: #dda15e;
-            --ring-far: #606c38;
-        }
-
-        body, html {
-            margin: 0; padding: 0;
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', -apple-system, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-        }
-
+        :root { --bg: #1a1614; --accent: #d4a373; --text: #fefae0; --border: #4a4238; --now: #bc6c25; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
-
-        /* HUD */
-        #hud {
-            padding: 15px; background: rgba(0,0,0,0.4);
-            border-bottom: 1px solid var(--border);
-            text-align: center; font-size: 0.8rem; letter-spacing: 2px;
-        }
-
-        /* Nav/Breadcrumbs */
-        #nav { padding: 10px; font-size: 0.7rem; color: var(--accent); cursor: pointer; }
-
-        /* Levels */
-        .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+        #hud { padding: 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); }
+        #nav-bar { display: flex; justify-content: space-between; padding: 10px; min-height: 20px; }
+        .breadcrumb { font-size: 0.6rem; color: var(--accent); text-transform: uppercase; }
+        .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 2px 8px; border-radius: 2px; cursor: pointer; }
+        .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow-y: auto; }
         
         /* Level 1: Sector Grid */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; width: 90%; height: 80%; }
-        .sector { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; }
-        .planet { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; width: 90%; height: 70%; }
+        .sector-box { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .planet { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
 
-        /* Level 4: Target Lock */
-        .target-lock { text-align: center; width: 100%; }
-        .central-node { 
-            width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--accent);
-            margin: 0 auto 30px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(212, 163, 115, 0.3);
-        }
-        .sub-tasks { list-style: none; padding: 0; }
-        .sub-tasks li { padding: 15px; border-bottom: 1px solid var(--border); width: 80%; margin: 0 auto; text-align: left; }
-        
-        .success-btn {
-            margin-top: 30px; padding: 20px; background: var(--accent); color: var(--bg);
-            border: none; font-weight: bold; letter-spacing: 1px; border-radius: 4px;
-        }
+        /* Level 2: Planetary Rings */
+        .rings-container { display: flex; flex-direction: column; gap: 20px; width: 80%; }
+        .ring { padding: 20px; border: 1px solid var(--border); text-align: center; border-radius: 50px; cursor: pointer; }
+        .ring:active { background: rgba(212, 163, 115, 0.1); }
+
+        /* Level 4: Ship Orbit */
+        .target-lock { width: 90%; text-align: center; }
+        .sub-task-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); text-align: left; }
+        .checkbox { width: 20px; height: 20px; border: 1px solid var(--accent); margin-right: 15px; display: flex; align-items: center; justify-content: center; }
+        .checked { background: var(--accent); }
+        .strikethrough { text-decoration: line-through; opacity: 0.5; }
+        .success-btn { width: 100%; margin-top: 20px; padding: 20px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; }
+        .disabled { opacity: 0.3; pointer-events: none; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div id="hud">WARNING: INCOMING TASKS</div>
-        <div id="nav" onclick="goBack()">[ ZOOM OUT ]</div>
+        <div id="hud">SYSTEM READY // STANDBY FOR INPUT</div>
+        <div id="nav-bar">
+            <div id="breadcrumb" class="breadcrumb"></div>
+            <div id="zoom-out" class="zoom-btn" style="display:none" onclick="zoomOut()">[ ZOOM OUT ]</div>
+        </div>
         <div id="view-container" class="view"></div>
     </div>
 
     <script>
-        let currentLevel = 1;
-        let selectedSector = null;
-        let selectedTask = null;
+        let state = {
+            level: 1,
+            sector: null,
+            horizon: null,
+            activeMission: null,
+            missions: JSON.parse(localStorage.getItem('missions')) || {
+                FINANCIAL: { NOW: [{ id: 1, name: 'Debt Avalanche', subs: [{t:'Review balances', c:false}, {t:'Alloc $14k', c:false}] }] },
+                CAREER: { NOW: [] }, PERSONAL: { NOW: [] }, HEALTH: { NOW: [] }
+            }
+        };
 
-        const sectors = ['CAREER', 'FINANCIAL', 'PERSONAL', 'HEALTH'];
+        function save() { localStorage.setItem('missions', JSON.stringify(state.missions)); }
 
         function render() {
             const container = document.getElementById('view-container');
+            const zoomBtn = document.getElementById('zoom-out');
+            const bread = document.getElementById('breadcrumb');
             container.innerHTML = '';
+            
+            zoomBtn.style.display = state.level > 1 ? 'block' : 'none';
+            bread.innerText = `${state.sector || ''} ${state.horizon ? '> ' + state.horizon : ''}`;
 
-            if (currentLevel === 1) {
+            if (state.level === 1) {
                 const grid = document.createElement('div');
                 grid.className = 'grid';
-                sectors.forEach(s => {
-                    const div = document.createElement('div');
-                    div.className = 'sector';
-                    div.innerHTML = `<div class="planet" onclick="selectSector('${s}')">${s}</div>`;
-                    grid.appendChild(div);
+                ['CAREER','FINANCIAL','PERSONAL','HEALTH'].forEach(s => {
+                    const box = document.createElement('div');
+                    box.className = 'sector-box';
+                    box.innerHTML = `<div class="planet" onclick="selectSector('${s}')">${s}</div>`;
+                    grid.appendChild(box);
                 });
                 container.appendChild(grid);
-            } else if (currentLevel === 4) {
-                container.innerHTML = `
-                    <div class="target-lock">
-                        <div class="central-node">${selectedTask}</div>
-                        <ul class="sub-tasks">
-                            <li>[ ] Finalize feasibility data</li>
-                            <li>[ ] Run massing variations</li>
-                            <li>[ ] Apply West Texas Modern textures</li>
-                        </ul>
-                        <button class="success-btn" onclick="goBack()">LOG SUCCESS & WARP</button>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `<div onclick="currentLevel = 4; render();">Entering ${selectedSector} Orbit... <br>(Touch to initiate Target Lock)</div>`;
+            } 
+            else if (state.level === 2) {
+                const rings = document.createElement('div');
+                rings.className = 'rings-container';
+                ['NOW', 'SOON', 'FUTURE'].forEach(h => {
+                    const r = document.createElement('div');
+                    r.className = 'ring';
+                    r.innerText = h;
+                    r.onclick = () => { state.horizon = h; state.level = 3; render(); };
+                    rings.appendChild(r);
+                });
+                container.appendChild(rings);
+            }
+            else if (state.level === 3) {
+                const list = state.missions[state.sector][state.horizon] || [];
+                container.innerHTML = `<div><h3>${state.horizon} MISSIONS</h3>` + 
+                    (list.length ? list.map(m => `<div class="ring" onclick="selectMission(${m.id})">${m.name}</div>`).join('') : '<p>No stars detected.</p>') +
+                    `<button onclick="addMission()">+ Add Mission</button></div>`;
+            }
+            else if (state.level === 4) {
+                const m = state.activeMission;
+                const allDone = m.subs.every(s => s.c);
+                container.innerHTML = `<div class="target-lock">
+                    <h2>${m.name}</h2>
+                    ${m.subs.map((s, i) => `
+                        <div class="sub-task-item" onclick="toggleSub(${i})">
+                            <div class="checkbox ${s.c ? 'checked' : ''}"></div>
+                            <span class="${s.c ? 'strikethrough' : ''}">${s.t}</span>
+                        </div>
+                    `).join('')}
+                    <button class="success-btn ${allDone ? '' : 'disabled'}" onclick="completeMission()">LOG SUCCESS & WARP</button>
+                </div>`;
             }
         }
 
-        function selectSector(s) {
-            selectedSector = s;
-            selectedTask = s === 'FINANCIAL' ? 'DEBT AVALANCHE' : 'GENERAL TASK';
-            currentLevel = 2;
-            render();
+        function selectSector(s) { state.sector = s; state.level = 2; render(); }
+        function selectMission(id) {
+            state.activeMission = state.missions[state.sector][state.horizon].find(m => m.id === id);
+            state.level = 4; render();
         }
-
-        function goBack() {
-            if (currentLevel > 1) currentLevel--;
-            render();
+        function toggleSub(i) {
+            state.activeMission.subs[i].c = !state.activeMission.subs[i].c;
+            save(); render();
         }
+        function completeMission() {
+            const list = state.missions[state.sector][state.horizon];
+            state.missions[state.sector][state.horizon] = list.filter(m => m.id !== state.activeMission.id);
+            save(); state.level = 3; state.activeMission = null; render();
+        }
+        function addMission() {
+            const name = prompt("Mission Name?");
+            if(!name) return;
+            const subsInput = prompt("Sub-missions? (comma separated)");
+            const subs = subsInput ? subsInput.split(',').map(t => ({t: t.trim(), c: false})) : [];
+            const newM = { id: Date.now(), name, subs };
+            if(!state.missions[state.sector][state.horizon]) state.missions[state.sector][state.horizon] = [];
+            state.missions[state.sector][state.horizon].push(newM);
+            save(); render();
+        }
+        function zoomOut() { state.level--; if(state.level === 1) state.sector = null; state.horizon = null; render(); }
 
         render();
     </script>
