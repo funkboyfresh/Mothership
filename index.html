@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V5.2</title>
+    <title>Mission Control V5.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -28,8 +28,10 @@
         .constellation-field { position: relative; width: 100%; height: 60%; margin-top: 60px; }
         
         .orbital-ring { position: absolute; border: 1px dashed var(--ring); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        .ring-label { position: absolute; font-size: 0.6rem; color: var(--accent); top: -10px; left: 50%; transform: translateX(-50%); background: var(--bg); padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; pointer-events: auto; letter-spacing: 1px; transition: all 0.2s; }
-        .ring-label:active { background: var(--border); }
+        
+        /* Updated Timeline Badges */
+        .ring-label { position: absolute; font-size: 0.6rem; color: var(--bg); top: -10px; left: 50%; transform: translateX(-50%); background: var(--accent); padding: 4px 12px; border-radius: 12px; cursor: pointer; pointer-events: auto; font-weight: bold; letter-spacing: 1px; transition: all 0.2s; box-shadow: 0 0 10px rgba(139, 155, 180, 0.2); }
+        .ring-label:active { transform: translateX(-50%) scale(0.95); opacity: 0.8; }
         
         .orbit-node { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transform: translate(-50%, -50%); z-index: 20; }
         .node-circle { width: 24px; height: 24px; border-radius: 50%; background: var(--border); border: 2px solid var(--accent); z-index: 2; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; }
@@ -55,7 +57,7 @@
 <body>
     <div id="app">
         <div id="hud">
-            <span>CONSTELLATION LINK ACTIVE</span>
+            <span>RADAR VIEW STABILIZED</span>
             <span onclick="confirmReset()" style="cursor:pointer; opacity:0.7">FACTORY RESET</span>
         </div>
         <div id="nav-bar">
@@ -136,13 +138,16 @@
                     ring.innerHTML = `<div class="ring-label" onclick="viewHorizon('${h}')">${h} &rsaquo;</div>`;
                     spatial.appendChild(ring);
 
+                    // Render passive Radar Blips
                     const list = state.missions[state.sector][h].filter(m => !m.captured);
                     list.forEach((m, idx) => {
                         const pos = getOrbitPos(idx, list.length || 1, radius);
                         const node = document.createElement('div'); node.className = 'orbit-node';
                         node.style.left = `calc(50% + ${pos.x}px)`; node.style.top = `calc(50% + ${pos.y}px)`;
-                        node.onclick = () => { state.horizon = h; selectMission(m.id); };
-                        node.innerHTML = `<div class="node-circle"></div><div class="node-label">${m.name.substring(0,12)}...</div>`;
+                        node.style.pointerEvents = 'none'; // Prevent clicking the blips
+                        
+                        // Smaller, anonymous dot for Radar view
+                        node.innerHTML = `<div class="node-circle" style="width:10px; height:10px; border-width:1px;"></div>`;
                         spatial.appendChild(node);
                     });
                 });
@@ -164,6 +169,7 @@
                     const star = document.createElement('div'); star.className = 'orbit-node';
                     star.style.left = m.x + '%'; star.style.top = m.y + '%';
                     star.onclick = () => selectMission(m.id);
+                    // Full size nodes with names for Constellation view
                     star.innerHTML = `<div class="node-circle ${m.captured ? 'completed' : ''}"></div><div class="node-label" style="${m.captured ? 'opacity:0.5' : ''}">${m.name}</div>`;
                     spatial.appendChild(star);
 
