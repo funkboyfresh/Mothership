@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V6.0</title>
+    <title>Mission Control V7.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        :root { --bg: #1a1614; --accent: #d4a373; --text: #fefae0; --border: #4a4238; --captured: #606c38; --thrust: #e63946; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        :root { --bg: #111111; --accent: #00e5ff; --text: #ffffff; --border: #333333; --captured: #00ff88; --thrust: #ff2a2a; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
-        #hud { padding: 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); }
+        #hud { padding: 15px; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
         #nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; min-height: 24px; align-items: center; z-index: 100; }
         .breadcrumb { font-size: 0.6rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 4px 12px; border-radius: 2px; cursor: pointer; background: transparent; color: var(--accent); text-transform: uppercase; }
         .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 20px; flex-direction: column; }
         
-        /* Warp Animation */
         @keyframes warp-drive {
             0% { opacity: 0; transform: scale(0.8); filter: blur(4px); }
             100% { opacity: 1; transform: scale(1); filter: blur(0); }
@@ -27,55 +26,63 @@
         .view-main-title { font-size: 1.4rem; margin-top: 0; margin-bottom: 20px; font-weight: 300; text-transform: uppercase; z-index: 5; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; width: 100%; height: 60%; z-index: 5; }
-        .sector-box { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .sector-box { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); }
         .planet { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
 
-        .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(212, 163, 115, 0.05); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); transition: background 0.2s; }
-        .ring-circle:active { background: rgba(212, 163, 115, 0.2); }
+        .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 229, 255, 0.03); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); transition: background 0.2s; }
+        .ring-circle:active { background: rgba(0, 229, 255, 0.1); }
 
         #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; }
         .star-node { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; }
-        .star-node.captured { border-color: var(--captured); box-shadow: 0 0 15px var(--captured); }
+        .star-node.captured { border-color: var(--captured); box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); color: var(--captured); }
         .star-label { font-size: 0.6rem; margin-top: 6px; text-align: center; white-space: nowrap; font-weight: 300; }
         .captured-banner { font-size: 0.4rem; color: var(--captured); letter-spacing: 1px; margin-top: 2px; font-weight: bold; }
 
         .target-lock { width: 100%; text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
         
-        /* ORBITAL MECHANICS & IGNITION */
+        /* Segmented Progress Bar */
+        .progress-wrapper { width: 90%; max-width: 400px; margin: 0 auto 15px auto; border: 1px solid var(--border); padding: 4px; background: rgba(0,0,0,0.6); border-radius: 2px; z-index: 20; }
+        .progress-bar-container { width: 100%; height: 10px; background: #222; position: relative; overflow: hidden; display: flex; }
+        .progress-fill { height: 100%; background: var(--accent); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 0 10px var(--accent); }
+        .progress-text { font-size: 0.65rem; color: var(--accent); letter-spacing: 1px; margin-top: 5px; text-align: right; font-weight: bold; }
+
         @keyframes orbit-spin { 100% { transform: rotate(360deg); } }
         @keyframes orbit-counter-spin { 100% { transform: rotate(-360deg); } }
         @keyframes core-ignition {
-            0% { r: 12; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); }
-            50% { r: 20; fill: var(--thrust); filter: drop-shadow(0 0 20px var(--thrust)); }
-            100% { r: 12; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); }
+            0% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); }
+            50% { r: 22; fill: var(--thrust); filter: drop-shadow(0 0 20px var(--thrust)); }
+            100% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); }
         }
 
-        .orbital-system { width: 340px; height: 340px; position: relative; margin: 20px auto; animation: orbit-spin 60s linear infinite; flex-shrink: 0; }
+        .orbital-system { width: 340px; height: 340px; position: relative; margin: 10px auto; animation: orbit-spin 60s linear infinite; flex-shrink: 0; }
         .counter-spin { animation: orbit-counter-spin 60s linear infinite; }
         .flare-active { animation: core-ignition 0.6s ease-out; }
         
-        .orbital-node-box { background: rgba(26, 22, 20, 0.95); border: 1px solid var(--border); padding: 6px 10px; border-radius: 4px; display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 140px; transition: all 0.3s; }
-        .orbital-node-box.checked { border-color: var(--captured); box-shadow: 0 0 10px rgba(96, 108, 56, 0.4); }
+        .orbital-node-box { background: rgba(17, 17, 17, 0.95); border: 1px solid var(--border); padding: 6px 10px; border-radius: 2px; display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 140px; transition: all 0.3s; }
+        .orbital-node-box.checked { border-color: var(--captured); box-shadow: 0 0 10px rgba(0, 255, 136, 0.2); }
         .orb-check { width: 14px; height: 14px; border: 1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size: 0.5rem; flex-shrink: 0; color: var(--bg); transition: all 0.3s;}
         .orbital-node-box.checked .orb-check { background: var(--captured); border-color: var(--captured); color: var(--bg); }
         .orb-text { font-size: 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; text-align: left; line-height: 1.2; }
         
-        .success-btn { width: 100%; padding: 20px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; font-size: 0.9rem; margin-top: auto; }
-        .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; background: rgba(0,0,0,0.2); width: 100%; box-sizing: border-box; }
-        .mod-btn { font-size: 0.6rem; color: var(--accent); background: none; border: 1px solid var(--accent); padding: 5px 10px; border-radius: 2px; margin: 0 5px; }
+        .success-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0, 255, 136, 0.1); border-top: 1px solid var(--captured); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; animation: warp-drive 0.5s ease-out forwards; z-index: 50; }
+        .success-btn { width: 100%; padding: 20px; background: var(--captured); color: var(--bg); border: none; font-weight: bold; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
+        
+        .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; background: rgba(0,0,0,0.4); width: 100%; box-sizing: border-box; }
+        .mod-btn { font-size: 0.6rem; color: var(--border); background: none; border: 1px solid var(--border); padding: 6px 12px; border-radius: 2px; margin: 0 5px; cursor: pointer; transition: all 0.2s; }
+        .mod-btn:hover { color: var(--text); border-color: var(--text); }
     </style>
 </head>
 <body>
     <div id="app">
-        <div id="hud">WARP DRIVE ONLINE // THRUSTERS NOMINAL</div>
+        <div id="hud">SYSTEM ARCHITECTURE NOMINAL</div>
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb">GALAXY</div>
             <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
         </div>
         <div id="view-container" class="view"></div>
         <div id="control-footer" class="control-footer" style="display:none">
-            <button class="zoom-btn" onclick="addMission()">+ ADD STAR</button>
+            <button class="zoom-btn" onclick="addMission()">+ INITIALIZE STAR</button>
         </div>
     </div>
 
@@ -110,7 +117,7 @@
         function triggerWarp() {
             const container = document.getElementById('view-container');
             container.classList.remove('warp-transition');
-            void container.offsetWidth; // Trigger reflow to restart CSS animation
+            void container.offsetWidth; 
             container.classList.add('warp-transition');
         }
 
@@ -155,13 +162,13 @@
                 container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
                 const missions = state.missions[state.sector][state.horizon];
                 if (missions.length === 0) {
-                    container.innerHTML += `<div style="margin-top: 60px; font-size: 0.8rem; color: var(--border); letter-spacing: 2px;">NO STARS DETECTED IN ${state.horizon} ORBIT</div>`;
+                    container.innerHTML += `<div style="margin-top: 60px; font-size: 0.8rem; color: var(--border); letter-spacing: 2px;">NO ARCHITECTURE DETECTED IN ${state.horizon} ORBIT</div>`;
                 } else {
                     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
                     missions.forEach((m, i) => {
                         const star = document.createElement('div'); star.className = 'star-container';
                         star.style.left = m.x + '%'; star.style.top = m.y + '%'; star.onclick = () => selectMission(m.id);
-                        star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>${m.captured ? '<div class="captured-banner">STAR CAPTURED</div>' : ''}`;
+                        star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>${m.captured ? '<div class="captured-banner">TARGET ACQUIRED</div>' : ''}`;
                         container.appendChild(star);
                         if (i < missions.length - 1) {
                             const next = missions[i+1];
@@ -175,28 +182,44 @@
             }
             else if (state.level === 4) {
                 const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-                const allDone = m.subs.length > 0 && m.subs.every(s => s.c);
+                const totalTasks = m.subs.length;
+                const completedTasks = m.subs.filter(s => s.c).length;
+                const progressPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+                const allDone = totalTasks > 0 && completedTasks === totalTasks;
                 
                 const coreClass = ignitionFlare ? 'flare-active' : '';
-                ignitionFlare = false; // Reset ignition switch
+                ignitionFlare = false;
                 const coreFill = allDone ? 'var(--captured)' : 'var(--bg)';
                 
                 let orbHtml = `<div class="target-lock">
                     <div class="view-level-title">LEVEL 4 // ${m.captured ? 'MISSION LOG' : 'ACTIVE TARGET'}</div>
-                    <h2 style="color:var(--accent); font-size: 1.1rem; margin-top: 0; margin-bottom: 5px; z-index:20;">${m.name}</h2>
+                    <h2 style="color:var(--text); font-size: 1.2rem; margin-top: 0; margin-bottom: 15px; z-index:20; font-weight:400;">${m.name}</h2>
+                    
+                    <div class="progress-wrapper">
+                        <div class="progress-bar-container">
+                            <div class="progress-fill" style="width: ${progressPercent}%;"></div>
+                        </div>
+                        <div class="progress-text">${progressPercent}% INTEGRITY</div>
+                    </div>
+
                     <div class="orbital-system">
                         <svg viewBox="0 0 340 340" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 1;">
-                            <polygon points="170,110 130,220 170,190 210,220" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
-                            <polygon points="170,190 155,230 185,230" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
-                            <circle id="ship-core" class="${coreClass}" cx="170" cy="170" r="12" fill="${coreFill}" stroke="var(--accent)" stroke-width="2" style="transition: fill 0.5s"/>`;
+                            <g stroke="var(--accent)" stroke-width="1.5" fill="none">
+                                <polygon points="170,70 230,220 170,190 110,220" />
+                                <polygon points="170,110 200,200 170,180 140,200" fill="rgba(0, 229, 255, 0.05)" />
+                                <circle id="ship-core" class="${coreClass}" cx="170" cy="170" r="14" fill="${coreFill}" stroke-width="2" style="transition: fill 0.5s"/>
+                                <circle cx="170" cy="170" r="4" fill="var(--accent)"/>
+                            </g>
+                        `;
 
+                // Anchor points on the Vanguard Coolship
                 const shipParts = [
-                    {x: 170, y: 110},
-                    {x: 130, y: 220},
-                    {x: 210, y: 220},
-                    {x: 155, y: 230},
-                    {x: 185, y: 230},
-                    {x: 170, y: 190}
+                    {x: 170, y: 70},  // Nose
+                    {x: 230, y: 220}, // Right Wingtip
+                    {x: 110, y: 220}, // Left Wingtip
+                    {x: 170, y: 190}, // Aft Engine
+                    {x: 200, y: 200}, // Inner Right
+                    {x: 140, y: 200}  // Inner Left
                 ];
 
                 m.subs.forEach((s, i) => {
@@ -207,7 +230,7 @@
                     const part = shipParts[i % shipParts.length];
                     const lineColor = s.c ? 'var(--captured)' : 'var(--border)';
                     const dashArray = s.c ? '0' : '4';
-                    orbHtml += `<line x1="${taskX}" y1="${taskY}" x2="${part.x}" y2="${part.y}" stroke="${lineColor}" stroke-dasharray="${dashArray}" stroke-width="2" style="transition: all 0.3s;" />`;
+                    orbHtml += `<line x1="${taskX}" y1="${taskY}" x2="${part.x}" y2="${part.y}" stroke="${lineColor}" stroke-dasharray="${dashArray}" stroke-width="1.5" style="transition: all 0.3s;" />`;
                 });
 
                 orbHtml += `</svg>`;
@@ -227,20 +250,24 @@
                         </div>`;
                 });
 
-                orbHtml += `</div>`;
+                orbHtml += `</div>`; // Close orbital-system
 
-                orbHtml += `<div style="width: 100%; margin-top: auto; display: flex; flex-direction: column; gap: 10px;">`;
-                if (!m.captured) {
-                    orbHtml += `<button class="success-btn ${allDone ? '' : 'disabled'}" onclick="completeMission()">LOG MISSION SUCCESS & WARP</button>`;
-                } else {
-                    orbHtml += `<div class="captured-banner" style="font-size:1rem; padding: 15px;">MISSION ARCHIVED</div>`;
+                // The Mission Success Page Overlay
+                if (allDone && !m.captured) {
+                    orbHtml += `
+                        <div class="success-overlay">
+                            <div style="font-size: 1.2rem; color: var(--captured); font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Target Parameters Met</div>
+                            <button class="success-btn" onclick="completeMission()">Log Mission Success & Warp</button>
+                        </div>`;
+                } else if (m.captured) {
+                    orbHtml += `<div class="captured-banner" style="font-size:1rem; padding: 15px; color: var(--border);">MISSION ARCHIVED</div>`;
                 }
                 
                 orbHtml += `
-                    <div style="display:flex; justify-content:center; margin-bottom: 10px;">
-                        <button class="mod-btn" onclick="editMission(${m.id}, event, true)">EDIT SUB-TASKS</button>
+                    <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
+                        <button class="mod-btn" onclick="editMission(${m.id}, event, true)">PARAMETERS</button>
                         <button class="mod-btn" onclick="editMission(${m.id}, event, false)">RENAME</button>
-                        <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:red; border-color:red">DESTROY</button>
+                        <button class="mod-btn" onclick="deleteMission(${m.id}, event)">DESTROY</button>
                     </div>
                 </div></div>`;
 
@@ -265,7 +292,7 @@
             e.stopPropagation();
             const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
             m.subs[index].c = !m.subs[index].c;
-            if(m.subs[index].c) ignitionFlare = true; // Trigger plume if checking a box
+            if(m.subs[index].c) ignitionFlare = true;
             save(); render();
         }
         
