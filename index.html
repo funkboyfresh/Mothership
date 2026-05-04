@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V3.2</title>
+    <title>Mission Control V3.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        :root { --bg: #1a1614; --accent: #d4a373; --text: #fefae0; --border: #4a4238; --now: #bc6c25; --danger: #ae2012; }
+        :root { --bg: #1a1614; --accent: #d4a373; --text: #fefae0; --border: #4a4238; --danger: #ae2012; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
         #hud { padding: 15px; background: rgba(0,0,0,0.4); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); }
@@ -25,15 +25,14 @@
 
         .rings-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
         .ring-item { padding: 20px; border: 1px solid var(--border); text-align: center; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .ring-item:active { background: rgba(212, 163, 115, 0.1); }
         .mission-name { flex: 1; text-align: left; }
-        .action-btns { display: flex; gap: 10px; font-size: 0.6rem; }
-        .btn-sm { border: 1px solid var(--border); padding: 4px 8px; border-radius: 2px; }
+        .btn-sm { border: 1px solid var(--border); padding: 4px 8px; border-radius: 2px; font-size: 0.6rem; margin-left: 5px; }
 
         .target-lock { width: 100%; text-align: center; }
         .sub-task-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); text-align: left; }
-        .checkbox { width: 20px; height: 20px; border: 1px solid var(--accent); margin-right: 15px; flex-shrink: 0; }
-        .checked { background: var(--accent); }
+        .checkbox { width: 22px; height: 22px; border: 1px solid var(--accent); margin-right: 15px; flex-shrink: 0; }
+        .checked { background: var(--accent); position: relative; }
+        .checked::after { content: '✓'; color: var(--bg); position: absolute; left: 5px; top: 0; font-weight: bold; }
         .strikethrough { text-decoration: line-through; opacity: 0.5; }
         .success-btn { width: 100%; margin-top: 20px; padding: 20px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; font-size: 0.9rem; }
         .mod-btn { margin-top: 15px; font-size: 0.6rem; color: var(--accent); text-decoration: underline; background: none; border: none; }
@@ -42,7 +41,7 @@
 </head>
 <body>
     <div id="app">
-        <div id="hud">NAVIGATION SYSTEMS ONLINE</div>
+        <div id="hud">CHECKING CIRCUIT INTEGRITY...</div>
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb"></div>
             <div id="zoom-out" class="zoom-btn" style="display:none" onclick="zoomOut()">[ ZOOM OUT ]</div>
@@ -52,7 +51,7 @@
 
     <script>
         let state = {
-            level: 1, sector: null, horizon: null, activeMission: null,
+            level: 1, sector: null, horizon: null, activeMissionId: null,
             missions: JSON.parse(localStorage.getItem('missions')) || {
                 CAREER: { NOW: [], SOON: [], FUTURE: [] },
                 FINANCIAL: { NOW: [], SOON: [], FUTURE: [] },
@@ -67,18 +66,18 @@
             const container = document.getElementById('view-container');
             const zoomBtn = document.getElementById('zoom-out');
             const bread = document.getElementById('breadcrumb');
+            const hud = document.getElementById('hud');
             container.innerHTML = '';
             
             zoomBtn.style.display = state.level > 1 ? 'block' : 'none';
             bread.innerText = `${state.sector || ''} ${state.horizon ? '> ' + state.horizon : ''}`;
+            hud.innerText = state.level === 4 ? "TARGET LOCKED // ISOLATION MODE" : "NAVIGATION SYSTEMS ONLINE";
 
             if (state.level === 1) {
                 container.innerHTML = `<div class="view-level-title">LEVEL 1</div><h1 class="view-main-title">Sector Map</h1>`;
-                const grid = document.createElement('div');
-                grid.className = 'grid';
+                const grid = document.createElement('div'); grid.className = 'grid';
                 Object.keys(state.missions).forEach(s => {
-                    const box = document.createElement('div');
-                    box.className = 'sector-box';
+                    const box = document.createElement('div'); box.className = 'sector-box';
                     box.innerHTML = `<div class="planet" onclick="selectSector('${s}')">${s}</div>`;
                     grid.appendChild(box);
                 });
@@ -86,11 +85,9 @@
             } 
             else if (state.level === 2) {
                 container.innerHTML = `<div class="view-level-title">LEVEL 2 // ${state.sector}</div><h1 class="view-main-title">Planetary Map</h1>`;
-                const rings = document.createElement('div');
-                rings.className = 'rings-container';
+                const rings = document.createElement('div'); rings.className = 'rings-container';
                 ['NOW', 'SOON', 'FUTURE'].forEach(h => {
-                    const r = document.createElement('div');
-                    r.className = 'ring-item';
+                    const r = document.createElement('div'); r.className = 'ring-item';
                     r.innerHTML = `<div style="width:100%">${h}</div>`;
                     r.onclick = () => { state.horizon = h; state.level = 3; render(); };
                     rings.appendChild(r);
@@ -100,47 +97,49 @@
             else if (state.level === 3) {
                 container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
                 const list = state.missions[state.sector][state.horizon] || [];
-                const rings = document.createElement('div');
-                rings.className = 'rings-container';
+                const cont = document.createElement('div'); cont.className = 'rings-container';
                 list.forEach(m => {
-                    rings.innerHTML += `<div class="ring-item">
-                        <span class="mission-name" onclick="selectMission(${m.id})">${m.name}</span>
-                        <div class="action-btns">
-                            <span class="btn-sm" onclick="editMission(${m.id})">EDIT</span>
-                            <span class="btn-sm" onclick="deleteMission(${m.id})" style="color:var(--danger)">X</span>
-                        </div>
-                    </div>`;
+                    const item = document.createElement('div'); item.className = 'ring-item';
+                    item.innerHTML = `<span class="mission-name" onclick="selectMission(${m.id})">${m.name}</span>
+                        <div><span class="btn-sm" onclick="editMission(${m.id}, event)">EDIT</span>
+                        <span class="btn-sm" onclick="deleteMission(${m.id}, event)" style="color:var(--danger)">X</span></div>`;
+                    cont.appendChild(item);
                 });
-                container.appendChild(rings);
+                container.appendChild(cont);
                 container.innerHTML += `<div style="margin-top:20px; text-align:center"><button class="zoom-btn" onclick="addMission()">+ ADD STAR</button></div>`;
             }
             else if (state.level === 4) {
-                const m = state.activeMission;
+                const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
                 const allDone = m.subs.length > 0 && m.subs.every(s => s.c);
-                container.innerHTML = `
-                    <div class="target-lock">
-                        <div class="view-level-title">LEVEL 4 // ACTIVE TARGET</div>
-                        <h1 class="view-main-title">Ship Orbit</h1>
-                        <h2 style="color:var(--accent); font-size: 1.1rem; margin-bottom: 25px;">${m.name}</h2>
-                        ${m.subs.map((s, i) => `
-                            <div class="sub-task-item" onclick="toggleSub(${i})">
-                                <div class="checkbox ${s.c ? 'checked' : ''}"></div>
-                                <span class="${s.c ? 'strikethrough' : ''}">${s.t}</span>
-                            </div>
-                        `).join('')}
-                        <button class="success-btn ${allDone ? '' : 'disabled'}" onclick="completeMission()">LOG MISSION SUCCESS & WARP</button>
-                        <br><button class="mod-btn" onclick="editMission(${m.id}, true)">[ MODIFY ORBITAL PARAMETERS ]</button>
-                    </div>`;
+                container.innerHTML = `<div class="target-lock">
+                    <div class="view-level-title">LEVEL 4 // ACTIVE TARGET</div><h1 class="view-main-title">Ship Orbit</h1>
+                    <h2 style="color:var(--accent); font-size: 1.1rem; margin-bottom: 25px;">${m.name}</h2>
+                    ${m.subs.map((s, i) => `
+                        <div class="sub-task-item" onclick="toggleSub(${i}, event)">
+                            <div class="checkbox ${s.c ? 'checked' : ''}"></div>
+                            <span class="${s.c ? 'strikethrough' : ''}">${s.t}</span>
+                        </div>
+                    `).join('')}
+                    <button class="success-btn ${allDone ? '' : 'disabled'}" onclick="completeMission()">LOG MISSION SUCCESS & WARP</button>
+                    <button class="mod-btn" onclick="editMission(${m.id}, event, true)">[ MODIFY ORBITAL PARAMETERS ]</button>
+                </div>`;
             }
         }
 
-        function editMission(id, focusSubtasks = false) {
+        function toggleSub(index, e) {
+            e.stopPropagation();
+            const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
+            m.subs[index].c = !m.subs[index].c;
+            save(); render();
+        }
+
+        function editMission(id, e, focusSubtasks = false) {
+            if(e) e.stopPropagation();
             const list = state.missions[state.sector][state.horizon];
             const m = list.find(x => x.id === id);
             let newName = m.name;
             if (!focusSubtasks) {
-                newName = prompt("Mission Name:", m.name);
-                if (newName === null) return;
+                newName = prompt("Mission Name:", m.name) || m.name;
             }
             const currentSubsText = m.subs.map(s => s.t).join(', ');
             const newSubsText = prompt("Modify Sub-missions (comma separated):", currentSubsText);
@@ -149,43 +148,25 @@
                 m.name = newName;
                 m.subs = newNames.map(name => {
                     const existing = m.subs.find(s => s.t === name);
-                    return existing ? existing : { t: name, c: false };
+                    return existing ? {t: existing.t, c: existing.c} : {t: name, c: false};
                 });
-            } else if (!focusSubtasks) {
-                m.name = newName;
-            }
+            } else if (!focusSubtasks) { m.name = newName; }
             save(); render();
         }
 
         function selectSector(s) { state.sector = s; state.level = 2; render(); }
-        function selectMission(id) {
-            state.activeMission = state.missions[state.sector][state.horizon].find(m => m.id === id);
-            state.level = 4; render();
-        }
-        function toggleSub(i) {
-            state.activeMission.subs[i].c = !state.activeMission.subs[i].c;
-            save(); render();
-        }
-        function deleteMission(id) {
-            if(!confirm("Destroy star?")) return;
-            state.missions[state.sector][state.horizon] = state.missions[state.sector][state.horizon].filter(m => m.id !== id);
-            save(); render();
-        }
-        function completeMission() {
-            const list = state.missions[state.sector][state.horizon];
-            state.missions[state.sector][state.horizon] = list.filter(m => m.id !== state.activeMission.id);
-            save(); state.level = 3; state.activeMission = null; render();
-        }
+        function selectMission(id) { state.activeMissionId = id; state.level = 4; render(); }
+        function deleteMission(id, e) { e.stopPropagation(); if(confirm("Destroy star?")) { state.missions[state.sector][state.horizon] = state.missions[state.sector][state.horizon].filter(m => m.id !== id); save(); render(); } }
+        function completeMission() { state.missions[state.sector][state.horizon] = state.missions[state.sector][state.horizon].filter(m => m.id !== state.activeMissionId); save(); state.level = 3; state.activeMissionId = null; render(); }
         function addMission() {
-            const name = prompt("Mission Name?");
-            if(!name) return;
+            const name = prompt("Mission Name?"); if(!name) return;
             const subsInput = prompt("Sub-missions? (comma separated)");
             const subs = subsInput ? subsInput.split(',').filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false})) : [];
             state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs });
             save(); render();
         }
         function zoomOut() { 
-            if (state.level === 4) { state.activeMission = null; state.level = 3; }
+            if (state.level === 4) { state.activeMissionId = null; state.level = 3; }
             else if (state.level === 3) state.level = 2;
             else if (state.level === 2) { state.level = 1; state.sector = null; }
             render(); 
