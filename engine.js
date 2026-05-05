@@ -385,10 +385,17 @@ function renderLevel3(container, footer) {
     const allCaptured = missions.filter(m => m.captured);
     const allActive = missions.filter(m => !m.captured).slice(0, 10);
     
-    const wireTasks = [...allCaptured.slice(-10), ...allActive];
-    const debrisMissions = allCaptured.slice(0, -10).slice(-20);
+    // --- NEW THRESHOLD LOGIC ---
+    // Rule: Shed if (Captured > 5) OR (Captured >= 1 AND Active >= 10)
+    let retentionCount = 10; 
+    if (allCaptured.length > 5 || (allCaptured.length >= 1 && allActive.length >= 10)) {
+        retentionCount = 5; 
+    }
 
-    // --- REPOSITIONED MISSION PRIORITIES (Up 1 Bar Width) ---
+    const wireTasks = [...allCaptured.slice(-retentionCount), ...allActive];
+    const debrisMissions = allCaptured.slice(0, -retentionCount).slice(-20);
+
+    // --- REPOSITIONED MISSION PRIORITIES ---
     if (wireTasks.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
@@ -425,7 +432,7 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- NODE RENDERING (Active + Floating Debris) ---
+    // --- NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div'); 
         const isDebris = debrisMissions.includes(m);
@@ -435,7 +442,8 @@ function renderLevel3(container, footer) {
         if (isDebris && !m.scale) {
             m.driftX = (Math.random() - 0.5) * 8;
             m.driftY = (Math.random() - 0.5) * 8;
-            m.scale = 0.1 + (Math.random() * 0.2); 
+            // SCALE: Random between 0.3 (smallest) and 0.7 (biggest)
+            m.scale = 0.3 + (Math.random() * 0.4); 
         }
 
         star.style.left = (m.x + (m.driftX || 0)) + '%'; 
@@ -447,18 +455,25 @@ function renderLevel3(container, footer) {
         
         if (isDebris) {
             node.style.transform = `scale(${m.scale})`;
-            node.style.opacity = '0.30';
+            node.style.opacity = '0.45'; 
             node.style.boxShadow = 'none';
         } else if (isCapturedOnWire) {
             node.style.opacity = '0.45';
             node.style.boxShadow = `0 0 5px ${accentColor}66`;
         } else {
+            // Standard Active Logic
             const isCritical = m.id === allActive[0]?.id;
             const opacityValue = isCritical ? 1.0 : 0.8;
+            const glowSize = isCritical ? 20 : 15;
+            const brightness = isCritical ? 1.15 : 1.0;
             const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
-            node.style.boxShadow = `0 0 20px ${accentColor}${hexOpacity}`;
+            
+            node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
             node.style.borderColor = `${accentColor}${hexOpacity}`;
-            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
+            node.style.filter = `brightness(${brightness}) saturate(1.1)`;
+            if (isCritical) node.style.borderWidth = '3px';
+            
+            node.textContent = allActive.indexOf(m) + 1;
         }
 
         const label = document.createElement('div');
@@ -470,7 +485,6 @@ function renderLevel3(container, footer) {
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 
-    // --- REPOSITIONED HEADER (Bottom 55px) ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 55px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
