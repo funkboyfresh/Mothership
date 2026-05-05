@@ -131,56 +131,48 @@ function doLinesIntersect(p1, q1, p2, q2) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    const activeWire = existingMissions.slice(-8); //
+    const activeWire = (existingMissions || []).slice(-8); 
     let x, y, safe, attempts = 0;
-    
-    // Define a 6x6 grid (36 cells)
     const gridSize = 6;
-    const margin = 15; // Keep nodes away from HUD edges
-    const usableSpace = 70; // Use 70% of the viewport width/height
+    const margin = 15; 
+    const usableSpace = 70; 
 
     do {
-        // Step 1: Pick a random cell (0-5, 0-5)
         const gridX = Math.floor(Math.random() * gridSize);
         const gridY = Math.floor(Math.random() * gridSize);
+        x = margin + (gridX * (usableSpace / (gridSize - 1))) + (Math.random() * 6 - 3);
+        y = margin + (gridY * (usableSpace / (gridSize - 1))) + (Math.random() * 6 - 3);
         
-        // Step 2: Convert to percentage coordinates
-        // Cells are spaced at approx 14% intervals
-        x = margin + (gridX * (usableSpace / (gridSize - 1)));
-        y = margin + (gridY * (usableSpace / (gridSize - 1)));
-        
-        // Step 3: Add jitter (±3%) so constellations look unique and organic
-        x += (Math.random() * 6 - 3);
-        y += (Math.random() * 6 - 3);
-
         safe = true;
         const newNode = { x, y };
-
-        // RULE 1: Node Overlap Guard
-        for (let m of existingMissions) {
+        for (let m of (existingMissions || [])) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x;
-            let dy = m.y - y;
-            // 12% distance is safe for the 52px nodes
+            let dx = m.x - x, dy = m.y - y;
             if (Math.sqrt(dx*dx + dy*dy) < 12) { safe = false; break; }
         }
-
-        // RULE 2: Wire Crossing Guard
         if (safe && activeWire.length > 0) {
             const lastNode = activeWire[activeWire.length - 1];
             for (let i = 0; i < activeWire.length - 1; i++) {
-                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
-                    safe = false;
-                    break;
+                if (activeWire[i] && activeWire[i+1]) {
+                    if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
+                        safe = false; break;
+                    }
                 }
             }
         }
-        
         attempts++;
-        // Allow up to 300 attempts to find a safe "random" square
     } while (!safe && attempts < 300);
-
     return { x, y };
+}
+
+function getHorizonFromDate(dateStr, fallbackHorizon) {
+    if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dDate = new Date(dateStr + 'T00:00:00');
+    const diffDays = Math.ceil((dDate - today) / 86400000);
+    if (diffDays <= 7) return 'IMMINENT';
+    if (diffDays <= 14) return 'HORIZON';
+    return 'TRAJECTORY';
 }
 
 function processTimeMechanics() {
@@ -363,111 +355,59 @@ function renderLevel3(container, footer) {
         footer.innerHTML = `<button class="zoom-btn" style="flex:1; font-size: 0.8rem;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>
             <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()"><span style="font-size: 1.6rem; line-height: 0;">^</span> LOG</button>`; 
     }
-    
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
-    svg.id = "constellation-svg"; container.appendChild(svg);
-    
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- 1. TEMPORAL DATA SCRUB (1 Week Expiration) ---
     const now = Date.now();
     const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
-    
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
-    // --- 2. WIRE ASSEMBLY (Max 6 Active, Max 2 Captured = 8 Total) ---
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
     const wireTasks = [...wireCaptured, ...wireActive];
-    
-    // Debris: Anything captured but older than 1 week or pushed off the 2-slot limit
     const debrisMissions = missions.filter(m => m.captured && !wireCaptured.includes(m)).slice(-20);
-
-    // --- 3. PRIORITY LOG (6 Active Only) ---
     const priorityTasks = wireActive; 
 
-    // HUD Header
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
-    // Priority Dropdown
     if (priorityTasks.length > 0) {
-        const priorityContainer = document.createElement('div');
-        priorityContainer.className = 'priority-dropdown-container';
+        const priorityContainer = document.createElement('div'); priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-        priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span>
-            </button>
-            <div class="priority-list">
-                ${priorityTasks.map((m, i) => `
-                    <div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" 
-                         style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
-                        <span class="p-num">${missions.indexOf(m) + 1}</span>
-                        <span class="p-status">${i === 0 ? '[ MISSION CRITICAL ]' : ''}</span>
-                        <span class="p-text">${m.name}</span>
-                    </div>`).join('')}
-            </div>`;
+        priorityContainer.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span></button>
+            <div class="priority-list">${priorityTasks.map((m, i) => `<div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                <span class="p-num">${missions.indexOf(m) + 1}</span><span class="p-status">${i === 0 ? '[ MISSION CRITICAL ]' : ''}</span><span class="p-text">${m.name}</span></div>`).join('')}</div>`;
         container.appendChild(priorityContainer);
     }
-
-    // --- 4. VECTOR LINES ---
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", wireTasks[i].x + "%"); line.setAttribute("y1", wireTasks[i].y + "%");
             line.setAttribute("x2", wireTasks[i+1].x + "%"); line.setAttribute("y2", wireTasks[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); 
-            line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45");
-            svg.appendChild(line);
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45"); svg.appendChild(line);
         }
     }
-    
-    // --- 5. NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
-        const star = document.createElement('div'); 
-        const isDebris = debrisMissions.includes(m);
-        const isCapturedOnWire = wireCaptured.includes(m);
+        const star = document.createElement('div'); const isDebris = debrisMissions.includes(m), isCapturedOnWire = wireCaptured.includes(m);
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
-        
-        if (isDebris && !m.scale) {
-            m.driftX = (Math.random() - 0.5) * 8; m.driftY = (Math.random() - 0.5) * 8;
-            m.scale = 0.3 + (Math.random() * 0.4); 
-        }
-
-        star.style.left = (m.x + (m.driftX || 0)) + '%'; 
-        star.style.top = (m.y + (m.driftY || 0)) + '%';
+        if (isDebris && !m.scale) { m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8; m.scale = 0.3 + (Math.random()*0.4); }
+        star.style.left = (m.x + (m.driftX || 0)) + '%'; star.style.top = (m.y + (m.driftY || 0)) + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
-        
-        const node = document.createElement('div');
-        node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        
-        if (isDebris) {
-            node.style.transform = `scale(${m.scale})`;
-            node.style.opacity = '0.45'; 
-            node.style.boxShadow = 'none';
-        } else {
-            const isCritical = m.id === wireActive[0]?.id;
-            const op = isCritical ? 1.0 : 0.8;
-            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
-            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`;
-            node.style.borderColor = `${accentColor}${hex}`;
-            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
-            if (isCritical) node.style.borderWidth = '3px';
+        const node = document.createElement('div'); node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        if (isDebris) { node.style.transform = `scale(${m.scale})`; node.style.opacity = '0.45'; node.style.boxShadow = 'none'; }
+        else {
+            const isCritical = m.id === wireActive[0]?.id, op = isCritical ? 1.0 : 0.8, hex = Math.floor(op * 255).toString(16).padStart(2, '0');
+            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`; node.style.borderColor = `${accentColor}${hex}`;
+            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`; if (isCritical) node.style.borderWidth = '3px';
             node.textContent = missions.indexOf(m) + 1;
         }
-
-        const label = document.createElement('div');
-        label.className = 'star-label';
-        label.style.display = isDebris ? 'none' : 'block';
-        label.style.opacity = isCapturedOnWire ? '0.45' : '1';
-        label.textContent = m.name; 
-
+        const label = document.createElement('div'); label.className = 'star-label'; label.style.display = isDebris ? 'none' : 'block';
+        label.style.opacity = isCapturedOnWire ? '0.45' : '1'; label.textContent = m.name; 
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 }
@@ -480,9 +420,10 @@ function renderLevel4(container, footer) {
     if (isCritical) document.getElementById('app').classList.add('critical-mode');
     lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`;
     lock.innerHTML = `<div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color: ${isCritical ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>`;
+    
+    const activeSector = state.sectors.find(s => s.id === state.sectorId); const accentColor = activeSector ? activeSector.color : 'var(--accent)';
     if (m.subs.length > 0) {
         const priorityContainer = document.createElement('div'); priorityContainer.className = 'priority-dropdown-container';
-        const activeSector = state.sectors.find(s => s.id === state.sectorId); const accentColor = activeSector ? activeSector.color : 'var(--accent)';
         let critIdx = m.subs.findIndex(s => !s.c); if (critIdx === -1) critIdx = 0; 
         priorityContainer.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
             <div class="priority-list">${m.subs.map((s, i) => `<div class="priority-item ${i === critIdx && !s.c ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" style="${i === critIdx && !s.c ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
@@ -528,46 +469,26 @@ function renderModalSubtasks() {
     });
 }
 
+function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
 function closeTaskModal() { const overlay = document.getElementById('task-modal-overlay'); if (overlay) overlay.style.display = 'none'; }
 
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
-    
-    // 1. Validation: Name Check
-    if (!name) { 
-        alert("Mission must be named"); 
-        return; 
-    }
-
+    if (!name) { alert("Mission must be named"); return; }
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-    
-    // 2. UPDATED Firewall: Enforce the 6 ACTIVE mission limit for the wire
-    const hzMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) 
-        ? state.missions[state.sectorId][h] 
-        : [];
-    
+    const hzMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) ? state.missions[state.sectorId][h] : [];
     const activeInHz = hzMissions.filter(m => !m.captured).length;
-
-    // Triggering the prompt if at or above 6 active tasks
-    if (!editModeId && activeInHz >= 6) { 
-        alert("Current mission must be completed before taking on new missions in this sector."); 
-        return; 
-    }
-
-    const dateStr = document.getElementById('modal-task-date').value;
-    const finalH = getHorizonFromDate(dateStr, h);
-    
+    if (!editModeId && activeInHz >= 6) { alert("Current mission must be completed before taking on new missions in this sector."); return; }
+    const dateStr = document.getElementById('modal-task-date').value, finalH = getHorizonFromDate(dateStr, h);
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
 
     if (editModeId) {
-        // ... [Existing Edit Logic] ...
         let existingIdx = -1, existingHz = null;
         HORIZONS.forEach(hz => { const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId); if (idx !== -1) { existingIdx = idx; existingHz = hz; } });
         if (existingIdx !== -1) {
             if (existingHz === finalH) {
                 const m = state.missions[state.sectorId][finalH][existingIdx];
-                m.name = name; m.dueDate = dateStr || null;
-                m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
+                m.name = name; m.dueDate = dateStr || null; m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
             } else {
                 state.missions[state.sectorId][existingHz].splice(existingIdx, 1);
                 const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
@@ -575,21 +496,10 @@ function saveTaskModal() {
             }
         }
     } else {
-        // 3. Spatial Guard: Passing the pool to ensure non-overlap
         const coords = getSafeCoordinates(hzMissions);
-        state.missions[state.sectorId][finalH].push({ 
-            id: Date.now(), 
-            name, 
-            subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-            x: coords.x, 
-            y: coords.y, 
-            dueDate: dateStr || null 
-        });
+        state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
     }
-
-    save(); 
-    closeTaskModal(); 
-    render();
+    save(); closeTaskModal(); render();
 }
 
 function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
