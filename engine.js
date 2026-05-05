@@ -382,26 +382,26 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- LOGIC DATA SCRUB ---
+    // --- LOGIC: 10-ITEM HUD & WIRE CONSTRAINT ---
     const allCaptured = missions.filter(m => m.captured);
     const allActive = missions.filter(m => !m.captured).slice(0, 10);
     
-    // --- UPDATED THRESHOLD LOGIC ---
-    // Rule: Shed if (Captured > 5) OR (Captured >= 1 AND Active >= 10)
-    let retentionCount = 10; 
-    if (allCaptured.length > 5 || (allCaptured.length >= 1 && allActive.length >= 10)) {
-        retentionCount = 5; 
-    }
-
-    const wireTasks = [...allCaptured.slice(-retentionCount), ...allActive];
-    const debrisMissions = allCaptured.slice(0, -retentionCount).slice(-20);
+    // Fill the 10 slots: Active missions first, then most recent completed
+    const maxHudItems = 10;
+    const remainingSlots = Math.max(0, maxHudItems - allActive.length);
     
-    // --- REPOSITIONED HEADER (Docked at 20px) ---
+    // The "Wire" is strictly limited to 10 items total
+    const wireTasks = [...allCaptured.slice(-remainingSlots), ...allActive];
+    
+    // Debris is any captured task NOT on the wire (capped at 20)
+    const debrisMissions = allCaptured.filter(m => !wireTasks.includes(m)).slice(-20);
+
+    // --- REPOSITIONED HEADER ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
-    
+
     // --- MISSION PRIORITIES DROPDOWN ---
     if (wireTasks.length > 0) {
         const priorityContainer = document.createElement('div');
@@ -427,7 +427,7 @@ function renderLevel3(container, footer) {
         container.appendChild(priorityContainer);
     }
 
-    // --- VECTOR LINES (50% Brighter) ---
+    // --- VECTOR LINES (50% Brighter Signal) ---
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -439,17 +439,18 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- NODE RENDERING ---
+    // --- NODE RENDERING (Active + Floating Debris) ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div'); 
         const isDebris = debrisMissions.includes(m);
         const isCapturedOnWire = m.captured && !isDebris;
+        
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
         
         if (isDebris && !m.scale) {
             m.driftX = (Math.random() - 0.5) * 8;
             m.driftY = (Math.random() - 0.5) * 8;
-            // SCALE FIX: Range 0.3 to 0.7
+            // Mass scale randomized between 0.3 and 0.7
             m.scale = 0.3 + (Math.random() * 0.4); 
         }
 
@@ -462,13 +463,14 @@ function renderLevel3(container, footer) {
         
         if (isDebris) {
             node.style.transform = `scale(${m.scale})`;
-            node.style.opacity = '0.45'; 
+            node.style.opacity = '0.45'; // Boosted visibility
             node.style.boxShadow = 'none';
         } else if (isCapturedOnWire) {
             node.style.opacity = '0.45';
             node.style.boxShadow = `0 0 5px ${accentColor}66`;
             node.textContent = wireTasks.indexOf(m) + 1;
         } else {
+            // Standard Active Node Glow Logic
             const isCritical = m.id === allActive[0]?.id;
             const opacityValue = isCritical ? 1.0 : 0.8;
             const glowSize = isCritical ? 20 : 15;
@@ -728,7 +730,14 @@ function togglePilotLog() {
     state.sectors.forEach(s => {
         HORIZONS.forEach(h => {
             (state.missions[s.id]?.[h] || []).forEach(m => {
-                if (m.captured && m.completionTimestamp) allLogs.push(m);
+                // NEW: Store the sector color with the log entry
+                if (m.captured && m.completionTimestamp) {
+                    allLogs.push({
+                        ...m,
+                        sectorName: s.name,
+                        sectorColor: s.color
+                    });
+                }
             });
         });
     });
@@ -736,12 +745,13 @@ function togglePilotLog() {
     allLogs.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
     const displayLogs = allLogs.slice(0, 50);
 
-    // Logic Update: Handle empty log state
     const logContent = displayLogs.length > 0 
         ? displayLogs.map(m => {
             const d = new Date(m.completionTimestamp);
-            return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
-                <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
+            // NEW: Border-left and Pilot text use the mission's original sectorColor
+            return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4; border-left: 2px solid ${m.sectorColor}; background: ${m.sectorColor}05;">
+                <span style="color:${m.sectorColor}; font-weight: bold;">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
+                in <span style="opacity:0.7">${m.sectorName}</span>
                 on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
                 at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>`;
