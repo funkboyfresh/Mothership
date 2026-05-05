@@ -370,7 +370,11 @@ function renderLevel2(container, footer, activeSector) {
 }
 
 function renderLevel3(container, footer) {
-    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`; }
+    // FIX: Restoring the "Initialize Target" logic to the footer
+    if(footer) { 
+        footer.style.display = 'flex'; 
+        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; 
+    }
     
     const header = document.createElement('div');
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
@@ -391,7 +395,6 @@ function renderLevel3(container, footer) {
         orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
         
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        // Sleek "Nose" pointing right (will be rotated 90deg in CSS to point tangential)
         ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
         ship.setAttribute("fill", "var(--accent)");
         ship.setAttribute("filter", `drop-shadow(0 0 12px ${accentColor})`);
@@ -404,9 +407,15 @@ function renderLevel3(container, footer) {
     if (missions.length > 1) {
         for (let i = 0; i < missions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
-            line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
+            line.setAttribute("x1", missions[i].x + "%"); 
+            line.setAttribute("y1", missions[i].y + "%");
+            line.setAttribute("x2", missions[i+1].x + "%"); 
+            line.setAttribute("y2", missions[i+1].y + "%");
+            line.setAttribute("stroke", "var(--accent)"); 
+            line.setAttribute("stroke-width", "1"); 
+            line.setAttribute("stroke-dasharray", "5,5"); 
+            line.setAttribute("opacity", "0.4"); 
+            svg.appendChild(line);
         }
     }
     
@@ -418,12 +427,10 @@ function renderLevel3(container, footer) {
         star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
-        // HIERARCHY GLOW MATH
-        // Task 1: 100% glow, Task 2: 90%, ... down to 65% for the last task
         const totalMissions = missions.length;
         const decayStep = totalMissions > 1 ? 25 / (totalMissions - 1) : 0; 
         const opacityValue = (100 - (i * (decayStep || 10))) / 100;
-        const glowSize = 15 - (i * 2); // Glow tightens as priority drops
+        const glowSize = 15 - (i * 2); 
 
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
