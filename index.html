@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V8.0</title>
+    <title>Mission Control V8.1</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -44,14 +44,12 @@
         .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
         .ring-label { position: absolute; top: 10px; text-shadow: 0 0 8px var(--accent); }
 
-        /* Particle System */
         .particle { position: absolute; border-radius: 50%; background: var(--accent); box-shadow: 0 0 5px var(--accent-glow); pointer-events: none; animation: float-particle linear infinite alternate; }
         @keyframes float-particle { 0% { transform: scale(0.8) translate(0, 0); opacity: 0.2; } 100% { transform: scale(1.2) translate(10px, -10px); opacity: 0.8; } }
 
         #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; transition: left 0.3s, top 0.3s; }
         
-        /* Orbital Decay Physics */
         @keyframes drift-decay {
             0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
             25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); }
@@ -119,7 +117,7 @@
 
     <script>
         const SECTORS = ['CAREER', 'FINANCIAL', 'PERSONAL', 'HEALTH'];
-        const HORIZONS = ['FAR', 'NEAR', 'NOW'];
+        const HORIZONS = ['TRAJECTORY', 'HORIZON', 'TACTICAL'];
         const SECTOR_COLORS = { 'CAREER': '#00e5ff', 'FINANCIAL': '#ffd700', 'PERSONAL': '#ff00ff', 'HEALTH': '#00ff88' };
 
         let state = {
@@ -147,9 +145,14 @@
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
                 
-                // MIGRATION PROTOCOL: Shift old tags to new system
-                if (state.missions[s]['SOON']) { state.missions[s]['NEAR'] = state.missions[s]['SOON']; delete state.missions[s]['SOON']; }
-                if (state.missions[s]['FUTURE']) { state.missions[s]['FAR'] = state.missions[s]['FUTURE']; delete state.missions[s]['FUTURE']; }
+                // MIGRATION PROTOCOL: Scooping up V7 and V8 tags
+                if (state.missions[s]['FUTURE']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FUTURE']; delete state.missions[s]['FUTURE']; }
+                if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
+
+                if (state.missions[s]['SOON']) { state.missions[s]['HORIZON'] = state.missions[s]['SOON']; delete state.missions[s]['SOON']; }
+                if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
+
+                if (state.missions[s]['NOW']) { state.missions[s]['TACTICAL'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
 
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
@@ -157,7 +160,7 @@
                         if (m.x === undefined) m.x = Math.floor(Math.random() * 70) + 15;
                         if (m.y === undefined) m.y = Math.floor(Math.random() * 60) + 20;
                         if (m.captured === undefined) m.captured = false;
-                        if (m.overdue === undefined) m.overdue = false; // Initialize decay state
+                        if (m.overdue === undefined) m.overdue = false; 
                     });
                 });
             });
@@ -236,11 +239,9 @@
                 center.style.position = 'relative'; center.style.width = '280px'; center.style.height = '280px';
                 center.style.display = 'flex'; center.style.alignItems = 'center'; center.style.justifyContent = 'center'; center.style.marginTop = '20px';
                 
-                // Procedural Radial Gradient Glow
                 center.style.background = 'radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%)';
                 center.style.borderRadius = '50%';
 
-                // Particle Engine
                 const particleSystem = document.createElement('div');
                 particleSystem.style.position = 'absolute'; particleSystem.style.width = '100%'; particleSystem.style.height = '100%'; particleSystem.style.pointerEvents = 'none'; particleSystem.style.zIndex = '1';
                 for(let i=0; i<80; i++) {
@@ -259,9 +260,9 @@
                 center.appendChild(particleSystem);
                 
                 const h_data = [ 
-                    { id: 'FAR', size: 280, speed: 60 }, 
-                    { id: 'NEAR', size: 190, speed: 30 }, 
-                    { id: 'NOW', size: 100, speed: 15 } 
+                    { id: 'TRAJECTORY', size: 280, speed: 60 }, 
+                    { id: 'HORIZON', size: 190, speed: 30 }, 
+                    { id: 'TACTICAL', size: 100, speed: 15 } 
                 ];
                 
                 h_data.forEach(d => {
@@ -433,60 +434,4 @@
         
         function toggleSub(index, e) {
             e.stopPropagation();
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-            m.subs[index].c = !m.subs[index].c;
-            if(m.subs[index].c) ignitionFlare = true;
-            save(); render();
-        }
-        
-        function completeMission() {
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-            m.captured = true;
-            m.overdue = false; // clear decay on capture
-            save(); state.level = 3; state.activeMissionId = null; render();
-        }
-        
-        function editMission(id, e, actionType) {
-            if(e) e.stopPropagation();
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === id);
-            
-            if(actionType === 'sub') {
-                const current = m.subs.map(s => s.t).join(', ');
-                const res = prompt("Modify Sub-missions:", current);
-                if(res !== null) {
-                    const names = res.split(',').map(t => t.trim()).filter(t => t !== "");
-                    m.subs = names.map(n => {
-                        const ex = m.subs.find(s => s.t === n);
-                        return ex ? {t: ex.t, c: ex.c} : {t: n, c: false};
-                    });
-                }
-            } else if (actionType === 'status') {
-                const decayToggle = confirm("WARNING: Toggle Orbital Decay / Overdue Status?");
-                if (decayToggle) m.overdue = !m.overdue;
-                if (!decayToggle) {
-                    const res = prompt("Rename Mission:", m.name);
-                    if(res) m.name = res;
-                }
-            }
-            save(); render();
-        }
-        
-        function deleteMission(id, e) {
-            if(e) e.stopPropagation();
-            if(confirm("Destroy this target permanently?")) {
-                state.missions[state.sector][state.horizon] = state.missions[state.sector][state.horizon].filter(m => m.id !== id);
-                save(); state.level = 3; state.activeMissionId = null; render();
-            }
-        }
-        
-        function zoomOut() { 
-            if (state.level === 4) { state.activeMissionId = null; state.level = 3; }
-            else if (state.level === 3) { state.level = 2; state.horizon = null; } 
-            else if (state.level === 2) { state.level = 1; state.sector = null; }
-            render(); 
-        }
-
-        render();
-    </script>
-</body>
-</html>
+            const m = state.missions[state.sector][state.horizon].find(x => x
