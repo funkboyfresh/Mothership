@@ -434,6 +434,32 @@ function renderLevel4(container, footer) {
     title.style.color = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
     title.textContent = m.name; 
     lock.appendChild(title);
+
+    // --- NEW: MISSION PRIORITIES DROPDOWN ---
+    if (m.subs.length > 0) {
+        const priorityContainer = document.createElement('div');
+        priorityContainer.className = 'priority-dropdown-container';
+        
+        const activeSector = state.sectors.find(s => s.id === state.sectorId);
+        const accentColor = activeSector ? activeSector.color : 'var(--accent)';
+
+        priorityContainer.innerHTML = `
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                MISSION PRIORITIES <span>▼</span>
+            </button>
+            <div class="priority-list">
+                ${m.subs.map((s, i) => `
+                    <div class="priority-item ${i === 0 ? 'first-critical' : ''}" 
+                         style="${i === 0 ? `--sector-color: ${accentColor}33; --sector-border: ${accentColor};` : ''}">
+                        <span class="p-num">${i + 1}</span>
+                        <span class="p-status">${i === 0 ? '[ CRITICAL ]' : ''}</span>
+                        <span class="p-text">${s.t}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        lock.appendChild(priorityContainer);
+    }
     
     lock.insertAdjacentHTML('beforeend', `<div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div>`);
     
@@ -462,7 +488,7 @@ function renderLevel4(container, footer) {
     lock.appendChild(orbSys);
     
     const btnWrap = document.createElement('div');
-    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto;';
+    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; margin-bottom: 20px;';
     btnWrap.innerHTML = `
         <button class="mod-btn" onclick="moveMission(-1)">▲ PRIORITY</button>
         <button class="mod-btn" onclick="moveMission(1)">▼ PRIORITY</button>
