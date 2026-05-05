@@ -292,7 +292,6 @@ function renderLevel2(container, footer, activeSector) {
     const center = document.createElement('div'); center.className = 'warp-transition';
     center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
     
-    // Particle Density Starfield
     const gravityWell = document.createElement('div');
     gravityWell.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; border-radius:50%;';
     const innerMin = 30, outerMax = 140 + (140 * 0.25);
@@ -306,16 +305,17 @@ function renderLevel2(container, footer, activeSector) {
     }
     center.appendChild(gravityWell);
 
-    // --- NEW: SVG Overlay for Curved Text Paths ---
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
     textSvg.setAttribute("viewBox", "0 0 280 280");
 
-    // Define the paths for the text to follow (Middle and Outer rings)
+    // NEW MATH: Adjusted path radii to sit halfway between rings
+    // Horizon: halfway between 100px and 190px (radius 50 and 95) = 72.5
+    // Trajectory: halfway between 190px and 280px (radius 95 and 140) = 117.5
     textSvg.innerHTML = `
         <defs>
-            <path id="path-horizon" d="M 45,140 A 95,95 0 0,1 235,140" />
-            <path id="path-trajectory" d="M 0,140 A 140,140 0 0,1 280,140" />
+            <path id="path-horizon" d="M 67.5,140 A 72.5,72.5 0 0,1 212.5,140" />
+            <path id="path-trajectory" d="M 22.5,140 A 117.5,117.5 0 0,1 257.5,140" />
         </defs>
     `;
     center.appendChild(textSvg);
@@ -326,25 +326,22 @@ function renderLevel2(container, footer, activeSector) {
         wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px';
         wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
         
-        // Handle Labels
         if (d.id === 'IMMINENT') {
-            // Centered in the middle of the smallest circle
             const label = document.createElement('div');
             label.className = 'ring-label';
-            label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0;';
+            label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0; color:#ffffff; text-shadow: 0 0 8px var(--accent-glow);';
             label.innerText = d.id;
             wrapper.appendChild(label);
         } else {
-            // Curved text paths for Horizon and Trajectory
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("fill", overdue ? "var(--thrust)" : "var(--accent)");
+            text.setAttribute("fill", "#ffffff"); // Forced White
             text.style.cssText = 'font-size: 0.6rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
             
             const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
             tp.setAttribute("href", `#path-${d.id.toLowerCase()}`);
             tp.setAttribute("startOffset", "50%");
             tp.setAttribute("text-anchor", "middle");
-            tp.setAttribute("dominant-baseline", "hanging"); // Places text underneath the arch
+            tp.setAttribute("dominant-baseline", "middle"); // Centered vertically on the path
             tp.textContent = d.id;
             
             text.appendChild(tp);
