@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V12.4</title>
+    <title>Mission Control V12.5</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -43,8 +43,8 @@
         <div id="control-footer" class="control-footer" style="display:none"></div>
     </div>
 
-    <div id="task-modal-overlay" class="modal-overlay">
-        <div class="modal-box">
+    <div id="task-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'task')">
+        <div class="modal-box" onclick="event.stopPropagation()">
             <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
             <div class="input-group">
                 <span class="input-label">Target Designation</span>
@@ -67,33 +67,34 @@
             <div class="add-btn-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
-                <button class="success-btn" id="modal-save-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
+                <button class="success-btn" id="modal-save-btn" style="flex:1" onclick="saveTaskModal()">LOCK TARGET</button>
             </div>
         </div>
     </div>
 
-    <div id="sector-modal-overlay" class="modal-overlay">
-        <div class="modal-box">
+    <div id="sector-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'sector')">
+        <div class="modal-box" onclick="event.stopPropagation()">
             <div class="modal-header">TERRITORIAL GEOMETRY MAP</div>
             <div class="subtasks-container" id="sector-edit-list"></div>
             <div class="add-btn-bar" id="sector-add-btn" onclick="addNewSector()">+ ADD SECTOR</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeSectorModal()">CANCEL</button>
-                <button class="success-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveSectorModal()">INITIALIZE MAP</button>
+                <button class="success-btn" style="flex:1" onclick="saveSectorModal()">INITIALIZE MAP</button>
             </div>
         </div>
     </div>
 
-    <div id="settings-modal-overlay" class="modal-overlay">
-        <div class="modal-box">
+    <div id="settings-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'settings')">
+        <div class="modal-box" onclick="event.stopPropagation()">
             <div class="modal-header">SYSTEM CONFIGURATION</div>
             <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="input-label" style="margin:0;">HAPTIC FEEDBACK</span>
                 <input type="checkbox" id="settings-haptics-toggle" checked style="width: 20px; height: 20px; accent-color: var(--accent);">
             </div>
-            <p style="font-size: 0.55rem; color: var(--border); line-height: 1.4; margin-top: -10px; margin-bottom: 20px;">Engage physical vibration motor on mobile devices during critical events.</p>
+            <p class="settings-description">Engage physical vibration motor on mobile devices during critical events and routine updates.</p>
             <div class="modal-actions">
-                <button class="success-btn" style="width: 100%; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="closeSettingsModal()">SAVE CONFIG</button>
+                <button class="mod-btn" style="flex:1" onclick="closeSettingsModal(false)">CANCEL</button>
+                <button class="success-btn" style="flex:1" onclick="closeSettingsModal(true)">SAVE CONFIG</button>
             </div>
         </div>
     </div>
