@@ -8,10 +8,7 @@ const defaultSectors = [
 ];
 
 let state = {
-    level: 1, 
-    sectorId: null, 
-    horizon: null, 
-    activeMissionId: null,
+    level: 1, sectorId: null, horizon: null, activeMissionId: null,
     playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
     energy: parseInt(localStorage.getItem('energy')) || 0,
     hapticsEnabled: localStorage.getItem('hapticsEnabled') !== 'false',
@@ -35,13 +32,8 @@ function updateHUD() {
 }
 
 function addEnergy(amount) {
-    state.energy += amount;
-    if (state.energy < 0) state.energy = 0;
-    if (state.energy >= 100) {
-        state.playerLevel += Math.floor(state.energy / 100);
-        state.energy = state.energy % 100;
-        triggerHyperDrive(); triggerHaptic([100, 50, 100, 50, 200]);
-    }
+    state.energy += amount; if (state.energy < 0) state.energy = 0;
+    if (state.energy >= 100) { state.playerLevel += Math.floor(state.energy / 100); state.energy = state.energy % 100; triggerHyperDrive(); triggerHaptic([100, 50, 100, 50, 200]); }
     save(); updateHUD();
 }
 
@@ -54,59 +46,8 @@ function triggerHyperDrive() {
 function save() { 
     localStorage.setItem('sectors', JSON.stringify(state.sectors));
     localStorage.setItem('missions', JSON.stringify(state.missions)); 
-    localStorage.setItem('energy', state.energy);
-    localStorage.setItem('playerLevel', state.playerLevel);
+    localStorage.setItem('energy', state.energy); localStorage.setItem('playerLevel', state.playerLevel);
     localStorage.setItem('hapticsEnabled', state.hapticsEnabled);
-}
-
-function runDatabaseMigration() {
-    let migrated = false; let newMissions = { ...state.missions };
-    const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal' };
-    Object.keys(newMissions).forEach(key => {
-        if (!key.startsWith('sec_')) {
-            const newId = legacyMap[key];
-            if (newId) {
-                if (!newMissions[newId]) newMissions[newId] = {};
-                Object.keys(newMissions[key]).forEach(h => {
-                    if (!newMissions[newId][h]) newMissions[newId][h] = [];
-                    newMissions[newId][h] = newMissions[newId][h].concat(newMissions[key][h]);
-                });
-            }
-            delete newMissions[key]; migrated = true;
-        }
-    });
-    state.missions = newMissions;
-    state.sectors.forEach(s => {
-        if (!state.missions[s.id]) { state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; migrated = true; }
-        HORIZONS.forEach(h => {
-            if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
-            state.missions[s.id][h].forEach((m, index, arr) => {
-                m.subs = m.subs || []; 
-                if (m.x === undefined || isNaN(m.x)) { let coords = getSafeCoordinates(arr.slice(0, index)); m.x = coords.x; m.y = coords.y; migrated = true; }
-            });
-        });
-    });
-    if (migrated) save();
-}
-
-function relaxLloyds(seeds, iterations) {
-    let points = seeds.map(p => ({x: p.x, y: p.y}));
-    for(let k=0; k<iterations; k++) {
-        const delaunay = d3.Delaunay.from(points, p => p.x, p => p.y);
-        const voronoi = delaunay.voronoi([0, 0, 1, 1]);
-        for (let i = 0; i < points.length; i++) {
-            const polygon = voronoi.cellPolygon(i);
-            if (polygon) {
-                let cx = 0, cy = 0, area = 0;
-                for (let j = 0, len = polygon.length; j < len - 1; j++) {
-                    const [x0, y0] = polygon[j]; const [x1, y1] = polygon[j + 1];
-                    const a = x0 * y1 - x1 * y0; area += a; cx += (x0 + x1) * a; cy += (y0 + y1) * a;
-                }
-                area *= 3; if (area !== 0) { points[i] = { x: cx / area, y: cy / area }; }
-            }
-        }
-    }
-    return points;
 }
 
 // --- NAVIGATION & SPATIAL GEOMETRY ---
@@ -118,8 +59,7 @@ function doLinesIntersect(p1, q1, p2, q2) {
 function getDistanceToSegment(p, a, b) {
     const l2 = (a.x - b.x)**2 + (a.y - b.y)**2;
     if (l2 === 0) return Math.sqrt((p.x - a.x)**2 + (p.y - a.y)**2);
-    let t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2;
-    t = Math.max(0, Math.min(1, t));
+    let t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2));
     return Math.sqrt((p.x - (a.x + t * (b.x - a.x)))**2 + (p.y - (a.y + t * (b.y - a.y)))**2);
 }
 
@@ -136,42 +76,28 @@ function getSafeCoordinates(existingMissions) {
     do {
         let gridX, gridY;
         if (count === 0) {
-            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]];
-            const s = corners[Math.floor(Math.random() * corners.length)];
-            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
-            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]], s = corners[Math.floor(Math.random() * corners.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
         } else if (count === 1) {
-            const startNode = existingMissions[0];
-            const startSector = SECTORS.find(s => (startNode.x >= margin + (s.x[0] * 14) - 5) && (startNode.x <= margin + (s.x[1] * 14) + 5));
-            const otherSectors = SECTORS.filter(s => s !== startSector);
-            const s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
-            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
-            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+            const startNode = existingMissions[0], startSector = SECTORS.find(s => (startNode.x >= margin + (s.x[0] * 14) - 5) && (startNode.x <= margin + (s.x[1] * 14) + 5));
+            const otherSectors = SECTORS.filter(s => s !== startSector), s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
         } else {
             gridX = Math.floor(Math.random() * 6); gridY = Math.floor(Math.random() * 6);
         }
-        x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3);
-        y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
+        x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3); y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
         safe = true; const newNode = { x, y };
-        for (let m of (existingMissions || [])) {
-            if (m && !isNaN(m.x) && Math.sqrt((m.x - x)**2 + (m.y - y)**2) < 15) { safe = false; break; }
-        }
+        for (let m of (existingMissions || [])) { if (m && !isNaN(m.x) && Math.sqrt((m.x - x)**2 + (m.y - y)**2) < 15) { safe = false; break; } }
         if (!safe) { attempts++; continue; }
         if (activeWire.length > 1) {
-            for (let i = 0; i < activeWire.length - 1; i++) {
-                if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) { safe = false; break; }
-            }
+            for (let i = 0; i < activeWire.length - 1; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) { safe = false; break; } }
         }
         if (!safe) { attempts++; continue; }
         if (activeWire.length > 0) {
-            const lastNode = activeWire[activeWire.length - 1];
-            for (let i = 0; i < activeWire.length - 1; i++) {
-                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) { safe = false; break; }
-            }
+            const last = activeWire[activeWire.length - 1];
+            for (let i = 0; i < activeWire.length - 1; i++) { if (doLinesIntersect(last, newNode, activeWire[i], activeWire[i+1])) { safe = false; break; } }
             if (safe && activeWire.length > 2) {
-                for (let i = 0; i < activeWire.length - 2; i++) {
-                    if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < 18) { safe = false; break; }
-                }
+                for (let i = 0; i < activeWire.length - 2; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < 18) { safe = false; break; } }
             }
         }
         attempts++;
@@ -198,10 +124,7 @@ function processTimeMechanics() {
                     const deadline = new Date(m.dueDate + 'T23:59:59'), diffHrs = (deadline - now) / (1000 * 60 * 60);
                     if (diffHrs < 0 && !m.overdue) addEnergy(-10);
                     m.overdue = diffHrs < 0; m.warningLevel = 0;
-                    if (!m.overdue) {
-                        if (diffHrs <= 24) m.warningLevel = 24;
-                        else if (diffHrs <= 48) m.warningLevel = 48;
-                    }
+                    if (!m.overdue) { if (diffHrs <= 24) m.warningLevel = 24; else if (diffHrs <= 48) m.warningLevel = 48; }
                     let targetH = Math.ceil(diffHrs / 24) <= 7 ? 'IMMINENT' : (Math.ceil(diffHrs / 24) <= 14 ? 'HORIZON' : 'TRAJECTORY');
                     if (targetH !== h) { state.missions[s.id][targetH].push(m); state.missions[s.id][h].splice(i, 1); }
                 }
@@ -213,12 +136,16 @@ function processTimeMechanics() {
 function checkDecayStatus() {
     let hasDecay = state.sectors.some(s => HORIZONS.some(h => state.missions[s.id]?.[h]?.some(m => m.overdue && !m.captured)));
     const levelR = document.getElementById('hud-level'), energyR = document.getElementById('hud-energy-readout');
-    if (hasDecay) {
-        if(levelR) { levelR.innerText = "CRITICAL DECAY"; levelR.classList.add('hud-warning'); }
-        if(energyR) energyR.classList.add('hud-warning');
-    } else {
-        if(levelR) { levelR.innerText = `PILOT LEVEL ${state.playerLevel}`; levelR.classList.remove('hud-warning'); }
-        if(energyR) energyR.classList.remove('hud-warning');
+    if (hasDecay) { if(levelR) levelR.innerText = "CRITICAL DECAY"; if(levelR) levelR.classList.add('hud-warning'); if(energyR) energyR.classList.add('hud-warning'); }
+    else { if(levelR) levelR.innerText = `PILOT LEVEL ${state.playerLevel}`; if(levelR) levelR.classList.remove('hud-warning'); if(energyR) energyR.classList.remove('hud-warning'); }
+}
+
+function generateStarfield() {
+    const field = document.getElementById('global-starfield'); if(!field) return; field.innerHTML = '';
+    for(let i=0; i<250; i++) {
+        const p = document.createElement('div'); p.className = 'void-particle'; p.style.width = Math.random() * 2 + 'px'; p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + '%'; p.style.top = Math.random() * 100 + '%'; p.style.animationDuration = (Math.random() * 5 + 3) + 's'; p.style.animationDelay = (Math.random() * 5) + 's';
+        field.appendChild(p);
     }
 }
 
@@ -233,8 +160,7 @@ function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); processTimeMechanics(); checkDecayStatus();
     const container = document.getElementById('view-container'), zoomBtn = document.getElementById('zoom-out'), bread = document.getElementById('breadcrumb'), footer = document.getElementById('control-footer');
-    if(!container) return; container.innerHTML = '';
-    if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
+    if(!container) return; container.innerHTML = ''; if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     const activeSector = state.sectors.find(s => s.id === state.sectorId), currentAccent = activeSector ? activeSector.color : '#00e5ff';
     document.documentElement.style.setProperty('--accent', currentAccent); document.documentElement.style.setProperty('--accent-glow', currentAccent + '99');
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
@@ -250,7 +176,7 @@ function renderLevel1(container, footer) {
     if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT SECTORS ]</button>`; }
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "voronoi-map"; container.appendChild(svg);
     const w = container.clientWidth, h = container.clientHeight;
-    let seeds = relaxLloyds(state.sectors.map(s => s.seed), 10);
+    let seeds = state.sectors.map(s => s.seed);
     const voronoi = d3.Delaunay.from(seeds.map(s => [s.x * w, s.y * h])).voronoi([0, 0, w, h]);
     state.sectors.forEach((s, i) => {
         const pathD = voronoi.renderCell(i); if(!pathD) return;
@@ -261,19 +187,17 @@ function renderLevel1(container, footer) {
         const cx = seeds[i].x * w, cy = seeds[i].y * h;
         [ { id: 'IMMINENT', r: 12, s: 10 }, { id: 'HORIZON', r: 20, s: 20 }, { id: 'TRAJECTORY', r: 28, s: 40 } ].forEach(ring => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", ring.r); circle.setAttribute("fill", "none"); circle.setAttribute("stroke", color); circle.setAttribute("stroke-width", "0.5"); circle.setAttribute("opacity", "0.4"); circle.style.pointerEvents = "none"; svg.appendChild(circle);
+            circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", ring.r); circle.setAttribute("fill", "none"); circle.setAttribute("stroke", color); circle.setAttribute("stroke-width", "0.5"); circle.setAttribute("opacity", "0.4"); svg.appendChild(circle);
             const missions = (state.missions[s.id]?.[ring.id] || []).filter(m => !m.captured);
             if (missions.length > 0) {
                 const group = document.createElementNS("http://www.w3.org/2000/svg", "g"); group.style.transformOrigin = `${cx}px ${cy}px`; group.style.animation = `orbit-spin ${ring.s}s linear infinite`;
                 missions.forEach((m, idx) => {
                     const angle = (idx / missions.length) * Math.PI * 2, dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     dot.setAttribute("cx", cx + ring.r * Math.cos(angle)); dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); dot.setAttribute("r", "1.5"); dot.setAttribute("fill", m.overdue ? 'var(--thrust)' : color); group.appendChild(dot);
-                });
-                svg.appendChild(group);
+                }); svg.appendChild(group);
             }
         });
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", cx); text.setAttribute("y", cy + 45); text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text"); text.style.textShadow = `0 0 10px ${color}`; text.textContent = s.name; svg.appendChild(text);
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text"); text.setAttribute("x", cx); text.setAttribute("y", cy + 45); text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text"); text.style.textShadow = `0 0 10px ${color}`; text.textContent = s.name; svg.appendChild(text);
     });
 }
 
@@ -293,9 +217,8 @@ function renderLevel2(container, footer, activeSector) {
     [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ].forEach(d => {
         const overdue = state.missions[state.sectorId]?.[d.id]?.some(m => m.overdue && !m.captured), wrapper = document.createElement('div'); wrapper.className = `ring-circle ${overdue ? 'overdue' : ''}`;
         wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px'; wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
-        if (d.id === 'IMMINENT') {
-            const label = document.createElement('div'); label.className = 'ring-label'; label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#ffffff; font-size: 0.7rem; font-weight: bold; letter-spacing: 2px;'; label.innerText = d.id; wrapper.appendChild(label);
-        } else {
+        if (d.id === 'IMMINENT') { const label = document.createElement('div'); label.className = 'ring-label'; label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#ffffff; font-size: 0.7rem; font-weight: bold; letter-spacing: 2px;'; label.innerText = d.id; wrapper.appendChild(label); }
+        else {
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text"); text.setAttribute("fill", "#ffffff"); text.style.cssText = 'font-size: 0.7rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
             const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath"); tp.setAttribute("href", `#path-${d.id.toLowerCase()}`); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.setAttribute("dominant-baseline", "middle"); tp.textContent = d.id; text.appendChild(tp); tSvg.appendChild(text);
         }
@@ -304,10 +227,8 @@ function renderLevel2(container, footer, activeSector) {
         missions.forEach((m, i) => {
             const angle = (i / missions.length) * Math.PI * 2, r = d.size/2, dot = document.createElement('div'), isDecay = m.overdue && !m.captured, color = isDecay ? 'var(--thrust)' : 'var(--accent)';
             dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${color}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${color};`; sField.appendChild(dot);
-        });
-        wrapper.appendChild(sField); center.appendChild(wrapper);
-    });
-    container.appendChild(center);
+        }); wrapper.appendChild(sField); center.appendChild(wrapper);
+    }); container.appendChild(center);
 }
 
 function renderLevel3(container, footer) {
@@ -322,8 +243,7 @@ function renderLevel3(container, footer) {
     if (priorityTasks.length > 0) {
         const pCont = document.createElement('div'); pCont.className = 'priority-dropdown-container'; pCont.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
         pCont.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span></button>
-            <div class="priority-list">${priorityTasks.map((m, i) => {
-                const isDecay = m.overdue && !m.captured;
+            <div class="priority-list">${priorityTasks.map((m, i) => { const isDecay = m.overdue && !m.captured;
                 return `<div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" style="${i === 0 ? `--sector-color: ${isDecay ? 'rgba(255, 42, 42, 0.2)' : accentColor + '22'}; --sector-border: ${isDecay ? 'var(--thrust)' : accentColor};` : ''}">
                 <span class="p-num">${missions.indexOf(m) + 1}</span><span class="p-status" style="color: ${isDecay ? 'var(--thrust)' : ''}">${i === 0 ? (isDecay ? '[ CRITICAL DECAY ]' : '[ MISSION CRITICAL ]') : ''}</span><span class="p-text">${m.name}</span></div>`}).join('')}</div>`; container.appendChild(pCont);
     }
@@ -391,8 +311,7 @@ function moveMission(direction) {
 }
 
 function openTaskModal(h, f) { 
-    editModeId = null; defaultHorizonContext = h; isHorizonFixed = f; 
-    document.getElementById('modal-task-name').value = ''; document.getElementById('modal-task-date').value = '';
+    editModeId = null; defaultHorizonContext = h; isHorizonFixed = f; document.getElementById('modal-task-name').value = ''; document.getElementById('modal-task-date').value = '';
     document.getElementById('modal-horizon-select').value = h; document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; 
     tempSubtasks = ['', '', '']; renderModalSubtasks(); document.getElementById('task-modal-overlay').style.display = 'flex'; 
 }
@@ -406,7 +325,6 @@ function renderModalSubtasks() {
 }
 
 function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
-
 function closeTaskModal() { const overlay = document.getElementById('task-modal-overlay'); if (overlay) overlay.style.display = 'none'; }
 
 function saveTaskModal() {
@@ -448,7 +366,6 @@ function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({
 function saveSectorModal() { editingSectors.forEach(s => { if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; }); state.sectors = JSON.parse(JSON.stringify(editingSectors)); save(); closeSectorModal(); render(); }
 function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
 function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
-
 function openEditModal(id) {
     editModeId = id; let target = null; HORIZONS.forEach(h => { const found = state.missions[state.sectorId]?.[h]?.find(m => m.id === id); if (found) target = found; });
     if (!target) return; document.getElementById('modal-task-name').value = target.name; document.getElementById('modal-task-date').value = target.dueDate || '';
@@ -465,5 +382,12 @@ function togglePilotLog() {
 }
 
 // --- INITIALIZATION ---
+function runDatabaseMigration() {
+    let m = false, nM = { ...state.missions }, lM = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal' };
+    Object.keys(nM).forEach(k => { if (!k.startsWith('sec_')) { let nId = lM[k]; if (nId) { if (!nM[nId]) nM[nId] = {}; HORIZONS.forEach(h => { if (nM[k][h]) nM[nId][h] = (nM[nId][h] || []).concat(nM[k][h]); }); } delete nM[k]; m = true; } });
+    state.missions = nM; state.sectors.forEach(s => { if (!state.missions[s.id]) { state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; m = true; } });
+    if (m) save();
+}
+
 runDatabaseMigration(); generateStarfield(); render();
 window.addEventListener('resize', () => { if(state.level === 1) render(); });
