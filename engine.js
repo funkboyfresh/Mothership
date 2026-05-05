@@ -131,32 +131,46 @@ function doLinesIntersect(p1, q1, p2, q2) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    const activeWire = existingMissions.slice(-10); 
+    // 1. CHECK EVERYTHING: Don't slice. We need to see all nodes to prevent overlap.
+    const allNodes = existingMissions || []; 
     let x, y, safe, attempts = 0;
-    const minDistance = 25; 
+    const minDistance = 22; 
     const padding = 20; 
 
     do {
-        x = padding + Math.random() * (100 - padding * 2); 
-        y = padding + Math.random() * (100 - padding * 2); 
+        // We slightly expand the spawn range to 15-85 to give more breathing room
+        x = 15 + Math.random() * 70; 
+        y = 15 + Math.random() * 70; 
         safe = true;
         const newNode = { x, y };
 
-        for (let m of activeWire) {
+        // RULE 1: Overlap Guard (Check against ALL existing nodes in this sector)
+        for (let m of allNodes) {
+            if (!m || isNaN(m.x)) continue;
             let dx = m.x - x, dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { safe = false; break; }
+            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
+                safe = false; 
+                break; 
+            }
         }
 
-        if (safe && activeWire.length > 0) {
-            const lastNode = activeWire[activeWire.length - 1];
-            for (let i = 0; i < activeWire.length - 1; i++) {
-                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
-                    safe = false; break;
+        // RULE 2: Intersection Guard (Only check against the actual wire segments)
+        if (safe && allNodes.length > 0) {
+            const lastNode = allNodes[allNodes.length - 1];
+            // Only check segments for the current 'active' wire view
+            const wirePath = allNodes.slice(-10); 
+            for (let i = 0; i < wirePath.length - 1; i++) {
+                if (doLinesIntersect(lastNode, newNode, wirePath[i], wirePath[i+1])) {
+                    safe = false; 
+                    break;
                 }
             }
         }
+        
         attempts++;
-    } while (!safe && attempts < 200);
+        // 2. INCREASE PERSISTENCE: Give it 500 tries to find a hole in the grid
+    } while (!safe && attempts < 500);
+
     return {x, y};
 }
 
