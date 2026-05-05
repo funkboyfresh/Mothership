@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V11.0</title>
+    <title>Mission Control V10.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
@@ -15,30 +15,16 @@
             --border: #333333; 
             --accent: #00e5ff; 
             --accent-glow: rgba(0, 229, 255, 0.6); 
-            --captured: #00ff88; 
+            --captured: var(--accent); 
             --thrust: #ff2a2a; 
             --thrust-glow: rgba(255, 42, 42, 0.2);
         }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
         #app { display: flex; flex-direction: column; height: 100%; position: relative; }
         
-        /* Updated Gamified HUD */
-        #hud { padding: 12px 20px; background: rgba(0,0,0,0.85); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; z-index: 200; position: relative; backdrop-filter: blur(10px); }
-        .hud-top-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
-        .hud-level-text { color: var(--text); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
-        .hud-energy-text { color: var(--accent); text-shadow: 0 0 8px var(--accent-glow); }
-        
-        /* Segmented Capacitor Bar */
-        .capacitor-container { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 2px; display: flex; overflow: hidden; position: relative; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); }
-        .capacitor-fill { height: 100%; background: var(--accent); transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 0 10px var(--accent); position: relative; }
-        .capacitor-segments { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: repeating-linear-gradient(to right, transparent, transparent 10%, rgba(0,0,0,0.5) 10%, rgba(0,0,0,0.5) 11%); pointer-events: none; z-index: 2; }
-        
-        .hud-warning { color: var(--thrust) !important; text-shadow: 0 0 15px var(--thrust) !important; animation: text-flash 1.5s infinite; }
-        @keyframes text-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        /* Level Up Animation Overlay */
-        #level-up-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--accent); z-index: 999; display: none; align-items: center; justify-content: center; flex-direction: column; animation: hyper-flash 1.5s forwards ease-out; pointer-events: none; opacity: 0; }
-        @keyframes hyper-flash { 0% { opacity: 1; transform: scale(1.1); filter: brightness(2); } 100% { opacity: 0; transform: scale(1); filter: brightness(1); } }
+        #hud { padding: 15px; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow); transition: color 0.5s, text-shadow 0.5s; z-index: 200; position: relative; }
+        .hud-warning { color: var(--thrust) !important; text-shadow: 0 0 15px var(--thrust) !important; animation: flash-warning 1.5s infinite; }
+        @keyframes flash-warning { 0%, 100% { background: rgba(255, 42, 42, 0.1); } 50% { background: rgba(0, 0, 0, 0.8); } }
 
         #nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; min-height: 24px; align-items: center; z-index: 100; position: relative; }
         .breadcrumb { font-size: 0.6rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 8px var(--accent-glow); }
@@ -47,6 +33,7 @@
         
         .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 20px; flex-direction: column; z-index: 10; }
         
+        /* High-Density Void & Grid */
         .grid-bg { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
         .dense-starfield { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 1; pointer-events: none; }
         .void-particle { position: absolute; border-radius: 50%; background: #fff; opacity: 0.5; animation: void-drift linear infinite alternate; }
@@ -58,6 +45,7 @@
         .view-level-title { font-size: 0.7rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 5px; opacity: 0.8; z-index: 5; text-shadow: 0 0 8px var(--accent-glow); }
         .view-main-title { font-size: 1.4rem; margin-top: 0; margin-bottom: 20px; font-weight: 300; text-transform: uppercase; z-index: 5; }
 
+        /* SVG Voronoi Map */
         #voronoi-map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
         .voronoi-cell { cursor: pointer; transition: fill 0.3s, filter 0.3s; }
         .voronoi-cell:hover { filter: brightness(1.5); }
@@ -93,7 +81,7 @@
 
         @keyframes orbit-spin { 100% { transform: rotate(360deg); } }
         @keyframes orbit-counter-spin { 100% { transform: rotate(-360deg); } }
-        @keyframes core-ignition { 0% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); } 50% { r: 22; fill: var(--captured); filter: drop-shadow(0 0 35px var(--captured)); } 100% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); } }
+        @keyframes core-ignition { 0% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); } 50% { r: 22; fill: var(--thrust); filter: drop-shadow(0 0 25px var(--thrust)); } 100% { r: 14; fill: var(--bg); filter: drop-shadow(0 0 0px transparent); } }
         @keyframes pulse-hex { 0% { filter: drop-shadow(0 0 15px var(--accent-glow)); } 50% { filter: drop-shadow(0 0 40px var(--accent)); } 100% { filter: drop-shadow(0 0 15px var(--accent-glow)); } }
 
         .orbital-system { width: 340px; height: 340px; position: relative; margin: 10px auto; animation: orbit-spin 60s linear infinite; flex-shrink: 0; }
@@ -143,25 +131,10 @@
 </head>
 <body>
     <div id="app">
-        <div id="level-up-overlay">
-            <h1 style="font-size: 3rem; color: var(--bg); text-align: center; letter-spacing: 5px; margin:0;">HYPER-DRIVE<br>ENGAGED</h1>
-            <p style="color: var(--bg); font-weight: bold; letter-spacing: 2px;">PILOT LEVEL UP</p>
-        </div>
-
         <div class="grid-bg"></div>
         <div class="dense-starfield" id="global-starfield"></div>
 
-        <div id="hud">
-            <div class="hud-top-row">
-                <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
-                <span class="hud-energy-text" id="hud-energy-readout">CAPACITOR 0%</span>
-            </div>
-            <div class="capacitor-container">
-                <div class="capacitor-fill" id="hud-capacitor-bar" style="width: 0%;"></div>
-                <div class="capacitor-segments"></div>
-            </div>
-        </div>
-
+        <div id="hud">SYSTEM ARCHITECTURE NOMINAL</div>
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb">GALAXY</div>
             <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
@@ -216,6 +189,7 @@
         const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
         const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
 
+        // --- MIGRATION & INIT ---
         let defaultSectors = [
             { id: 'sec_career', name: 'CAREER', color: '#00e5ff', seed: {x: 0.3, y: 0.3} },
             { id: 'sec_finance', name: 'FINANCIAL', color: '#ffd700', seed: {x: 0.7, y: 0.3} },
@@ -224,61 +198,24 @@
 
         let state = {
             level: 1, sectorId: null, horizon: null, activeMissionId: null,
-            playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
-            energy: parseInt(localStorage.getItem('energy')) || 0,
             sectors: JSON.parse(localStorage.getItem('sectors')) || defaultSectors,
             missions: JSON.parse(localStorage.getItem('missions')) || {}
         };
 
-        let ignitionFlare = false;
-        let tempSubtasks = []; 
-        let editModeId = null;
-        let defaultHorizonContext = 'TRAJECTORY';
-        let isHorizonFixed = false;
-
-        function updateHUD() {
-            document.getElementById('hud-level').innerText = `PILOT LEVEL ${state.playerLevel}`;
-            document.getElementById('hud-energy-readout').innerText = `CAPACITOR ${state.energy}%`;
-            document.getElementById('hud-capacitor-bar').style.width = `${state.energy}%`;
-        }
-
-        function addEnergy(amount) {
-            state.energy += amount;
-            if (state.energy < 0) state.energy = 0;
-            
-            if (state.energy >= 100) {
-                const levelsGained = Math.floor(state.energy / 100);
-                state.playerLevel += levelsGained;
-                state.energy = state.energy % 100;
-                triggerHyperDrive();
-            }
-            save();
-            updateHUD();
-        }
-
-        function triggerHyperDrive() {
-            const overlay = document.getElementById('level-up-overlay');
-            overlay.style.display = 'flex';
-            // Force reflow to restart animation
-            overlay.style.animation = 'none';
-            void overlay.offsetWidth;
-            overlay.style.animation = 'hyper-flash 1.5s forwards ease-out';
-            
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 1500);
-        }
-
+        // Migrate old key-based missions to ID-based
         function runDatabaseMigration() {
             let migrated = false;
             let newMissions = { ...state.missions };
-            const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal', 'HEALTH': 'sec_personal' };
+            
+            // Map legacy strings to the hardcoded default IDs
+            const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal', 'HEALTH': 'sec_personal' }; // Dump health into personal if exists
 
             Object.keys(newMissions).forEach(key => {
                 if (!key.startsWith('sec_')) {
                     const newId = legacyMap[key];
                     if (newId) {
                         if (!newMissions[newId]) newMissions[newId] = {};
+                        // Merge old arrays into new
                         Object.keys(newMissions[key]).forEach(h => {
                             if (!newMissions[newId][h]) newMissions[newId][h] = [];
                             newMissions[newId][h] = newMissions[newId][h].concat(newMissions[key][h]);
@@ -288,11 +225,14 @@
                     migrated = true;
                 }
             });
+
             state.missions = newMissions;
 
+            // Ensure every sector ID has valid arrays
             state.sectors.forEach(s => {
                 if (!state.missions[s.id]) state.missions[s.id] = {};
                 
+                // Temporal Taxonomy Fixes
                 if (state.missions[s.id]['FAR']) { state.missions[s.id]['TRAJECTORY'] = state.missions[s.id]['FAR']; delete state.missions[s.id]['FAR']; }
                 if (state.missions[s.id]['NEAR']) { state.missions[s.id]['HORIZON'] = state.missions[s.id]['NEAR']; delete state.missions[s.id]['NEAR']; }
                 if (state.missions[s.id]['NOW']) { state.missions[s.id]['IMMINENT'] = state.missions[s.id]['NOW']; delete state.missions[s.id]['NOW']; }
@@ -300,10 +240,25 @@
                 HORIZONS.forEach(h => {
                     if (!state.missions[s.id][h]) state.missions[s.id][h] = [];
                     state.missions[s.id][h].forEach((m, index, arr) => {
-                        m.subs = m.subs || []; // Fail-safe for missing arrays
-                        if (m.x === undefined || m.y === undefined || isNaN(m.x) || isNaN(m.y)) {
+                        // Spatial buffer
+                        if (m.x === undefined || m.y === undefined) {
                             let coords = getSafeCoordinates(arr.slice(0, index));
                             m.x = coords.x; m.y = coords.y;
+                        } else {
+                            let safe = false, attempts = 0;
+                            while(!safe && attempts < 20) {
+                                safe = true;
+                                for(let i=0; i<index; i++) {
+                                    let other = arr[i];
+                                    let dx = m.x - other.x; let dy = m.y - other.y;
+                                    if(Math.sqrt(dx*dx + dy*dy) < 18) {
+                                        safe = false;
+                                        m.x = Math.floor(Math.random() * 70) + 15; m.y = Math.floor(Math.random() * 50) + 25;
+                                        break;
+                                    }
+                                }
+                                attempts++;
+                            }
                         }
                         if (m.captured === undefined) m.captured = false;
                         if (m.overdue === undefined) m.overdue = false; 
@@ -314,14 +269,17 @@
             if (migrated) save();
         }
 
+        // --- GLOBAL VISUALS --- //
         function generateStarfield() {
             const field = document.getElementById('global-starfield');
             field.innerHTML = '';
             for(let i=0; i<250; i++) {
                 const p = document.createElement('div');
                 p.className = 'void-particle';
-                p.style.width = Math.random() * 2 + 'px'; p.style.height = p.style.width;
-                p.style.left = Math.random() * 100 + '%'; p.style.top = Math.random() * 100 + '%';
+                p.style.width = Math.random() * 2 + 'px';
+                p.style.height = p.style.width;
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
                 p.style.animationDuration = (Math.random() * 5 + 3) + 's';
                 p.style.animationDelay = (Math.random() * 5) + 's';
                 field.appendChild(p);
@@ -350,7 +308,9 @@
             container.classList.add('warp-transition');
         }
 
+        // --- CORE MATH --- //
         function relaxLloyds(seeds, iterations) {
+            // Approximates centroid of Voronoi cells to make polygons visually balanced
             let points = [...seeds];
             for(let k=0; k<iterations; k++) {
                 const delaunay = d3.Delaunay.from(points, p => p.x, p => p.y);
@@ -360,10 +320,17 @@
                     if (polygon) {
                         let cx = 0, cy = 0, area = 0;
                         for (let j = 0, len = polygon.length; j < len - 1; j++) {
-                            const [x0, y0] = polygon[j]; const [x1, y1] = polygon[j + 1];
-                            const a = x0 * y1 - x1 * y0; area += a; cx += (x0 + x1) * a; cy += (y0 + y1) * a;
+                            const [x0, y0] = polygon[j];
+                            const [x1, y1] = polygon[j + 1];
+                            const a = x0 * y1 - x1 * y0;
+                            area += a;
+                            cx += (x0 + x1) * a;
+                            cy += (y0 + y1) * a;
                         }
-                        area *= 3; if (area !== 0) { points[i] = { x: cx / area, y: cy / area }; }
+                        area *= 3;
+                        if (area !== 0) {
+                            points[i] = { x: cx / area, y: cy / area };
+                        }
                     }
                 }
             }
@@ -377,13 +344,24 @@
                 y = Math.floor(Math.random() * 50) + 25;
                 safe = true;
                 for (let m of existingMissions) {
-                    if (m.x === undefined || m.y === undefined || isNaN(m.x) || isNaN(m.y)) continue;
+                    if (m.x === undefined || m.y === undefined) continue;
                     let dx = m.x - x; let dy = m.y - y;
                     if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; } 
                 }
                 attempts++;
             } while (!safe && attempts < 50);
             return {x, y};
+        }
+
+        function getHorizonFromDate(dateStr, fallbackHorizon) {
+            if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
+            const today = new Date(); today.setHours(0,0,0,0);
+            const dDate = new Date(dateStr + 'T00:00:00');
+            const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 7) return 'IMMINENT';
+            if (diffDays <= 14) return 'HORIZON';
+            return 'TRAJECTORY';
         }
 
         function processTimeMechanics() {
@@ -395,19 +373,10 @@
                         if (m.dueDate && !m.captured) {
                             const dDate = new Date(m.dueDate + 'T00:00:00');
                             const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-                            
-                            const isNowOverdue = diffDays < 0;
-                            // Economy Drain trigger
-                            if (isNowOverdue && !m.overdue) {
-                                addEnergy(-10); // Drain fuel if something newly breaches containment
-                            }
-                            
-                            m.overdue = isNowOverdue;
-                            
+                            m.overdue = diffDays < 0;
                             let targetH = 'TRAJECTORY';
                             if (diffDays <= 7) targetH = 'IMMINENT';
                             else if (diffDays <= 14) targetH = 'HORIZON';
-                            
                             if (targetH !== h) {
                                 state.missions[s.id][targetH].push(m);
                                 state.missions[s.id][h].splice(i, 1);
@@ -430,47 +399,26 @@
                     }
                 });
             });
-            
-            const levelReadout = document.getElementById('hud-level');
-            const energyReadout = document.getElementById('hud-energy-readout');
-            
+            const hud = document.getElementById('hud');
             if (hasDecay) {
-                levelReadout.innerText = "WARNING: DECAY DETECTED";
-                levelReadout.classList.add('hud-warning');
-                energyReadout.classList.add('hud-warning');
+                hud.innerText = "WARNING: CONTAINMENT BREACH / ORBITAL DECAY";
+                hud.classList.add('hud-warning');
             } else {
-                levelReadout.innerText = `PILOT LEVEL ${state.playerLevel}`;
-                levelReadout.classList.remove('hud-warning');
-                energyReadout.classList.remove('hud-warning');
+                hud.innerText = "SYSTEM ARCHITECTURE NOMINAL";
+                hud.classList.remove('hud-warning');
             }
         }
 
         function save() { 
             localStorage.setItem('sectors', JSON.stringify(state.sectors));
             localStorage.setItem('missions', JSON.stringify(state.missions)); 
-            localStorage.setItem('energy', state.energy);
-            localStorage.setItem('playerLevel', state.playerLevel);
         }
 
-        // --- Core Failsafe --- //
-        function safelyGetActiveMission() {
-            let targetMission = null;
-            let actualHorizon = state.horizon;
-            for (let h of HORIZONS) {
-                const found = state.missions[state.sectorId][h].find(x => x.id === state.activeMissionId);
-                if (found) { targetMission = found; actualHorizon = h; break; }
-            }
-            if (targetMission && actualHorizon !== state.horizon) {
-                state.horizon = actualHorizon; 
-            }
-            return targetMission;
-        }
-
+        // --- RENDERING --- //
         function render() {
             updateAccentColor();
             processTimeMechanics();
             checkDecayStatus();
-            updateHUD();
             
             const container = document.getElementById('view-container');
             const zoomBtn = document.getElementById('zoom-out');
@@ -490,15 +438,20 @@
                 footer.style.display = 'flex';
                 footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`;
                 
+                // Voronoi SVG Setup
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
                 svg.id = "voronoi-map"; 
                 container.appendChild(svg);
                 
-                const w = container.clientWidth || window.innerWidth;
-                const h = container.clientHeight || window.innerHeight;
+                // Force layout calculation
+                const w = container.clientWidth;
+                const h = container.clientHeight;
 
+                // Run Lloyd's Relaxation on seeds
                 let seeds = state.sectors.map(s => ({x: s.seed.x, y: s.seed.y}));
                 seeds = relaxLloyds(seeds, 5);
+                
+                // Update seeds back to state for consistency
                 seeds.forEach((seed, i) => { state.sectors[i].seed = seed; });
 
                 const mappedSeeds = seeds.map(s => [s.x * w, s.y * h]);
@@ -512,29 +465,27 @@
                     const cellColor = isOverdue ? 'var(--thrust)' : s.color;
                     const fillOpacity = isOverdue ? 0.2 : 0.05;
                     
-                    if (pathData) {
-                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        path.setAttribute("d", pathData);
-                        path.setAttribute("fill", cellColor);
-                        path.setAttribute("fill-opacity", fillOpacity);
-                        path.setAttribute("stroke", cellColor);
-                        path.setAttribute("stroke-width", "2");
-                        path.setAttribute("class", "voronoi-cell");
-                        path.onclick = () => selectSector(s.id);
-                        svg.appendChild(path);
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", pathData);
+                    path.setAttribute("fill", cellColor);
+                    path.setAttribute("fill-opacity", fillOpacity);
+                    path.setAttribute("stroke", cellColor);
+                    path.setAttribute("stroke-width", "2");
+                    path.setAttribute("class", "voronoi-cell");
+                    path.onclick = () => selectSector(s.id);
+                    svg.appendChild(path);
 
-                        const cx = mappedSeeds[i][0];
-                        const cy = mappedSeeds[i][1];
+                    const cx = mappedSeeds[i][0];
+                    const cy = mappedSeeds[i][1];
 
-                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        text.setAttribute("x", cx);
-                        text.setAttribute("y", cy);
-                        text.setAttribute("fill", cellColor);
-                        text.setAttribute("class", "voronoi-text");
-                        text.style.textShadow = `0 0 10px ${cellColor}`;
-                        text.textContent = s.name;
-                        svg.appendChild(text);
-                    }
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", cx);
+                    text.setAttribute("y", cy);
+                    text.setAttribute("fill", cellColor);
+                    text.setAttribute("class", "voronoi-text");
+                    text.style.textShadow = `0 0 10px ${cellColor}`;
+                    text.textContent = s.name;
+                    svg.appendChild(text);
                 });
 
             } 
@@ -615,8 +566,7 @@
                         const decayClass = m.overdue && !m.captured ? 'decaying' : '';
                         const star = document.createElement('div'); 
                         star.className = `star-container ${decayClass}`;
-                        star.style.left = m.x + '%'; star.style.top = m.y + '%'; 
-                        star.onclick = () => selectMission(m.id);
+                        star.style.left = m.x + '%'; star.style.top = m.y + '%'; star.onclick = () => selectMission(m.id);
                         star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''} ${decayClass}">${i+1}</div><div class="star-label ${decayClass}">${m.name}</div>${m.captured ? '<div class="captured-banner">TARGET ACQUIRED</div>' : ''}`;
                         container.appendChild(star);
                         if (i < missions.length - 1) {
@@ -631,120 +581,105 @@
             }
             else if (state.level === 4) {
                 footer.style.display = 'none';
+                const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
+                const totalTasks = m.subs.length;
+                const completedTasks = m.subs.filter(s => s.c).length;
+                const progressPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+                const allDone = totalTasks > 0 && completedTasks === totalTasks;
                 
-                try {
-                    const m = safelyGetActiveMission();
-                    if (!m) { zoomOut(); return; } 
-
-                    const safeSubs = m.subs || [];
-                    const totalTasks = safeSubs.length;
-                    const completedTasks = safeSubs.filter(s => s.c).length;
-                    const progressPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-                    const allDone = totalTasks > 0 && completedTasks === totalTasks;
+                const coreClass = ignitionFlare ? 'flare-active' : '';
+                ignitionFlare = false;
+                const coreFill = allDone ? 'var(--accent)' : 'var(--bg)';
+                const titleColor = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
+                
+                let orbHtml = `<div class="target-lock">
+                    <div class="view-level-title" style="color: ${m.overdue && !m.captured ? 'var(--thrust)' : ''}">LEVEL 4 // ${m.captured ? 'MISSION LOG' : (m.overdue ? 'DECAYING TARGET' : 'ACTIVE TARGET')}</div>
+                    <h2 style="color:${titleColor}; font-size: 1.2rem; margin-top: 0; margin-bottom: 5px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
+                    ${m.dueDate ? `<div style="font-size: 0.6rem; color: ${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--border)'}; margin-bottom: 10px; z-index:20;">DEADLINE: ${m.dueDate}</div>` : ''}
                     
-                    const coreClass = ignitionFlare ? 'flare-active' : '';
-                    ignitionFlare = false;
-                    const coreFill = allDone ? 'var(--captured)' : 'var(--bg)';
-                    const titleColor = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
-                    
-                    let orbHtml = `<div class="target-lock">
-                        <div class="view-level-title" style="color: ${m.overdue && !m.captured ? 'var(--thrust)' : ''}">LEVEL 4 // ${m.captured ? 'MISSION LOG' : (m.overdue ? 'DECAYING TARGET' : 'ACTIVE TARGET')}</div>
-                        <h2 style="color:${titleColor}; font-size: 1.2rem; margin-top: 0; margin-bottom: 5px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
-                        ${m.dueDate ? `<div style="font-size: 0.6rem; color: ${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--border)'}; margin-bottom: 10px; z-index:20;">DEADLINE: ${m.dueDate}</div>` : ''}
-                        
-                        <div class="progress-wrapper">
-                            <div class="progress-bar-container">
-                                <div class="progress-fill" style="width: ${progressPercent}%;"></div>
-                            </div>
-                            <div class="progress-text">${progressPercent}% INTEGRITY</div>
+                    <div class="progress-wrapper">
+                        <div class="progress-bar-container">
+                            <div class="progress-fill" style="width: ${progressPercent}%;"></div>
                         </div>
+                        <div class="progress-text">${progressPercent}% INTEGRITY</div>
+                    </div>
 
-                        <div class="orbital-system">
-                            <svg viewBox="0 0 340 340" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 1;">
-                                <g stroke="var(--accent)" stroke-width="1.5" fill="none" style="filter: drop-shadow(0 0 5px var(--accent-glow));">
-                                    <polygon points="170,70 230,220 170,190 110,220" />
-                                    <polygon points="170,110 200,200 170,180 140,200" fill="rgba(255, 255, 255, 0.05)" />
-                                    <circle id="ship-core" class="${coreClass}" cx="170" cy="170" r="14" fill="${coreFill}" stroke-width="2" style="transition: fill 0.5s"/>
-                                    <circle cx="170" cy="170" r="4" fill="var(--accent)"/>
-                                </g>
-                            `;
+                    <div class="orbital-system">
+                        <svg viewBox="0 0 340 340" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index: 1;">
+                            <g stroke="var(--accent)" stroke-width="1.5" fill="none" style="filter: drop-shadow(0 0 5px var(--accent-glow));">
+                                <polygon points="170,70 230,220 170,190 110,220" />
+                                <polygon points="170,110 200,200 170,180 140,200" fill="rgba(255, 255, 255, 0.05)" />
+                                <circle id="ship-core" class="${coreClass}" cx="170" cy="170" r="14" fill="${coreFill}" stroke-width="2" style="transition: fill 0.5s"/>
+                                <circle cx="170" cy="170" r="4" fill="var(--accent)"/>
+                            </g>
+                        `;
 
-                    const shipParts = [ {x: 170, y: 70}, {x: 230, y: 220}, {x: 110, y: 220}, {x: 170, y: 190}, {x: 200, y: 200}, {x: 140, y: 200} ];
+                const shipParts = [ {x: 170, y: 70}, {x: 230, y: 220}, {x: 110, y: 220}, {x: 170, y: 190}, {x: 200, y: 200}, {x: 140, y: 200} ];
 
-                    if (totalTasks > 0) {
-                        safeSubs.forEach((s, i) => {
-                            const text = s.t || '';
-                            const hash = (i * 17) + text.length + (text.charCodeAt(0) || 0);
-                            const rand = Math.abs(Math.sin(hash));
-                            const radius = 80 + rand * 45;
-                            const baseAngle = (i / totalTasks) * Math.PI * 2;
-                            const angle = baseAngle + (rand * 0.4 - 0.2);
-                            
-                            const taskX = 170 + radius * Math.cos(angle);
-                            const taskY = 170 + radius * Math.sin(angle);
-                            const part = shipParts[i % shipParts.length];
-                            const lineColor = s.c ? 'var(--captured)' : 'var(--border)';
-                            const dashArray = s.c ? '0' : '4';
-                            
-                            orbHtml += `<line x1="${taskX}" y1="${taskY}" x2="${part.x}" y2="${part.y}" stroke="${lineColor}" stroke-dasharray="${dashArray}" stroke-width="1.5" style="transition: all 0.3s; filter: drop-shadow(0 0 5px ${s.c ? 'var(--captured)' : 'transparent'});" />`;
-                        });
-                    }
-
-                    orbHtml += `</svg>`;
-
-                    if (totalTasks > 0) {
-                        safeSubs.forEach((s, i) => {
-                            const text = s.t || '';
-                            const hash = (i * 17) + text.length + (text.charCodeAt(0) || 0);
-                            const rand = Math.abs(Math.sin(hash));
-                            const radius = 80 + rand * 45;
-                            const baseAngle = (i / totalTasks) * Math.PI * 2;
-                            const angle = baseAngle + (rand * 0.4 - 0.2);
-                            
-                            const taskX = 170 + radius * Math.cos(angle);
-                            const taskY = 170 + radius * Math.sin(angle);
-
-                            orbHtml += `
-                                <div style="position:absolute; left:${taskX}px; top:${taskY}px; transform:translate(-50%, -50%); z-index:20; cursor:pointer;" onclick="${m.captured ? '' : `toggleSub(${i}, event)`}">
-                                    <div class="counter-spin orbital-node-box ${s.c ? 'checked' : ''}">
-                                        <div class="orb-check">${s.c ? '✓' : ''}</div>
-                                        <div class="orb-text ${s.c ? 'strikethrough' : ''}">${text}</div>
-                                    </div>
-                                </div>`;
-                        });
-                    }
-
-                    orbHtml += `</div>`; 
-
-                    if (allDone && !m.captured) {
-                        orbHtml += `
-                            <div class="hex-modal warp-transition">
-                                <div class="hex-container">
-                                    <div class="hex-shape"></div>
-                                    <div class="hex-inner">
-                                        <div class="hex-icon">✓</div>
-                                    </div>
-                                </div>
-                                <h2 style="color: var(--captured); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px; text-align: center; font-weight: 300; text-shadow: 0 0 15px var(--accent-glow);">Target<br>Secured</h2>
-                                <button class="success-btn" onclick="completeMission()">Log Mission & Warp (+25%)</button>
-                            </div>`;
-                    } else if (m.captured) {
-                        orbHtml += `<div class="captured-banner" style="font-size:1rem; padding: 15px; color: var(--border);">MISSION ARCHIVED</div>`;
-                    }
+                m.subs.forEach((s, i) => {
+                    const hash = (i * 17) + s.t.length + (s.t.charCodeAt(0) || 0);
+                    const rand = Math.abs(Math.sin(hash));
+                    const radius = 80 + rand * 45;
+                    const baseAngle = (i / m.subs.length) * Math.PI * 2;
+                    const angle = baseAngle + (rand * 0.4 - 0.2);
                     
+                    const taskX = 170 + radius * Math.cos(angle);
+                    const taskY = 170 + radius * Math.sin(angle);
+                    const part = shipParts[i % shipParts.length];
+                    const lineColor = s.c ? 'var(--accent)' : 'var(--border)';
+                    const dashArray = s.c ? '0' : '4';
+                    
+                    orbHtml += `<line x1="${taskX}" y1="${taskY}" x2="${part.x}" y2="${part.y}" stroke="${lineColor}" stroke-dasharray="${dashArray}" stroke-width="1.5" style="transition: all 0.3s; filter: drop-shadow(0 0 5px ${s.c ? 'var(--accent-glow)' : 'transparent'});" />`;
+                });
+
+                orbHtml += `</svg>`;
+
+                m.subs.forEach((s, i) => {
+                    const hash = (i * 17) + s.t.length + (s.t.charCodeAt(0) || 0);
+                    const rand = Math.abs(Math.sin(hash));
+                    const radius = 80 + rand * 45;
+                    const baseAngle = (i / m.subs.length) * Math.PI * 2;
+                    const angle = baseAngle + (rand * 0.4 - 0.2);
+                    
+                    const taskX = 170 + radius * Math.cos(angle);
+                    const taskY = 170 + radius * Math.sin(angle);
+
                     orbHtml += `
-                        <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
-                            <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT PARAMETERS</button>
-                            <button class="mod-btn" onclick="editMissionStatus(${m.id}, event)" style="${m.overdue && !m.captured ? 'color: var(--thrust); border-color: var(--thrust); box-shadow: 0 0 8px rgba(255,42,42,0.4);' : ''}">STATUS</button>
-                            <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
-                        </div>
-                    </div>`;
+                        <div style="position:absolute; left:${taskX}px; top:${taskY}px; transform:translate(-50%, -50%); z-index:20; cursor:pointer;" onclick="${m.captured ? '' : `toggleSub(${i}, event)`}">
+                            <div class="counter-spin orbital-node-box ${s.c ? 'checked' : ''}">
+                                <div class="orb-check">${s.c ? '✓' : ''}</div>
+                                <div class="orb-text ${s.c ? 'strikethrough' : ''}">${s.t}</div>
+                            </div>
+                        </div>`;
+                });
 
-                    container.innerHTML = orbHtml;
-                } catch (err) {
-                    console.error("Target Render Failure:", err);
-                    zoomOut(); // Safely exit on fatal error
+                orbHtml += `</div>`; 
+
+                if (allDone && !m.captured) {
+                    orbHtml += `
+                        <div class="hex-modal warp-transition">
+                            <div class="hex-container">
+                                <div class="hex-shape"></div>
+                                <div class="hex-inner">
+                                    <div class="hex-icon">✓</div>
+                                </div>
+                            </div>
+                            <h2 style="color: var(--accent); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px; text-align: center; font-weight: 300; text-shadow: 0 0 15px var(--accent-glow);">Target<br>Secured</h2>
+                            <button class="success-btn" onclick="completeMission()">Log Mission & Warp</button>
+                        </div>`;
+                } else if (m.captured) {
+                    orbHtml += `<div class="captured-banner" style="font-size:1rem; padding: 15px; color: var(--border);">MISSION ARCHIVED</div>`;
                 }
+                
+                orbHtml += `
+                    <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
+                        <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT PARAMETERS</button>
+                        <button class="mod-btn" onclick="editMissionStatus(${m.id}, event)" style="${m.overdue && !m.captured ? 'color: var(--thrust); border-color: var(--thrust); box-shadow: 0 0 8px rgba(255,42,42,0.4);' : ''}">STATUS</button>
+                        <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
+                    </div>
+                </div>`;
+
+                container.innerHTML = orbHtml;
             }
         }
 
@@ -752,7 +687,7 @@
         let editingSectors = [];
         
         function openSectorModal() {
-            editingSectors = JSON.parse(JSON.stringify(state.sectors)); 
+            editingSectors = JSON.parse(JSON.stringify(state.sectors)); // Deep copy
             renderSectorEditList();
             document.getElementById('sector-modal-overlay').style.display = 'flex';
         }
@@ -785,7 +720,9 @@
         function addNewSector() {
             const newColor = AUTO_PALETTE[Math.floor(Math.random() * AUTO_PALETTE.length)];
             editingSectors.push({
-                id: 'sec_' + Date.now(), name: 'NEW SECTOR', color: newColor,
+                id: 'sec_' + Date.now(),
+                name: 'NEW SECTOR',
+                color: newColor,
                 seed: { x: 0.1 + Math.random() * 0.8, y: 0.1 + Math.random() * 0.8 }
             });
             renderSectorEditList();
@@ -793,15 +730,24 @@
         
         function saveSectorModal() {
             if (editingSectors.length < 1) { alert("Must have at least 1 active sector."); return; }
+            
+            // Clean up deleted sectors in missions
             const newIds = editingSectors.map(s => s.id);
             Object.keys(state.missions).forEach(id => {
                 if (!newIds.includes(id)) delete state.missions[id];
             });
+            
+            // Ensure missions exist for new sectors
             editingSectors.forEach(s => {
-                if (!state.missions[s.id]) { state.missions[s.id] = { 'TRAJECTORY': [], 'HORIZON': [], 'IMMINENT': [] }; }
+                if (!state.missions[s.id]) {
+                    state.missions[s.id] = { 'TRAJECTORY': [], 'HORIZON': [], 'IMMINENT': [] };
+                }
             });
+
             state.sectors = editingSectors;
-            save(); closeSectorModal(); render();
+            save();
+            closeSectorModal();
+            render();
         }
 
         // === TARGET CONSOLE === //
@@ -824,7 +770,6 @@
                 if (found) { targetMission = found; targetHorizon = h; }
             });
             if (!targetMission) return;
-            
             defaultHorizonContext = targetHorizon; isHorizonFixed = true; 
             document.getElementById('modal-task-name').value = targetMission.name;
             document.getElementById('modal-task-date').value = targetMission.dueDate || '';
@@ -832,9 +777,7 @@
             document.getElementById('modal-save-btn').innerText = 'UPDATE TARGET';
             document.getElementById('modal-horizon-select').value = defaultHorizonContext;
             document.getElementById('modal-horizon-group').style.display = 'none';
-            
-            const safeSubs = targetMission.subs || [];
-            tempSubtasks = safeSubs.map(s => s.t);
+            tempSubtasks = targetMission.subs.map(s => s.t);
             if(tempSubtasks.length === 0) tempSubtasks = [''];
             renderModalSubtasks();
             document.getElementById('task-modal-overlay').style.display = 'flex';
@@ -876,7 +819,7 @@
                 let text = t.trim();
                 if(text !== "") {
                     let isChecked = false;
-                    if (oldMission) { let existing = (oldMission.subs || []).find(s => s.t === text); if (existing) isChecked = existing.c; }
+                    if (oldMission) { let existing = oldMission.subs.find(s => s.t === text); if (existing) isChecked = existing.c; }
                     validSubs.push({t: text, c: isChecked});
                 }
             });
@@ -903,44 +846,24 @@
             render();
         }
 
-        // --- INTERACTION --- //
         function selectSector(id) { state.sectorId = id; state.level = 2; render(); }
         function selectMission(id) { state.activeMissionId = id; state.level = 4; render(); }
-        
         function toggleSub(index, e) {
             e.stopPropagation();
-            const m = safelyGetActiveMission(); if(!m) return;
-            const safeSubs = m.subs || [];
-            if(safeSubs[index]) {
-                safeSubs[index].c = !safeSubs[index].c;
-                if(safeSubs[index].c) {
-                    ignitionFlare = true;
-                    addEnergy(5); // Fuel for checking a box
-                } else {
-                    addEnergy(-5); // Drain fuel if unchecking
-                }
-            }
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
+            m.subs[index].c = !m.subs[index].c; if(m.subs[index].c) ignitionFlare = true;
             save(); render();
         }
-        
         function completeMission() {
-            const m = safelyGetActiveMission(); if(!m) return;
-            m.captured = true; m.overdue = false; 
-            addEnergy(25); // Massive surge for complete capture
-            save(); state.level = 3; state.activeMissionId = null; render();
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
+            m.captured = true; m.overdue = false; save(); state.level = 3; state.activeMissionId = null; render();
         }
         
         function editMissionStatus(id, e) {
             if(e) e.stopPropagation();
-            let m = null;
-            for (let h of HORIZONS) { const found = state.missions[state.sectorId][h].find(x => x.id === id); if(found) m = found; }
-            if(!m) return;
-
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === id);
             const decayToggle = confirm("WARNING: Toggle Orbital Decay / Overdue Status?");
-            if (decayToggle) {
-                m.overdue = !m.overdue;
-                if (m.overdue) addEnergy(-10); // Penalty for forced decay
-            }
+            if (decayToggle) m.overdue = !m.overdue;
             if (!decayToggle) { const res = prompt("Rename Mission:", m.name); if(res) m.name = res; }
             save(); render();
         }
@@ -948,13 +871,10 @@
         function deleteMission(id, e) {
             if(e) e.stopPropagation();
             if(confirm("Destroy this target permanently?")) {
-                HORIZONS.forEach(h => {
-                    state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id);
-                });
+                state.missions[state.sectorId][state.horizon] = state.missions[state.sectorId][state.horizon].filter(m => m.id !== id);
                 save(); state.level = 3; state.activeMissionId = null; render();
             }
         }
-        
         function zoomOut() { 
             if (state.level === 4) { state.activeMissionId = null; state.level = 3; }
             else if (state.level === 3) { state.level = 2; state.horizon = null; } 
@@ -962,10 +882,13 @@
             render(); 
         }
 
-        // --- BOOT SEQUENCE --- //
-        runDatabaseMigration(); 
+        // Init
+        runDatabaseMigration();
         generateStarfield();
+        
+        // Re-calculate Voronoi map on window resize to keep math accurate
         window.addEventListener('resize', () => { if(state.level === 1) render(); });
+        
         render();
     </script>
 </body>
