@@ -162,7 +162,7 @@ function checkDecayStatus() {
     const levelReadout = document.getElementById('hud-level');
     const energyReadout = document.getElementById('hud-energy-readout');
     if (hasDecay) {
-        if(levelReadout) { levelReadout.innerText = "WARNING: DECAY DETECTED"; levelReadout.classList.add('hud-warning'); }
+        if(levelReadout) { levelReadout.innerText = "CRITICAL DECAY"; levelReadout.classList.add('hud-warning'); }
         if(energyReadout) energyReadout.classList.add('hud-warning');
     } else {
         if(levelReadout) { levelReadout.innerText = `PILOT LEVEL ${state.playerLevel}`; levelReadout.classList.remove('hud-warning'); }
@@ -191,6 +191,7 @@ function safelyGetActiveMission() {
 }
 
 function render() {
+    document.getElementById('app').classList.remove('critical-mode'); // Clears alert state globally
     updateHUD(); processTimeMechanics(); checkDecayStatus();
     const container = document.getElementById('view-container');
     const zoomBtn = document.getElementById('zoom-out');
@@ -201,7 +202,7 @@ function render() {
     
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     
-const activeSector = state.sectors.find(s => s.id === state.sectorId);
+    const activeSector = state.sectors.find(s => s.id === state.sectorId);
 
     // Lock in the base color
     const currentAccent = activeSector ? activeSector.color : '#00e5ff';
@@ -290,7 +291,6 @@ function renderLevel2(container, footer, activeSector) {
     gravityWell.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; border-radius:50%; overflow:hidden;';
     for (let i = 0; i < 150; i++) {
         const p = document.createElement('div');
-        // Squaring the random number pulls the particle density heavily toward the center
         const r = 140 * Math.pow(Math.random(), 2); 
         const angle = Math.random() * Math.PI * 2;
         const x = 140 + r * Math.cos(angle);
@@ -372,6 +372,12 @@ function renderLevel4(container, footer) {
     
     const lock = document.createElement('div');
     const isCritical = m.overdue && !m.captured;
+    
+    // Deploys the global vignette if the task is critical
+    if (isCritical) {
+        document.getElementById('app').classList.add('critical-mode');
+    }
+
     lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`;
     
     const titleWrap = document.createElement('div');
