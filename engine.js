@@ -130,48 +130,32 @@ function doLinesIntersect(p1, q1, p2, q2) {
     return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
 }
 
-ffunction getSafeCoordinates(existingMissions) {
-    // We base logic on the slot index (0-9)
+function getSafeCoordinates(existingMissions) {
     const slotIndex = existingMissions.length % 10;
-    
-    // Define a 10-point 'Golden Path' or grid cells
-    // This ensures Node 1 is Top-Left, Node 5 is Bottom-Right, etc.
     const columns = 4;
     const rows = 3;
     const col = slotIndex % columns;
     const row = Math.floor(slotIndex / columns);
 
-    // Calculate cell boundaries
-    const cellWidth = 70 / columns; // Using 70% of screen to keep padding
-    const cellHeight = 70 / rows;
+    const cellWidth = 15; // Controlled width for partitioning
+    const cellHeight = 15;
 
     let x, y, safe, attempts = 0;
     const minDistance = 15; 
 
     do {
-        // Find a random spot within the specific quadrant assigned to this mission number
-        const baseX = 15 + (col * cellWidth);
-        const baseY = 15 + (row * cellHeight);
-        
+        const baseX = 15 + (col * 18); // Spread based on grid cell
+        const baseY = 15 + (row * 18);
         x = baseX + Math.random() * cellWidth;
         y = baseY + Math.random() * cellHeight;
-        
         safe = true;
-
-        // Still run a quick overlap check against debris and recent nodes
         for (let m of existingMissions) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x;
-            let dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
-                safe = false; 
-                break; 
-            }
+            let dx = m.x - x, dy = m.y - y;
+            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { safe = false; break; }
         }
-        
         attempts++;
     } while (!safe && attempts < 100);
-
     return {x, y};
 }
 
@@ -366,28 +350,34 @@ function renderLevel3(container, footer) {
             <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()"><span style="font-size: 1.6rem; line-height: 0;">^</span> LOG</button>`; 
     }
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
+    svg.id = "constellation-svg"; container.appendChild(svg);
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
-    const allCaptured = missions.filter(m => m.captured), allActive = missions.filter(m => !m.captured).slice(0, 10);
-    const maxHud = 10, rem = Math.max(0, maxHud - allActive.length);
-    const wireTasks = [...allCaptured.slice(-rem), ...allActive];
-    const debrisMissions = allCaptured.filter(m => !wireTasks.includes(m)).slice(-20);
-    // Change this line to strictly enforce the 10-item list
+
+    const allCaptured = missions.filter(m => m.captured);
+    const allActive = missions.filter(m => !m.captured).slice(0, 10);
+    
+    // STRICT 10-NODE LIMIT ON THE WIRE
     const wireTasks = [...allCaptured, ...allActive].slice(-10);
+    const debrisMissions = allCaptured.filter(m => !wireTasks.includes(m)).slice(-20);
+
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
+
     if (wireTasks.length > 0) {
-        const priorityContainer = document.createElement('div'); priorityContainer.className = 'priority-dropdown-container';
+        const priorityContainer = document.createElement('div');
+        priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
         let criticalIdx = wireTasks.findIndex(m => !m.captured);
         priorityContainer.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
-            <div class="priority-list">${wireTasks.map((m, i) => `<div class="priority-item ${i === criticalIdx ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" style="${i === criticalIdx ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+            <div class="priority-list">${wireTasks.map((m, i) => `<div class="priority-item ${i === criticalIdx ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" style="${i === criticalIdx ? '--sector-color: ${accentColor}22; --sector-border: ${accentColor};' : ''}">
                 <span class="p-num">${i + 1}</span><span class="p-status">${i === criticalIdx ? '[ MISSION CRITICAL ]' : ''}</span><span class="p-text">${m.name}</span></div>`).join('')}</div>`;
         container.appendChild(priorityContainer);
     }
+
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -396,23 +386,49 @@ function renderLevel3(container, footer) {
             line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45"); svg.appendChild(line);
         }
     }
+
     [...debrisMissions, ...wireTasks].forEach((m) => {
-        const star = document.createElement('div'); const isDebris = debrisMissions.includes(m), isCapturedOnWire = m.captured && !isDebris;
+        const star = document.createElement('div');
+        const isDebris = debrisMissions.includes(m);
+        const isCapturedOnWire = m.captured && !isDebris;
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
-        if (isDebris && !m.scale) { m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8; m.scale = 0.3 + (Math.random()*0.4); }
-        star.style.left = (m.x + (m.driftX || 0)) + '%'; star.style.top = (m.y + (m.driftY || 0)) + '%';
+        
+        if (isDebris && !m.scale) {
+            m.driftX = (Math.random()-0.5)*8;
+            m.driftY = (Math.random()-0.5)*8;
+            m.scale = 0.3 + (Math.random()*0.4);
+        }
+
+        star.style.left = (m.x + (m.driftX || 0)) + '%';
+        star.style.top = (m.y + (m.driftY || 0)) + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
-        const node = document.createElement('div'); node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        if (isDebris) { node.style.transform = `scale(${m.scale})`; node.style.opacity = '0.45'; node.style.boxShadow = 'none'; }
-        else if (isCapturedOnWire) { node.style.opacity = '0.45'; node.style.boxShadow = `0 0 5px ${accentColor}66`; node.textContent = wireTasks.indexOf(m) + 1; }
-        else {
-            const isCritical = m.id === allActive[0]?.id, op = isCritical ? 1.0 : 0.8, hex = Math.floor(op * 255).toString(16).padStart(2, '0');
-            node.style.boxShadow = `0 0 ${isCritical?20:15}px ${accentColor}${hex}`; node.style.borderColor = `${accentColor}${hex}`;
-            node.style.filter = `brightness(${isCritical?1.15:1.0})`; if (isCritical) node.style.borderWidth = '3px';
+        
+        const node = document.createElement('div');
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        
+        if (isDebris) {
+            node.style.transform = `scale(${m.scale})`;
+            node.style.opacity = '0.45';
+            node.style.boxShadow = 'none';
+        } else if (isCapturedOnWire) {
+            node.style.opacity = '0.45';
+            node.style.boxShadow = `0 0 5px ${accentColor}66`;
+            node.textContent = wireTasks.indexOf(m) + 1;
+        } else {
+            const isCritical = m.id === allActive[0]?.id;
+            const op = isCritical ? 1.0 : 0.8;
+            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
+            node.style.boxShadow = `0 0 ${isCritical?20:15}px ${accentColor}${hex}`;
+            node.style.borderColor = `${accentColor}${hex}`;
+            node.style.filter = `brightness(${isCritical?1.15:1.0})`;
+            if (isCritical) node.style.borderWidth = '3px';
             node.textContent = wireTasks.indexOf(m) + 1;
         }
-        const label = document.createElement('div'); label.className = 'star-label'; label.style.display = isDebris ? 'none' : 'block';
-        label.style.opacity = isCapturedOnWire ? '0.45' : '1'; label.textContent = m.name; 
+        const label = document.createElement('div');
+        label.className = 'star-label';
+        label.style.display = isDebris ? 'none' : 'block';
+        label.style.opacity = isCapturedOnWire ? '0.45' : '1';
+        label.textContent = m.name; 
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 }
