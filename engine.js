@@ -176,19 +176,36 @@ function getHorizonFromDate(dateStr, fallbackHorizon) {
 }
 
 function processTimeMechanics() {
-    const today = new Date(); today.setHours(0,0,0,0);
+    const now = new Date();
     state.sectors.forEach(s => {
         HORIZONS.forEach(h => {
-            if(!state.missions[s.id] || !state.missions[s.id][h]) return;
+            if(!state.missions[s.id]?.[h]) return;
             for (let i = state.missions[s.id][h].length - 1; i >= 0; i--) {
                 let m = state.missions[s.id][h][i];
-                if (m && m.dueDate && !m.captured) {
-                    const dDate = new Date(m.dueDate + 'T00:00:00');
-                    const diff = Math.ceil((dDate - today) / 86400000);
-                    if (diff < 0 && !m.overdue) addEnergy(-10);
-                    m.overdue = diff < 0;
-                    let targetH = diff <= 7 ? 'IMMINENT' : (diff <= 14 ? 'HORIZON' : 'TRAJECTORY');
-                    if (targetH !== h) { state.missions[s.id][targetH].push(m); state.missions[s.id][h].splice(i, 1); }
+                if (m?.dueDate && !m.captured) {
+                    // Calculate precise millisecond difference to the end of the due date
+                    const deadline = new Date(m.dueDate + 'T23:59:59');
+                    const diffMs = deadline - now;
+                    const diffHrs = diffMs / (1000 * 60 * 60);
+                    const diffDays = Math.ceil(diffHrs / 24);
+
+                    // Stage 1: Critical Decay (Expired)
+                    if (diffHrs < 0 && !m.overdue) addEnergy(-10);
+                    m.overdue = diffHrs < 0;
+
+                    // Stage 2: Temporal Warnings (24h / 48h)
+                    m.warningLevel = 0; // Reset
+                    if (!m.overdue) {
+                        if (diffHrs <= 24) m.warningLevel = 24;
+                        else if (diffHrs <= 48) m.warningLevel = 48;
+                    }
+
+                    // Automatic Horizon Re-assignment
+                    let targetH = diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
+                    if (targetH !== h) { 
+                        state.missions[s.id][targetH].push(m); 
+                        state.missions[s.id][h].splice(i, 1); 
+                    }
                 }
             }
         });
@@ -370,6 +387,7 @@ function renderLevel3(container, footer) {
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
+    // Wire Constraint: Max 6 Active, Max 2 Captured (8 Total)
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
     const wireTasks = [...wireCaptured, ...wireActive];
@@ -380,7 +398,7 @@ function renderLevel3(container, footer) {
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
-    // --- HUD: PRIORITY LOG ---
+    // --- HUD: PRIORITY LOG (Active Only) ---
     if (wireActive.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
@@ -416,29 +434,34 @@ function renderLevel3(container, footer) {
     
     // --- NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
-        const star = document.createElement('div'); 
+        const star = document.createElement('div');
         const isDebris = debrisMissions.includes(m);
         const isCapturedOnWire = wireCaptured.includes(m);
-        const isDecaying = m.overdue && !m.captured; // IDENTIFY DECAYING TARGETS
-
-        // RESTORED: Decay class enables red pulse and shake animations from CSS
-        star.className = `star-container ${isDebris ? 'debris-node' : ''} ${isDecaying ? 'decaying' : ''} warp-transition`;
+        const isDecaying = m.overdue && !m.captured;
         
-        if (isDebris && !m.scale) {
-            m.driftX = (Math.random() - 0.5) * 8; m.driftY = (Math.random() - 0.5) * 8;
-            m.scale = 0.3 + (Math.random() * 0.4); 
-        }
+        let warningClass = '';
+        if (isDecaying) warningClass = 'decaying';
+        else if (m.warningLevel === 24) warningClass = 'warning-24';
+        else if (m.warningLevel === 48) warningClass = 'warning-48';
 
-        star.style.left = (m.x + (m.driftX || 0)) + '%'; 
+        star.className = `star-container ${isDebris ? 'debris-node' : ''} ${warningClass} warp-transition`;
+        
+        // Handle Coordinates and Drift
+        if (isDebris && !m.scale) {
+            m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8;
+            m.scale = 0.3 + (Math.random()*0.4);
+        }
+        star.style.left = (m.x + (m.driftX || 0)) + '%';
         star.style.top = (m.y + (m.driftY || 0)) + '%';
 
+        // interaction Lock for Captured Nodes
         if (!m.captured) {
             star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
             star.style.cursor = 'pointer';
         } else {
             star.style.pointerEvents = 'none';
         }
-        
+
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
         
@@ -454,10 +477,23 @@ function renderLevel3(container, footer) {
             const isCritical = m.id === wireActive[0]?.id;
             const op = isCritical ? 1.0 : 0.8;
             const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
-            const baseColor = isDecaying ? 'var(--thrust)' : accentColor;
             
-            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${isDecaying ? 'rgba(255, 42, 42, 0.6)' : accentColor + hex}`;
-            node.style.borderColor = isDecaying ? 'var(--thrust)' : `${accentColor}${hex}`;
+            let baseColor = accentColor;
+            let glowColor = accentColor + hex;
+            
+            if (isDecaying) {
+                baseColor = 'var(--thrust)';
+                glowColor = 'rgba(255, 42, 42, 0.6)';
+            } else if (m.warningLevel === 24) {
+                baseColor = '#ff9900'; // Orange
+                glowColor = 'rgba(255, 153, 0, 0.6)';
+            } else if (m.warningLevel === 48) {
+                baseColor = '#ffd700'; // Yellow
+                glowColor = 'rgba(255, 215, 0, 0.6)';
+            }
+            
+            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${glowColor}`;
+            node.style.borderColor = baseColor;
             node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
             if (isCritical) node.style.borderWidth = '3px';
             node.textContent = missions.indexOf(m) + 1;
