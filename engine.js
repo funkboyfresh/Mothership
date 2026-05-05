@@ -387,7 +387,6 @@ function renderLevel3(container, footer) {
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
-    // Wire Constraint: Max 6 Active, Max 2 Captured (8 Total)
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
     const wireTasks = [...wireCaptured, ...wireActive];
@@ -431,6 +430,90 @@ function renderLevel3(container, footer) {
             svg.appendChild(line);
         }
     }
+    
+    // --- NODE RENDERING ---
+    [...debrisMissions, ...wireTasks].forEach((m) => {
+        const star = document.createElement('div');
+        const isDebris = debrisMissions.includes(m);
+        const isCapturedOnWire = wireCaptured.includes(m);
+        
+        // PERSISTENT VISUAL DECAY: Check overdue status regardless of capture
+        const isDecaying = m.overdue; 
+        
+        let warningClass = '';
+        if (isDecaying) warningClass = 'decaying';
+        else if (m.warningLevel === 24) warningClass = 'warning-24';
+        else if (m.warningLevel === 48) warningClass = 'warning-48';
+
+        star.className = `star-container ${isDebris ? 'debris-node' : ''} ${warningClass} warp-transition`;
+        
+        if (isDebris && !m.scale) {
+            m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8;
+            m.scale = 0.3 + (Math.random()*0.4);
+        }
+        star.style.left = (m.x + (m.driftX || 0)) + '%';
+        star.style.top = (m.y + (m.driftY || 0)) + '%';
+
+        if (!m.captured) {
+            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+            star.style.cursor = 'pointer';
+        } else {
+            star.style.pointerEvents = 'none';
+        }
+
+        const node = document.createElement('div');
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        
+        if (isDebris) {
+            node.style.transform = `scale(${m.scale})`;
+            node.style.opacity = '0.45'; 
+            node.style.boxShadow = 'none';
+        } else if (isCapturedOnWire) {
+            // CHROMATIC OVERRIDE FOR ARCHIVED NODES
+            let archivalColor = accentColor;
+            if (isDecaying) archivalColor = 'var(--thrust)';
+            else if (m.warningLevel === 24) archivalColor = '#ff9900';
+            else if (m.warningLevel === 48) archivalColor = '#ffd700';
+
+            node.style.opacity = '0.45';
+            node.style.boxShadow = `0 0 5px ${archivalColor}66`;
+            node.style.borderColor = archivalColor; // Set historic warning color
+            node.textContent = missions.indexOf(m) + 1;
+        } else {
+            const isCritical = m.id === wireActive[0]?.id;
+            const op = isCritical ? 1.0 : 0.8;
+            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
+            
+            let baseColor = accentColor;
+            let glowColor = accentColor + hex;
+            
+            if (isDecaying) {
+                baseColor = 'var(--thrust)';
+                glowColor = 'rgba(255, 42, 42, 0.6)';
+            } else if (m.warningLevel === 24) {
+                baseColor = '#ff9900';
+                glowColor = 'rgba(255, 153, 0, 0.6)';
+            } else if (m.warningLevel === 48) {
+                baseColor = '#ffd700';
+                glowColor = 'rgba(255, 215, 0, 0.6)';
+            }
+            
+            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${glowColor}`;
+            node.style.borderColor = baseColor;
+            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
+            if (isCritical) node.style.borderWidth = '3px';
+            node.textContent = missions.indexOf(m) + 1;
+        }
+
+        const label = document.createElement('div');
+        label.className = 'star-label';
+        label.style.display = isDebris ? 'none' : 'block';
+        label.style.opacity = isCapturedOnWire ? '0.45' : '1';
+        label.textContent = m.name; 
+
+        star.appendChild(node); star.appendChild(label); container.appendChild(star);
+    });
+}
     
     // --- NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
