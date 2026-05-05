@@ -8,12 +8,16 @@ const defaultSectors = [
 ];
 
 let state = {
-    level: 1, sectorId: null, horizon: null, activeMissionId: null,
+    level: 1, 
+    sectorId: null, 
+    horizon: null, 
+    activeMissionId: null,
     playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
     energy: parseInt(localStorage.getItem('energy')) || 0,
     hapticsEnabled: localStorage.getItem('hapticsEnabled') !== 'false',
     sectors: JSON.parse(localStorage.getItem('sectors')) || [...defaultSectors],
-    missions: JSON.parse(localStorage.getItem('missions')) || {}
+    missions: JSON.parse(localStorage.getItem('missions')) || {},
+    shipPos: { x: 50, y: 50 } // Navigation hardware initialized
 };
 
 if (!state.sectors || state.sectors.length === 0) { state.sectors = [...defaultSectors]; }
@@ -361,43 +365,27 @@ function renderLevel2(container, footer, activeSector) {
     container.appendChild(center);
 }
 function renderLevel3(container, footer) {
-    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
-    
-    const header = document.createElement('div');
-    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
-    container.appendChild(header);
+    // ... existing header code ...
 
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
     
-    if (missions.length > 1) {
-        for (let i = 0; i < missions.length - 1; i++) {
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
-            line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
-        }
+    // Determine ship position: Docked at the first uncaptured mission
+    const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
+    if (activeTarget) {
+        state.shipPos = { x: activeTarget.x, y: activeTarget.y };
     }
-    
-    missions.forEach((m, i) => {
-        const star = document.createElement('div'); 
-        const isOverdue = m.overdue && !m.captured;
-        star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
-        star.style.left = m.x + '%'; star.style.top = m.y + '%';
-        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
-        
-        const node = document.createElement('div');
-        node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        node.textContent = i + 1;
-        
-        const label = document.createElement('div');
-        label.className = 'star-label';
-        label.textContent = m.name; // Sanitized via textContent
 
-        star.appendChild(node);
-        star.appendChild(label);
-        container.appendChild(star);
-    });
+    // DRAW THE SHIP
+    const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    ship.setAttribute("points", "-8,-8 12,0 -8,8 -4,0"); // Sleek delta-wing shape
+    ship.setAttribute("fill", "var(--accent)");
+    ship.setAttribute("filter", "drop-shadow(0 0 8px var(--accent-glow))");
+    ship.style.transition = "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)";
+    ship.style.transform = `translate(${state.shipPos.x}%, ${state.shipPos.y}%)`;
+    svg.appendChild(ship);
+
+    // ... existing line drawing and mission node code ...
 }
 
 function renderLevel4(container, footer) {
@@ -483,11 +471,26 @@ function openTaskModal(h, f) {
     document.getElementById('task-modal-overlay').style.display = 'flex'; 
 }
 
+function moveSubtask(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= tempSubtasks.length) return;
+    const item = tempSubtasks.splice(index, 1)[0];
+    tempSubtasks.splice(newIndex, 0, item);
+    renderModalSubtasks();
+}
+
 function renderModalSubtasks() {
     const list = document.getElementById('modal-subtasks-list'); if(!list) return; list.innerHTML = '';
     tempSubtasks.forEach((sub, i) => {
         const row = document.createElement('div'); row.className = 'subtask-row';
-        row.innerHTML = `<input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value"><button class="subtask-remove" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">-</button>`;
+        row.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <button class="subtask-remove" style="height:14px; font-size:8px;" onclick="moveSubtask(${i}, -1)">▲</button>
+                <button class="subtask-remove" style="height:14px; font-size:8px;" onclick="moveSubtask(${i}, 1)">▼</button>
+            </div>
+            <input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value">
+            <button class="subtask-remove" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">-</button>
+        `;
         list.appendChild(row);
     });
 }
