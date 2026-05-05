@@ -98,11 +98,14 @@
     <div id="settings-modal-overlay" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">SYSTEM CONFIGURATION</div>
-            <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="input-label" style="margin:0;">HAPTIC FEEDBACK</span>
-                <input type="checkbox" id="settings-haptics-toggle" checked style="width: 20px; height: 20px; accent-color: var(--accent);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+                <span class="input-label" style="margin: 0; line-height: 20px;">HAPTIC FEEDBACK</span>
+                <input type="checkbox" id="settings-haptics-toggle" checked style="width: 20px; height: 20px; accent-color: var(--accent); margin: 0; padding: 0;">
             </div>
-            <p style="font-size: 0.55rem; color: #fff; line-height: 1.4; margin-top: -10px; margin-bottom: 20px;">Engage physical vibration motor on mobile devices during critical events and routine updates.</p>
+            
+            <p style="font-size: 0.55rem; color: #fff; line-height: 1.4; margin-top: 0; margin-bottom: 20px;">Engage physical vibration motor on supported mobile devices during critical events.</p>
+            
             <div class="modal-actions">
                 <button class="success-btn" style="width: 100%; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="closeSettingsModal()">SAVE CONFIG</button>
             </div>
