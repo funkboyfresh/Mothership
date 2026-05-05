@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V9.1</title>
+    <title>Mission Control V9.2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -105,6 +105,16 @@
         .modal-header { font-size: 0.9rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 5px var(--accent-glow); text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .input-group { margin-bottom: 15px; }
         .input-label { font-size: 0.6rem; color: var(--border); text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
+        
+        /* Stylized Select Dropdown */
+        select.modal-input {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
         .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.8rem; }
         .modal-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
@@ -132,18 +142,31 @@
     <div id="task-modal-overlay">
         <div class="task-modal">
             <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
+            
             <div class="input-group">
                 <span class="input-label">Target Designation</span>
-                <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter mission parameters..." autocomplete="off">
+                <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter target name..." autocomplete="off">
             </div>
+            
+            <div class="input-group" id="modal-horizon-group">
+                <span class="input-label">Mission Parameters (Orbit)</span>
+                <select id="modal-horizon-select" class="modal-input">
+                    <option value="IMMINENT">IMMINENT (0 - 7 Days)</option>
+                    <option value="HORIZON">HORIZON (8 - 14 Days)</option>
+                    <option value="TRAJECTORY">TRAJECTORY (> 14 Days / Undefined)</option>
+                </select>
+            </div>
+
             <div class="input-group">
-                <span class="input-label">Temporal Deadline (Due Date)</span>
+                <span class="input-label">Temporal Deadline (Optional)</span>
                 <input type="date" id="modal-task-date" class="modal-input">
             </div>
+            
             <span class="input-label">Sub-Routines (Max 10)</span>
             <div class="subtasks-container" id="modal-subtasks-list">
                 </div>
             <div class="add-subtask-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
+            
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
                 <button class="success-btn" id="modal-save-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
@@ -165,6 +188,7 @@
         let tempSubtasks = []; 
         let editModeId = null;
         let defaultHorizonContext = 'TRAJECTORY';
+        let isHorizonFixed = false; // Tracks if the dropdown should be hidden
 
         function updateAccentColor() {
             const hex = state.sector ? SECTOR_COLORS[state.sector] : '#00e5ff';
@@ -213,6 +237,10 @@
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
                 
+                if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
+                if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
+                if (state.missions[s]['NOW']) { state.missions[s]['IMMINENT'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
+
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
                     for (let i = state.missions[s][h].length - 1; i >= 0; i--) {
@@ -295,10 +323,12 @@
             // Dynamic Contextual Footer
             if (state.level === 2) {
                 footer.style.display = 'flex';
-                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY')">+ INITIALIZE TARGET</button>`;
+                // Level 2 shows the dropdown (isFixed = false)
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`;
             } else if (state.level === 3) {
                 footer.style.display = 'flex';
-                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}')">+ INITIALIZE TARGET (${state.horizon})</button>`;
+                // Level 3 hides the dropdown (isFixed = true)
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
             } else {
                 footer.style.display = 'none';
             }
@@ -524,14 +554,18 @@
 
         // === TEMPORAL DATA CONSOLE LOGIC (MODAL) === //
 
-        function openTaskModal(horizonContext = null) {
+        function openTaskModal(horizonContext = null, isFixed = false) {
             editModeId = null;
             defaultHorizonContext = horizonContext || 'TRAJECTORY';
+            isHorizonFixed = isFixed;
             
             document.getElementById('modal-task-name').value = '';
             document.getElementById('modal-task-date').value = '';
             document.getElementById('modal-header-text').innerText = 'TARGET INITIALIZATION';
             document.getElementById('modal-save-btn').innerText = 'LOCK TARGET';
+            
+            document.getElementById('modal-horizon-select').value = defaultHorizonContext;
+            document.getElementById('modal-horizon-group').style.display = isFixed ? 'none' : 'block';
             
             tempSubtasks = ['', '', '']; 
             renderModalSubtasks();
@@ -551,10 +585,15 @@
             if (!targetMission) return;
             
             defaultHorizonContext = targetHorizon;
+            isHorizonFixed = true; // Hard lock dropdown in edit view, time dictates placement
+            
             document.getElementById('modal-task-name').value = targetMission.name;
             document.getElementById('modal-task-date').value = targetMission.dueDate || '';
             document.getElementById('modal-header-text').innerText = 'MODIFY TARGET PARAMETERS';
             document.getElementById('modal-save-btn').innerText = 'UPDATE TARGET';
+            
+            document.getElementById('modal-horizon-select').value = defaultHorizonContext;
+            document.getElementById('modal-horizon-group').style.display = 'none';
             
             tempSubtasks = targetMission.subs.map(s => s.t);
             if(tempSubtasks.length === 0) tempSubtasks = [''];
@@ -634,21 +673,21 @@
                 }
             });
             
-            const targetHorizon = getHorizonFromDate(dateStr, defaultHorizonContext);
+            // Context logic: If hidden, use default Context. If visible, use Dropdown value.
+            const selectedHorizon = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
+            // Time Override: If date is present, it overrules the manual selection
+            const targetHorizon = getHorizonFromDate(dateStr, selectedHorizon);
 
             if (editModeId && oldMission) {
-                // Remove from old location
                 state.missions[state.sector][oldHorizon] = state.missions[state.sector][oldHorizon].filter(m => m.id !== editModeId);
                 
                 oldMission.name = name;
                 oldMission.dueDate = dateStr || null;
                 oldMission.subs = validSubs;
                 
-                // Assign new coordinates if it crossed a gravitational boundary
                 if (oldHorizon !== targetHorizon) {
                     const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
-                    oldMission.x = coords.x;
-                    oldMission.y = coords.y;
+                    oldMission.x = coords.x; oldMission.y = coords.y;
                 }
                 
                 state.missions[state.sector][targetHorizon].push(oldMission);
@@ -670,11 +709,7 @@
             closeTaskModal();
             processTimeMechanics(); 
             
-            // Stay with the target if we are in orbit
-            if (state.level === 4) {
-                state.horizon = targetHorizon; 
-            }
-            
+            if (state.level === 4) { state.horizon = targetHorizon; }
             render();
         }
 
