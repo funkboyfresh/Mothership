@@ -131,43 +131,56 @@ function doLinesIntersect(p1, q1, p2, q2) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    // Determine which of the 8 wire slots this mission belongs to
-    const slotIndex = (existingMissions.length) % 8;
-
-    // Fixed Snaking Grid (4 columns, 2 rows)
-    // Sequence: 
-    // Top Row: 0 -> 1 -> 2 -> 3
-    // Bottom Row: 7 <- 6 <- 5 <- 4
-    const gridMap = [
-        { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 }, { col: 3, row: 0 }, // Top Left to Right
-        { col: 3, row: 1 }, { col: 2, row: 1 }, { col: 1, row: 1 }, { col: 0, row: 1 }  // Bottom Right to Left
-    ];
-
-    const targetCell = gridMap[slotIndex];
-
-    // Partition 70% of the screen into the grid
-    const cellWidth = 18; 
-    const cellHeight = 25;
+    const activeWire = existingMissions.slice(-8); //
+    let x, y, safe, attempts = 0;
     
-    // baseX and baseY define the strict quadrant center
-    const baseX = 15 + (targetCell.col * 20); 
-    const baseY = 25 + (targetCell.row * 35);
+    // Define a 6x6 grid (36 cells)
+    const gridSize = 6;
+    const margin = 15; // Keep nodes away from HUD edges
+    const usableSpace = 70; // Use 70% of the viewport width/height
 
-    // Apply a 'Soft Jitter' (±3%) so it doesn't look like a sterile spreadsheet
-    const x = baseX + (Math.random() * 6 - 3);
-    const y = baseY + (Math.random() * 6 - 3);
+    do {
+        // Step 1: Pick a random cell (0-5, 0-5)
+        const gridX = Math.floor(Math.random() * gridSize);
+        const gridY = Math.floor(Math.random() * gridSize);
+        
+        // Step 2: Convert to percentage coordinates
+        // Cells are spaced at approx 14% intervals
+        x = margin + (gridX * (usableSpace / (gridSize - 1)));
+        y = margin + (gridY * (usableSpace / (gridSize - 1)));
+        
+        // Step 3: Add jitter (±3%) so constellations look unique and organic
+        x += (Math.random() * 6 - 3);
+        y += (Math.random() * 6 - 3);
+
+        safe = true;
+        const newNode = { x, y };
+
+        // RULE 1: Node Overlap Guard
+        for (let m of existingMissions) {
+            if (!m || isNaN(m.x)) continue;
+            let dx = m.x - x;
+            let dy = m.y - y;
+            // 12% distance is safe for the 52px nodes
+            if (Math.sqrt(dx*dx + dy*dy) < 12) { safe = false; break; }
+        }
+
+        // RULE 2: Wire Crossing Guard
+        if (safe && activeWire.length > 0) {
+            const lastNode = activeWire[activeWire.length - 1];
+            for (let i = 0; i < activeWire.length - 1; i++) {
+                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
+                    safe = false;
+                    break;
+                }
+            }
+        }
+        
+        attempts++;
+        // Allow up to 300 attempts to find a safe "random" square
+    } while (!safe && attempts < 300);
 
     return { x, y };
-}
-
-function getHorizonFromDate(dateStr, fallbackHorizon) {
-    if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
-    const today = new Date(); today.setHours(0,0,0,0);
-    const dDate = new Date(dateStr + 'T00:00:00');
-    const diffDays = Math.ceil((dDate - today) / 86400000);
-    if (diffDays <= 7) return 'IMMINENT';
-    if (diffDays <= 14) return 'HORIZON';
-    return 'TRAJECTORY';
 }
 
 function processTimeMechanics() {
@@ -358,38 +371,41 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- DATA SCRUB ---
+    // --- 1. TEMPORAL DATA SCRUB (1 Week Expiration) ---
     const now = Date.now();
     const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
     
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
-    // Wire Constraint: Max 6 Active, Max 2 Completed (8 Total)
+    // --- 2. WIRE ASSEMBLY (Max 6 Active, Max 2 Captured = 8 Total) ---
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
     const wireTasks = [...wireCaptured, ...wireActive];
     
-    // Debris: Anything captured but not on the 2-slot wire limit
+    // Debris: Anything captured but older than 1 week or pushed off the 2-slot limit
     const debrisMissions = missions.filter(m => m.captured && !wireCaptured.includes(m)).slice(-20);
 
-    // --- HUD REPOSITIONING ---
+    // --- 3. PRIORITY LOG (6 Active Only) ---
+    const priorityTasks = wireActive; 
+
+    // HUD Header
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
-    // Dropdown: Purely active tasks
-    if (wireActive.length > 0) {
+    // Priority Dropdown
+    if (priorityTasks.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
         priorityContainer.innerHTML = `
             <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
+                MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span>
             </button>
             <div class="priority-list">
-                ${wireActive.map((m, i) => `
+                ${priorityTasks.map((m, i) => `
                     <div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" 
                          style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${missions.indexOf(m) + 1}</span>
@@ -400,7 +416,7 @@ function renderLevel3(container, footer) {
         container.appendChild(priorityContainer);
     }
 
-    // --- VECTOR LINES ---
+    // --- 4. VECTOR LINES ---
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -412,7 +428,7 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- NODE RENDERING ---
+    // --- 5. NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div'); 
         const isDebris = debrisMissions.includes(m);
@@ -441,7 +457,6 @@ function renderLevel3(container, footer) {
             const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
             node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`;
             node.style.borderColor = `${accentColor}${hex}`;
-            node.style.opacity = op;
             node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
             if (isCritical) node.style.borderWidth = '3px';
             node.textContent = missions.indexOf(m) + 1;
