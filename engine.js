@@ -369,9 +369,10 @@ function renderLevel2(container, footer, activeSector) {
 function renderLevel3(container, footer) {
     if(footer) { 
         footer.style.display = 'flex'; 
+        // Logic Update: Doubled the up arrow size via font-size override
         footer.innerHTML = `
             <button class="zoom-btn" style="flex:1; font-size: 0.8rem;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>
-            <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()">^ LOG</button>
+            <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()"><span style="font-size: 1.6rem; line-height: 0;">^</span> LOG</button>
         `; 
     }
     
@@ -394,7 +395,15 @@ function renderLevel3(container, footer) {
 
     const wireTasks = [...allCaptured.slice(-retentionCount), ...allActive];
     const debrisMissions = allCaptured.slice(0, -retentionCount).slice(-20);
-
+    
+    // --- REPOSITIONED HEADER ---
+    // Moved down to sit just above the horizontal bar (footer border)
+    // Distance matches the inner padding/gap of the footer (approx 20px)
+    const header = document.createElement('div');
+    header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
+    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
+    container.appendChild(header);
+    
     // --- REPOSITIONED MISSION PRIORITIES ---
     if (wireTasks.length > 0) {
         const priorityContainer = document.createElement('div');
@@ -721,6 +730,7 @@ function togglePilotLog() {
         logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; };
         document.body.appendChild(logModal);
     }
+    
     let allLogs = [];
     state.sectors.forEach(s => {
         HORIZONS.forEach(h => {
@@ -729,20 +739,27 @@ function togglePilotLog() {
             });
         });
     });
+
     allLogs.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
     const displayLogs = allLogs.slice(0, 50);
+
+    // Logic Update: Handle empty log state
+    const logContent = displayLogs.length > 0 
+        ? displayLogs.map(m => {
+            const d = new Date(m.completionTimestamp);
+            return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
+                <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
+                on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
+                at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>`;
+        }).join('')
+        : '<div style="padding: 40px 20px; text-align: center; opacity: 0.5; font-size: 0.7rem; letter-spacing: 1px;">NO MISSIONS HAVE BEEN COMPLETED</div>';
+
     logModal.innerHTML = `
         <div class="modal-box" style="max-width: 450px;">
             <div class="modal-header">PILOT FLIGHT LOG [LAST 50]</div>
             <div class="subtasks-container" style="max-height: 60vh;">
-                ${displayLogs.map(m => {
-                    const d = new Date(m.completionTimestamp);
-                    return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
-                        <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
-                        on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
-                        at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>`;
-                }).join('') || '<div style="padding:20px; text-align:center; opacity:0.5;">NO DATA RECORDED</div>'}
+                ${logContent}
             </div>
             <button class="mod-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('pilot-log-modal').style.display='none'">DISMISS</button>
         </div>`;
