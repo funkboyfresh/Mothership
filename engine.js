@@ -78,6 +78,21 @@ function save() {
     localStorage.setItem('hapticsEnabled', state.hapticsEnabled);
 }
 
+// NEW: Data aggregation for captured stars
+function getCapturedCount(sectorId = null) {
+    let count = 0;
+    const targets = sectorId ? [state.sectors.find(s => s.id === sectorId)] : state.sectors;
+    targets.forEach(s => {
+        if (!s || !state.missions[s.id]) return;
+        HORIZONS.forEach(h => {
+            (state.missions[s.id][h] || []).forEach(m => {
+                if (m.captured) count++;
+            });
+        });
+    });
+    return count;
+}
+
 // --- NAVIGATION & SPATIAL GEOMETRY ---
 function doLinesIntersect(p1, q1, p2, q2) {
     const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
@@ -92,12 +107,9 @@ function getDistanceToSegment(p, a, b) {
 }
 
 const SECTORS = [
-    { id: 0, x: [0, 1], y: [0, 2] }, // Top Left
-    { id: 1, x: [0, 1], y: [3, 5] }, // Top Right
-    { id: 2, x: [2, 3], y: [0, 2] }, // Mid Left
-    { id: 3, x: [2, 3], y: [3, 5] }, // Mid Right
-    { id: 4, x: [4, 5], y: [0, 2] }, // Bottom Left
-    { id: 5, x: [4, 5], y: [3, 5] }  // Bottom Right
+    { id: 0, x: [0, 1], y: [0, 2] }, { id: 1, x: [0, 1], y: [3, 5] },
+    { id: 2, x: [2, 3], y: [0, 2] }, { id: 3, x: [2, 3], y: [3, 5] },
+    { id: 4, x: [4, 5], y: [0, 2] }, { id: 5, x: [4, 5], y: [3, 5] }
 ];
 
 function getSafeCoordinates(existingMissions) {
@@ -110,18 +122,15 @@ function getSafeCoordinates(existingMissions) {
     let bestCandidate = null;
     let maxSpread = 0;
 
-    // MAX-SPREAD PROTOCOL: Sample 1000 valid locations and pick the one furthest from all existing nodes
     for (let attempts = 0; attempts < 1000; attempts++) {
         let gridX, gridY;
 
         if (count === 0) {
-            // RULE: Start random between 4 corners
             const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]];
             const s = corners[Math.floor(Math.random() * corners.length)];
             gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
             gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
         } else if (count === 1) {
-            // RULE: Jump to an open sector to create a long initial path
             const startNode = existingMissions[0];
             const startSector = SECTORS.find(s => 
                 (startNode.x >= margin + (s.x[0] * (usableSpace/5)) - 5) && 
@@ -133,12 +142,10 @@ function getSafeCoordinates(existingMissions) {
             gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
             gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
         } else {
-            // RULE: Randomly pick from all 36 squares
             gridX = Math.floor(Math.random() * 6);
             gridY = Math.floor(Math.random() * 6);
         }
 
-        // Convert grid to coordinates with Jitter
         let x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3);
         let y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
         
@@ -146,17 +153,15 @@ function getSafeCoordinates(existingMissions) {
         const newNode = { x, y };
         let minNodeDist = Infinity;
 
-        // CONSTRAINT 1: Node Overlap & Calculate Distance for Spread
         for (let m of (existingMissions || [])) {
             if (!m || isNaN(m.x)) continue;
             let dist = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
             if (dist < minNodeDist) minNodeDist = dist;
-            if (dist < 18) { safe = false; break; } // Minimum clearance zone
+            if (dist < 18) { safe = false; break; } 
         }
 
         if (!safe) continue;
 
-        // CONSTRAINT 2: Strict Wire Exclusion Zone
         if (activeWire.length > 1) {
             for (let i = 0; i < activeWire.length - 1; i++) {
                 if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) {
@@ -167,7 +172,6 @@ function getSafeCoordinates(existingMissions) {
 
         if (!safe) continue;
 
-        // CONSTRAINT 3: Wire Integrity (No crossing & No Boxing In)
         if (activeWire.length > 0) {
             const lastNode = activeWire[activeWire.length - 1];
             
@@ -188,14 +192,12 @@ function getSafeCoordinates(existingMissions) {
             }
         }
         
-        // If safe, and it has a BETTER spread than previous candidates, keep it
         if (safe && minNodeDist > maxSpread) {
             maxSpread = minNodeDist === Infinity ? 1000 : minNodeDist;
             bestCandidate = newNode;
         }
     }
 
-    // Return the coordinate with the maximum distance from existing clusters
     return bestCandidate || { x: 50 + (Math.random()*10), y: 50 + (Math.random()*10) };
 }
 
@@ -340,6 +342,16 @@ function renderLevel1(container, footer) {
         footer.style.display = 'flex'; 
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT SECTORS ]</button>`; 
     }
+    
+    // NEW: Global Tracker Overlay
+    const totalCaptured = getCapturedCount();
+    const globalTracker = document.createElement('div');
+    globalTracker.style.cssText = 'position: absolute; top: 20px; right: 20px; text-align: right; color: var(--text); font-size: 0.7rem; letter-spacing: 1px; z-index: 10; pointer-events: none;';
+    globalTracker.innerHTML = `
+        <div style="opacity: 0.5; font-size: 0.5rem; text-transform: uppercase;">GALAXY SECURED</div>
+        <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);">${totalCaptured} <span style="font-size: 0.8rem;">★</span></div>`;
+    container.appendChild(globalTracker);
+
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
     container.appendChild(svg);
@@ -403,14 +415,31 @@ function renderLevel1(container, footer) {
             }
         });
         
+        // Sector Name
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.setAttribute("x", cx); 
         text.setAttribute("y", cy + 45); 
         text.setAttribute("fill", color); 
         text.setAttribute("class", "voronoi-text");
+        text.style.pointerEvents = "none";
         text.style.textShadow = `0 0 10px ${color}`; 
         text.textContent = s.name; 
         svg.appendChild(text);
+
+        // NEW: Individual Sector Captured Counter
+        const sectorCaptured = getCapturedCount(s.id);
+        const subText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        subText.setAttribute("x", cx); 
+        subText.setAttribute("y", cy + 62); 
+        subText.setAttribute("fill", color); 
+        subText.style.pointerEvents = "none";
+        subText.style.fontSize = "0.5rem";
+        subText.style.letterSpacing = "2px";
+        subText.style.opacity = "0.7";
+        subText.style.textShadow = `0 0 8px ${color}`; 
+        subText.setAttribute("text-anchor", "middle");
+        subText.textContent = `[ ${sectorCaptured} SECURED ]`; 
+        svg.appendChild(subText);
     });
 }
 
@@ -420,6 +449,15 @@ function renderLevel2(container, footer, activeSector) {
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`; 
     }
     
+    // NEW: Planetary Map Sector Tracker
+    const sectorCaptured = getCapturedCount(state.sectorId);
+    const sectorTracker = document.createElement('div');
+    sectorTracker.style.cssText = 'position: absolute; top: 20px; right: 20px; text-align: right; color: var(--text); font-size: 0.7rem; letter-spacing: 1px; z-index: 10; pointer-events: none;';
+    sectorTracker.innerHTML = `
+        <div style="opacity: 0.5; font-size: 0.5rem; text-transform: uppercase;">SECTOR SECURED</div>
+        <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);">${sectorCaptured} <span style="font-size: 0.8rem;">★</span></div>`;
+    container.appendChild(sectorTracker);
+
     const header = document.createElement('div');
     header.innerHTML = `<div class="view-level-title">LEVEL 2 // <span id="sector-title-safe"></span></div><h1 class="view-main-title">Planetary Map</h1>`;
     container.appendChild(header);
@@ -613,7 +651,6 @@ function renderLevel3(container, footer) {
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
         
         if (isDebris) { 
-            // Optional: Maintain coloring for debris without the bright outlines
             let warningFill = accentColor; 
             if (isDecay) warningFill = 'var(--thrust)'; 
             else if (m.warningLevel === 24) warningFill = '#ff9900'; 
@@ -627,23 +664,21 @@ function renderLevel3(container, footer) {
             node.style.borderStyle = 'solid';
             node.style.boxShadow = 'none'; 
         } else if (isCapOnWire) {
-            // FIX: Fill = Decay Color. Ring = Sector Color. Brightness restored.
-            let warningFill = accentColor; // Default Blue (No Decay)
-            if (isDecay) warningFill = 'var(--thrust)'; // Red
-            else if (m.warningLevel === 24) warningFill = '#ff9900'; // Orange
-            else if (m.warningLevel === 48) warningFill = '#ffd700'; // Yellow
+            let warningFill = accentColor; 
+            if (isDecay) warningFill = 'var(--thrust)'; 
+            else if (m.warningLevel === 24) warningFill = '#ff9900'; 
+            else if (m.warningLevel === 48) warningFill = '#ffd700';
             
-            node.style.opacity = '1.0'; // Removed brightness reduction
+            node.style.opacity = '1.0'; 
             node.style.backgroundColor = warningFill; 
             node.style.borderColor = accentColor; 
             node.style.borderWidth = '2px';
             node.style.borderStyle = 'solid';
             node.style.color = '#ffffff'; 
             node.style.textShadow = '0px 0px 3px rgba(0,0,0,0.8)';
-            node.style.boxShadow = `0 0 10px ${warningFill}99`; // Added slight glow matching fill
+            node.style.boxShadow = `0 0 10px ${warningFill}99`; 
             node.textContent = missions.indexOf(m) + 1;
         } else {
-            // ACTIVE NODE LOGIC
             const isCrit = m.id === wireActive[0]?.id;
             const op = isCrit ? 1.0 : 0.8;
             const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
