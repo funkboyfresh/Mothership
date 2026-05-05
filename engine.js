@@ -387,11 +387,12 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- MISSION PRIORITIES DROPDOWN ---
+    // --- DYNAMIC MISSION PRIORITIES (Positioned under Breadcrumbs) ---
     if (missions.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        priorityContainer.style.cssText = 'position: absolute; top: 110px; z-index: 100;';
+        // Moved up to sit under the zoom/breadcrumb controls
+        priorityContainer.style.cssText = 'position: absolute; top: 60px; z-index: 100;'; 
 
         let criticalIndex = missions.findIndex(m => !m.captured);
         if (criticalIndex === -1) criticalIndex = 0; 
@@ -416,7 +417,7 @@ function renderLevel3(container, footer) {
         container.appendChild(priorityContainer);
     }
 
-    // --- SHIP PATROL ---
+    // --- SHIP NAVIGATION ---
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
     if (activeTarget) {
         const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -430,7 +431,7 @@ function renderLevel3(container, footer) {
         svg.appendChild(orbitalGroup);
     }
 
-    // --- HIERARCHY LINES ---
+    // --- VECTOR LINES ---
     if (missions.length > 1) {
         for (let i = 0; i < missions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -440,7 +441,9 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- NODE RENDERING WITH EXTREME DECAY ---
+    // --- MISSION NODES (Updated Spectral Decay) ---
+    const activeMissions = missions.filter(m => !m.captured);
+
     missions.forEach((m, i) => {
         const star = document.createElement('div'); 
         const isOverdue = m.overdue && !m.captured;
@@ -448,16 +451,28 @@ function renderLevel3(container, footer) {
         star.style.left = m.x + '%'; star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
-        const totalMissions = missions.length;
-        let opacityValue, glowSize;
+        let opacityValue;
+        let glowSize;
 
-        if (i === 0) {
-            opacityValue = 1.0; 
-            glowSize = 25;       
+        if (m.captured) {
+            // Rule: Completed tasks stay at 30% fade
+            opacityValue = 0.3;
+            glowSize = 5;
         } else {
-            const decayProgress = (i - 1) / (totalMissions - 1 || 1);
-            opacityValue = 0.65 - (decayProgress * 0.45); // Node 2 starts at 65%, last node at 20%
-            glowSize = 12 - (decayProgress * 8); 
+            // Find its position among uncompleted tasks for the fade curve
+            const activeIndex = activeMissions.findIndex(active => active.id === m.id);
+            const totalActive = activeMissions.length;
+
+            if (activeIndex === 0) {
+                // Rule: Current Critical Mission inherits full glow properties
+                opacityValue = 1.0;
+                glowSize = 25;
+            } else {
+                // Rule: Subsequent tasks start at 25% fade (0.75) and end at 50% fade (0.5)
+                const decayProgress = (activeIndex - 1) / (totalActive - 1 || 1);
+                opacityValue = 0.75 - (decayProgress * 0.25);
+                glowSize = 15 - (decayProgress * 7);
+            }
         }
 
         const node = document.createElement('div');
@@ -466,18 +481,21 @@ function renderLevel3(container, footer) {
         node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
         node.style.borderColor = `${accentColor}${hexOpacity}`;
         
-        if (i === 0) {
+        // Critical highlight for the lead active node
+        const isActiveLead = !m.captured && m.id === (activeMissions[0]?.id);
+        if (isActiveLead) {
             node.style.filter = 'brightness(1.3) saturate(1.2)';
             node.style.borderWidth = '3px';
         } else {
             node.style.filter = `brightness(${opacityValue + 0.3})`;
         }
+
         node.textContent = i + 1;
         
         const label = document.createElement('div');
         label.className = 'star-label';
         label.style.opacity = opacityValue;
-        label.style.fontWeight = i === 0 ? '700' : '300';
+        label.style.fontWeight = isActiveLead ? '700' : '300';
         label.textContent = m.name; 
 
         star.appendChild(node);
