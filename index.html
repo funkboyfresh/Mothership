@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V8.2</title>
+    <title>Mission Control V9.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -15,6 +15,7 @@
             --accent-glow: rgba(0, 229, 255, 0.6); 
             --captured: var(--accent); 
             --thrust: #ff2a2a; 
+            --thrust-glow: rgba(255, 42, 42, 0.2);
         }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
         #app { display: flex; flex-direction: column; height: 100%; }
@@ -37,11 +38,14 @@
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; width: 100%; max-width: 400px; height: 60%; z-index: 5; margin: 0 auto; }
         .sector-box { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); border-radius: 8px; transition: all 0.3s; }
+        .sector-box.overdue { background: var(--thrust-glow); border-color: var(--thrust); box-shadow: 0 0 20px rgba(255, 42, 42, 0.4); color: var(--thrust); }
+        
         .planet { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; position: relative; cursor: pointer; }
         .mini-ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.2); pointer-events: none; }
 
         .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
         .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
+        .ring-circle.overdue { background: var(--thrust-glow); border-color: var(--thrust); box-shadow: 0 0 20px var(--thrust) inset, 0 0 20px var(--thrust); color: #fff; text-shadow: 0 0 10px var(--thrust); }
         .ring-label { position: absolute; top: 10px; text-shadow: 0 0 8px var(--accent); }
 
         .particle { position: absolute; border-radius: 50%; background: var(--accent); box-shadow: 0 0 5px var(--accent-glow); pointer-events: none; animation: float-particle linear infinite alternate; }
@@ -100,6 +104,23 @@
         .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; }
         .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; margin: 0 5px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 8px var(--accent-glow); }
         .mod-btn:hover { background: var(--accent); color: var(--bg); }
+
+        /* Custom Modal System */
+        #task-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .task-modal { background: #111; border: 1px solid var(--accent); box-shadow: 0 0 25px var(--accent-glow); border-radius: 8px; width: 90%; max-width: 350px; padding: 20px; color: var(--text); display: flex; flex-direction: column; max-height: 85vh; }
+        .modal-header { font-size: 0.9rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 5px var(--accent-glow); text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .input-group { margin-bottom: 15px; }
+        .input-label { font-size: 0.6rem; color: var(--border); text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
+        .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.8rem; }
+        .modal-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        .subtasks-container { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
+        .subtask-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .subtask-remove { background: var(--thrust); color: #fff; border: none; border-radius: 4px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; box-shadow: 0 0 8px var(--thrust-glow); }
+        .add-subtask-bar { width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px dashed var(--accent); color: var(--accent); text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: bold; margin-bottom: 15px; }
+        .add-subtask-bar:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 8px var(--accent-glow); }
+        .add-subtask-bar.disabled { opacity: 0.3; pointer-events: none; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -111,7 +132,29 @@
         </div>
         <div id="view-container" class="view"></div>
         <div id="control-footer" class="control-footer" style="display:none">
-            <button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="addMission()">+ INITIALIZE STAR</button>
+            <button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal()">+ INITIALIZE TARGET</button>
+        </div>
+    </div>
+
+    <div id="task-modal-overlay">
+        <div class="task-modal">
+            <div class="modal-header">Target Initialization Protocol</div>
+            <div class="input-group">
+                <span class="input-label">Target Designation</span>
+                <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter mission parameters..." autocomplete="off">
+            </div>
+            <div class="input-group">
+                <span class="input-label">Temporal Deadline (Due Date)</span>
+                <input type="date" id="modal-task-date" class="modal-input">
+            </div>
+            <span class="input-label">Sub-Routines (Max 10)</span>
+            <div class="subtasks-container" id="modal-subtasks-list">
+                </div>
+            <div class="add-subtask-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
+            <div class="modal-actions">
+                <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
+                <button class="success-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
+            </div>
         </div>
     </div>
 
@@ -126,6 +169,7 @@
         };
 
         let ignitionFlare = false;
+        let tempSubtasks = []; // Holds inputs during modal use
 
         function updateAccentColor() {
             const hex = state.sector ? SECTOR_COLORS[state.sector] : '#00e5ff';
@@ -141,64 +185,65 @@
             }
         }
 
-        // Spatial collision avoidance algorithm for Constellation Map
         function getSafeCoordinates(existingMissions) {
-            let x, y, safe;
-            let attempts = 0;
+            let x, y, safe; let attempts = 0;
             do {
                 x = Math.floor(Math.random() * 70) + 15;
                 y = Math.floor(Math.random() * 50) + 25;
                 safe = true;
                 for (let m of existingMissions) {
                     if (m.x === undefined || m.y === undefined) continue;
-                    let dx = m.x - x;
-                    let dy = m.y - y;
-                    if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; } // Minimum 18% viewport spacing buffer
+                    let dx = m.x - x; let dy = m.y - y;
+                    if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; } 
                 }
                 attempts++;
             } while (!safe && attempts < 50);
             return {x, y};
         }
 
-        function ensurePath() {
+        function processTimeMechanics() {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const inOneWeek = new Date(today);
+            inOneWeek.setDate(today.getDate() + 7);
+
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
-                
-                // MIGRATION PROTOCOL: Deep taxonomy hardcode
                 if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
                 if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
                 if (state.missions[s]['NOW']) { state.missions[s]['IMMINENT'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
-                // Failsafes for older artifacts
-                if (state.missions[s]['FUTURE']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FUTURE']; delete state.missions[s]['FUTURE']; }
-                if (state.missions[s]['SOON']) { state.missions[s]['HORIZON'] = state.missions[s]['SOON']; delete state.missions[s]['SOON']; }
 
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
-                    state.missions[s][h].forEach((m, index, arr) => {
-                        // Apply Spatial Buffer retroactively to overlapping nodes
+                    for (let i = state.missions[s][h].length - 1; i >= 0; i--) {
+                        let m = state.missions[s][h][i];
+                        
+                        // Buffer fix
                         if (m.x === undefined || m.y === undefined) {
-                            let coords = getSafeCoordinates(arr.slice(0, index));
+                            let coords = getSafeCoordinates(state.missions[s][h].slice(0, i));
                             m.x = coords.x; m.y = coords.y;
-                        } else {
-                            let safe = false, attempts = 0;
-                            while(!safe && attempts < 20) {
-                                safe = true;
-                                for(let i=0; i<index; i++) {
-                                    let other = arr[i];
-                                    let dx = m.x - other.x; let dy = m.y - other.y;
-                                    if(Math.sqrt(dx*dx + dy*dy) < 18) {
-                                        safe = false;
-                                        m.x = Math.floor(Math.random() * 70) + 15;
-                                        m.y = Math.floor(Math.random() * 50) + 25;
-                                        break;
-                                    }
-                                }
-                                attempts++;
-                            }
                         }
                         if (m.captured === undefined) m.captured = false;
-                        if (m.overdue === undefined) m.overdue = false; 
-                    });
+                        if (m.overdue === undefined) m.overdue = false;
+
+                        // Temporal Physics Engine
+                        if (m.dueDate && !m.captured) {
+                            let dDate = new Date(m.dueDate + 'T00:00:00'); 
+                            
+                            // 1. Orbital Decay (Past Due)
+                            if (dDate < today) {
+                                m.overdue = true;
+                            } else {
+                                m.overdue = false;
+                            }
+
+                            // 2. Gravitational Migration (Within 7 days pulls to IMMINENT)
+                            if (dDate <= inOneWeek && h !== 'IMMINENT') {
+                                state.missions[s]['IMMINENT'].push(m);
+                                state.missions[s][h].splice(i, 1);
+                            }
+                        }
+                    }
                 });
             });
             save();
@@ -226,7 +271,7 @@
             });
             const hud = document.getElementById('hud');
             if (hasDecay) {
-                hud.innerText = "WARNING: ORBITAL DECAY DETECTED";
+                hud.innerText = "WARNING: CONTAINMENT BREACH / ORBITAL DECAY";
                 hud.classList.add('hud-warning');
             } else {
                 hud.innerText = "SYSTEM ARCHITECTURE NOMINAL";
@@ -236,7 +281,7 @@
 
         function render() {
             updateAccentColor();
-            ensurePath();
+            processTimeMechanics();
             checkDecayStatus();
             
             const container = document.getElementById('view-container');
@@ -256,9 +301,14 @@
                 const grid = document.createElement('div'); grid.className = 'grid';
                 SECTORS.forEach(s => {
                     const cHex = SECTOR_COLORS[s];
-                    const box = document.createElement('div'); box.className = 'sector-box';
                     
-                    let planetHtml = `<div class="planet" onclick="selectSector('${s}')" style="border-color: ${cHex}; box-shadow: 0 0 20px ${cHex}66; color: ${cHex}; text-shadow: 0 0 8px ${cHex};">
+                    // Check if Sector is bleeding red
+                    let isSectorOverdue = HORIZONS.some(h => state.missions[s][h].some(m => m.overdue && !m.captured));
+                    
+                    const box = document.createElement('div'); 
+                    box.className = `sector-box ${isSectorOverdue ? 'overdue' : ''}`;
+                    
+                    let planetHtml = `<div class="planet" onclick="selectSector('${s}')" style="${!isSectorOverdue ? `border-color: ${cHex}; box-shadow: 0 0 20px ${cHex}66; color: ${cHex}; text-shadow: 0 0 8px ${cHex};` : ''}">
                         <div style="z-index: 5;">${s}</div>
                         <div class="mini-ring" style="width: 80px; height: 80px; animation: orbit-spin 10s linear infinite;"></div>
                         <div class="mini-ring" style="width: 60px; height: 60px; animation: orbit-counter-spin 15s linear infinite;"></div>
@@ -303,8 +353,10 @@
                 ];
                 
                 h_data.forEach(d => {
+                    let isRingOverdue = state.missions[state.sector][d.id].some(m => m.overdue && !m.captured);
+                    
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'ring-circle';
+                    wrapper.className = `ring-circle ${isRingOverdue ? 'overdue' : ''}`;
                     wrapper.style.width = d.size + 'px'; 
                     wrapper.style.height = d.size + 'px';
                     wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
@@ -377,7 +429,8 @@
                 
                 let orbHtml = `<div class="target-lock">
                     <div class="view-level-title" style="color: ${m.overdue && !m.captured ? 'var(--thrust)' : ''}">LEVEL 4 // ${m.captured ? 'MISSION LOG' : (m.overdue ? 'DECAYING TARGET' : 'ACTIVE TARGET')}</div>
-                    <h2 style="color:${titleColor}; font-size: 1.2rem; margin-top: 0; margin-bottom: 15px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
+                    <h2 style="color:${titleColor}; font-size: 1.2rem; margin-top: 0; margin-bottom: 5px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
+                    ${m.dueDate ? `<div style="font-size: 0.6rem; color: ${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--border)'}; margin-bottom: 10px; z-index:20;">DEADLINE: ${m.dueDate}</div>` : ''}
                     
                     <div class="progress-wrapper">
                         <div class="progress-bar-container">
@@ -455,8 +508,6 @@
                 
                 orbHtml += `
                     <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
-                        <button class="mod-btn" onclick="editMission(${m.id}, event, 'sub')">PARAMETERS</button>
-                        <button class="mod-btn" onclick="editMission(${m.id}, event, 'status')" style="${m.overdue && !m.captured ? 'color: var(--thrust); border-color: var(--thrust); box-shadow: 0 0 8px rgba(255,42,42,0.4);' : ''}">STATUS</button>
                         <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
                     </div>
                 </div>`;
@@ -465,13 +516,95 @@
             }
         }
 
-        function addMission() {
-            const name = prompt("Mission Name?"); if(!name) return;
-            const subsInput = prompt("Sub-missions? (comma separated)");
-            const subs = subsInput ? subsInput.split(',').filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false})) : [];
-            const coords = getSafeCoordinates(state.missions[state.sector][state.horizon]);
-            state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs, x: coords.x, y: coords.y, captured: false, overdue: false });
-            save(); render();
+        // === TEMPORAL DATA CONSOLE LOGIC (MODAL) === //
+
+        function openTaskModal() {
+            document.getElementById('modal-task-name').value = '';
+            document.getElementById('modal-task-date').value = '';
+            tempSubtasks = ['', '', '']; // Default 3
+            renderModalSubtasks();
+            document.getElementById('task-modal-overlay').style.display = 'flex';
+        }
+
+        function closeTaskModal() {
+            document.getElementById('task-modal-overlay').style.display = 'none';
+        }
+
+        function renderModalSubtasks() {
+            const list = document.getElementById('modal-subtasks-list');
+            const addBtn = document.getElementById('modal-add-btn');
+            list.innerHTML = '';
+            
+            tempSubtasks.forEach((sub, i) => {
+                const row = document.createElement('div');
+                row.className = 'subtask-row';
+                row.innerHTML = `
+                    <input type="text" class="modal-input" placeholder="Sub-routine definition..." value="${sub}" oninput="updateTempSubtask(${i}, this.value)">
+                    <button class="subtask-remove" onclick="removeModalSubtask(${i})">-</button>
+                `;
+                list.appendChild(row);
+            });
+
+            if (tempSubtasks.length >= 10) {
+                addBtn.classList.add('disabled');
+                addBtn.innerText = "MAXIMUM SUB-ROUTINES REACHED";
+            } else {
+                addBtn.classList.remove('disabled');
+                addBtn.innerText = "+";
+            }
+        }
+
+        function updateTempSubtask(index, val) { tempSubtasks[index] = val; }
+        
+        function removeModalSubtask(index) {
+            tempSubtasks.splice(index, 1);
+            renderModalSubtasks();
+        }
+
+        function addModalSubtask() {
+            if (tempSubtasks.length < 10) {
+                tempSubtasks.push('');
+                renderModalSubtasks();
+            }
+        }
+
+        function saveTaskModal() {
+            const name = document.getElementById('modal-task-name').value.trim();
+            const dateStr = document.getElementById('modal-task-date').value;
+            
+            if (!name) { alert("Target designation required."); return; }
+
+            const validSubs = tempSubtasks.filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false}));
+            
+            let targetHorizon = state.horizon;
+            let isOverdue = false;
+
+            // Auto-calculate horizon based on date during creation
+            if (dateStr) {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const inOneWeek = new Date(today); inOneWeek.setDate(today.getDate() + 7);
+                const dDate = new Date(dateStr + 'T00:00:00');
+                
+                if (dDate < today) isOverdue = true;
+                if (dDate <= inOneWeek) targetHorizon = 'IMMINENT';
+            }
+
+            const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
+            
+            state.missions[state.sector][targetHorizon].push({ 
+                id: Date.now(), 
+                name: name, 
+                subs: validSubs, 
+                x: coords.x, 
+                y: coords.y, 
+                captured: false, 
+                overdue: isOverdue,
+                dueDate: dateStr || null
+            });
+
+            save();
+            closeTaskModal();
+            render();
         }
 
         function selectSector(s) { state.sector = s; state.level = 2; render(); }
@@ -487,34 +620,8 @@
         
         function completeMission() {
             const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-            m.captured = true;
-            m.overdue = false; 
+            m.captured = true; m.overdue = false; 
             save(); state.level = 3; state.activeMissionId = null; render();
-        }
-        
-        function editMission(id, e, actionType) {
-            if(e) e.stopPropagation();
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === id);
-            
-            if(actionType === 'sub') {
-                const current = m.subs.map(s => s.t).join(', ');
-                const res = prompt("Modify Sub-missions:", current);
-                if(res !== null) {
-                    const names = res.split(',').map(t => t.trim()).filter(t => t !== "");
-                    m.subs = names.map(n => {
-                        const ex = m.subs.find(s => s.t === n);
-                        return ex ? {t: ex.t, c: ex.c} : {t: n, c: false};
-                    });
-                }
-            } else if (actionType === 'status') {
-                const decayToggle = confirm("WARNING: Toggle Orbital Decay / Overdue Status?");
-                if (decayToggle) m.overdue = !m.overdue;
-                if (!decayToggle) {
-                    const res = prompt("Rename Mission:", m.name);
-                    if(res) m.name = res;
-                }
-            }
-            save(); render();
         }
         
         function deleteMission(id, e) {
