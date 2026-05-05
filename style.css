@@ -483,3 +483,22 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     font-weight: bold;
     margin-right: 5px;
 }
+
+/* Lighten Captured Text by 50% (Opacity 0.5) */
+.priority-item.task-captured .p-text {
+    text-decoration: line-through;
+    opacity: 0.5 !important; /* Adjusted to your request */
+    color: #fff; /* Using white base, then opacity makes it light grey */
+}
+
+/* Log Entry Styling */
+.log-entry {
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 4px;
+    border-left: 2px solid var(--accent);
+}
+
+/* Breadcrumb positioning tweak to accommodate the higher menu */
+.breadcrumb {
+    margin-bottom: 5px;
+}
