@@ -201,9 +201,15 @@ function render() {
     
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     
-    const activeSector = state.sectors.find(s => s.id === state.sectorId);
+const activeSector = state.sectors.find(s => s.id === state.sectorId);
 
-    document.documentElement.style.setProperty('--accent', activeSector ? activeSector.color : '#00e5ff');
+    // Lock in the base color
+    const currentAccent = activeSector ? activeSector.color : '#00e5ff';
+    document.documentElement.style.setProperty('--accent', currentAccent);
+    
+    // Auto-generate the glow by attaching a 60% alpha channel ('99') to the hex code
+    document.documentElement.style.setProperty('--accent-glow', currentAccent + '99');
+
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
     switch(state.level) {
