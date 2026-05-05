@@ -239,11 +239,9 @@ function renderLevel1(container, footer) {
         path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
         path.onclick = () => { state.sectorId = s.id; state.level = 2; render(); }; svg.appendChild(path);
         
-        const cx = seeds[i].x * w;
-        const cy = seeds[i].y * h;
-
-        // --- NEW: Mini Orbital Rings for Sector Map ---
-        const rings = [ { id: 'IMMINENT', r: 12 }, { id: 'HORIZON', r: 20 }, { id: 'TRAJECTORY', r: 28 } ];
+        const cx = seeds[i].x * w, cy = seeds[i].y * h;
+        const rings = [ { id: 'IMMINENT', r: 12, s: 10 }, { id: 'HORIZON', r: 20, s: 20 }, { id: 'TRAJECTORY', r: 28, s: 40 } ];
+        
         rings.forEach(ring => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", ring.r);
@@ -253,21 +251,29 @@ function renderLevel1(container, footer) {
             svg.appendChild(circle);
 
             const missions = state.missions[s.id]?.[ring.id] || [];
-            missions.forEach((m, idx) => {
-                if (m.captured) return;
-                const angle = (idx / missions.length) * Math.PI * 2;
-                const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                dot.setAttribute("cx", cx + ring.r * Math.cos(angle)); 
-                dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
-                dot.setAttribute("r", "1.5");
-                dot.setAttribute("fill", m.overdue ? 'var(--thrust)' : color);
-                dot.style.pointerEvents = "none";
-                svg.appendChild(dot);
-            });
+            if (missions.length > 0) {
+                // NEW: Animated group for orbital rotation
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                group.style.transformOrigin = `${cx}px ${cy}px`;
+                group.style.animation = `orbit-spin ${ring.s}s linear infinite`;
+                
+                missions.forEach((m, idx) => {
+                    if (m.captured) return;
+                    const angle = (idx / missions.length) * Math.PI * 2;
+                    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    dot.setAttribute("cx", cx + ring.r * Math.cos(angle)); 
+                    dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
+                    dot.setAttribute("r", "1.5");
+                    dot.setAttribute("fill", m.overdue ? 'var(--thrust)' : color);
+                    dot.style.pointerEvents = "none";
+                    group.appendChild(dot);
+                });
+                svg.appendChild(group);
+            }
         });
         
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", cx); text.setAttribute("y", cy + 45); // Shifted down below rings
+        text.setAttribute("x", cx); text.setAttribute("y", cy + 45);
         text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text");
         text.style.textShadow = `0 0 10px ${color}`; 
         text.textContent = s.name;
@@ -286,22 +292,26 @@ function renderLevel2(container, footer, activeSector) {
     const center = document.createElement('div'); center.className = 'warp-transition';
     center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
     
-    // --- NEW: Radial Density Starfield ---
     const gravityWell = document.createElement('div');
-    gravityWell.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; border-radius:50%; overflow:hidden;';
-    for (let i = 0; i < 150; i++) {
+    gravityWell.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; border-radius:50%;';
+    
+    // UPDATED: 225 particles (50% increase), localized to the orbit band
+    const innerMin = 30; // Starts near the Imminent ring
+    const outerMax = 140 + (140 * 0.25); // Max radius + 25% overflow
+
+    for (let i = 0; i < 225; i++) {
         const p = document.createElement('div');
-        const r = 140 * Math.pow(Math.random(), 2); 
+        // Constraints random particles to stay between the core and the 25% outer margin
+        const r = innerMin + (Math.random() * (outerMax - innerMin));
         const angle = Math.random() * Math.PI * 2;
         const x = 140 + r * Math.cos(angle);
         const y = 140 + r * Math.sin(angle);
-        const size = Math.random() * 2 + 1;
-        p.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:#fff; border-radius:50%; opacity:${Math.random() * 0.5 + 0.1}; left:${x}px; top:${y}px; animation: orbit-spin ${30 + Math.random() * 60}s linear infinite;`;
+        const size = Math.random() * 1.5 + 0.5;
+        p.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:#fff; border-radius:50%; opacity:${Math.random() * 0.4 + 0.1}; left:${x}px; top:${y}px; animation: orbit-spin ${40 + Math.random() * 80}s linear infinite;`;
         gravityWell.appendChild(p);
     }
     center.appendChild(gravityWell);
 
-    // --- Orbital Rings ---
     [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ].forEach(d => {
         const overdue = state.missions[state.sectorId]?.[d.id]?.some(m => m.overdue && !m.captured);
         const wrapper = document.createElement('div'); wrapper.className = `ring-circle ${overdue ? 'overdue' : ''}`;
