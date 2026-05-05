@@ -387,11 +387,10 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- DYNAMIC MISSION PRIORITIES (Positioned under Breadcrumbs) ---
+    // --- MISSION PRIORITIES DROPDOWN ---
     if (missions.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        // Moved up to sit under the zoom/breadcrumb controls
         priorityContainer.style.cssText = 'position: absolute; top: 60px; z-index: 100;'; 
 
         let criticalIndex = missions.findIndex(m => !m.captured);
@@ -425,7 +424,7 @@ function renderLevel3(container, footer) {
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
         ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
         ship.setAttribute("fill", "var(--accent)");
-        ship.setAttribute("filter", `drop-shadow(0 0 15px ${accentColor})`);
+        ship.setAttribute("filter", `drop-shadow(0 0 12px ${accentColor})`);
         ship.style.cssText = `transform-origin: 0 0; animation: ship-patrol 5s linear infinite;`;
         orbitalGroup.appendChild(ship);
         svg.appendChild(orbitalGroup);
@@ -441,8 +440,8 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- MISSION NODES (Updated Spectral Decay) ---
-    const activeMissions = missions.filter(m => !m.captured);
+    // --- MISSION NODES (Balanced Levels) ---
+    const firstActiveIndex = missions.findIndex(m => !m.captured);
 
     missions.forEach((m, i) => {
         const star = document.createElement('div'); 
@@ -453,26 +452,23 @@ function renderLevel3(container, footer) {
         
         let opacityValue;
         let glowSize;
+        let brightness;
 
         if (m.captured) {
-            // Rule: Completed tasks stay at 30% fade
+            // Archive: Locked at 30%
             opacityValue = 0.3;
             glowSize = 5;
+            brightness = 0.6;
+        } else if (i === firstActiveIndex) {
+            // Mission Critical: Reduced by 15% (1.15 filter vs 1.3 before)
+            opacityValue = 1.0;
+            glowSize = 20;
+            brightness = 1.15;
         } else {
-            // Find its position among uncompleted tasks for the fade curve
-            const activeIndex = activeMissions.findIndex(active => active.id === m.id);
-            const totalActive = activeMissions.length;
-
-            if (activeIndex === 0) {
-                // Rule: Current Critical Mission inherits full glow properties
-                opacityValue = 1.0;
-                glowSize = 25;
-            } else {
-                // Rule: Subsequent tasks start at 25% fade (0.75) and end at 50% fade (0.5)
-                const decayProgress = (activeIndex - 1) / (totalActive - 1 || 1);
-                opacityValue = 0.75 - (decayProgress * 0.25);
-                glowSize = 15 - (decayProgress * 7);
-            }
+            // Follow-ups: Uniform level, boosted by 20% (0.8 opacity vs 0.6 before)
+            opacityValue = 0.8;
+            glowSize = 15;
+            brightness = 1.0;
         }
 
         const node = document.createElement('div');
@@ -480,22 +476,16 @@ function renderLevel3(container, footer) {
         const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
         node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
         node.style.borderColor = `${accentColor}${hexOpacity}`;
-        
-        // Critical highlight for the lead active node
-        const isActiveLead = !m.captured && m.id === (activeMissions[0]?.id);
-        if (isActiveLead) {
-            node.style.filter = 'brightness(1.3) saturate(1.2)';
-            node.style.borderWidth = '3px';
-        } else {
-            node.style.filter = `brightness(${opacityValue + 0.3})`;
-        }
+        node.style.filter = `brightness(${brightness}) saturate(1.1)`;
+
+        if (i === firstActiveIndex) node.style.borderWidth = '3px';
 
         node.textContent = i + 1;
         
         const label = document.createElement('div');
         label.className = 'star-label';
         label.style.opacity = opacityValue;
-        label.style.fontWeight = isActiveLead ? '700' : '300';
+        label.style.fontWeight = i === firstActiveIndex ? '700' : '300';
         label.textContent = m.name; 
 
         star.appendChild(node);
