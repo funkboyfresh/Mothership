@@ -129,42 +129,112 @@ function doLinesIntersect(p1, q1, p2, q2) {
     const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
     return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
 }
+// Helper: Calculate distance from point P to line segment (A, B)
+function getDistanceToSegment(p, a, b) {
+    const l2 = (a.x - b.x)**2 + (a.y - b.y)**2;
+    if (l2 === 0) return Math.sqrt((p.x - a.x)**2 + (p.y - a.y)**2);
+    let t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.sqrt((p.x - (a.x + t * (b.x - a.x)))**2 + (p.y - (a.y + t * (b.y - a.y)))**2);
+}
 
+// Helper: Define 6 sectors in a 6x6 grid
+const SECTORS = [
+    { id: 0, x: [0, 1], y: [0, 2] }, // Top Left
+    { id: 1, x: [0, 1], y: [3, 5] }, // Top Right
+    { id: 2, x: [2, 3], y: [0, 2] }, // Mid Left
+    { id: 3, x: [2, 3], y: [3, 5] }, // Mid Right
+    { id: 4, x: [4, 5], y: [0, 2] }, // Bottom Left
+    { id: 5, x: [4, 5], y: [3, 5] }  // Bottom Right
+];
 function getSafeCoordinates(existingMissions) {
-    const activeWire = (existingMissions || []).slice(-8); 
+    const count = (existingMissions || []).length;
+    const activeWire = (existingMissions || []).slice(-8);
+    const margin = 15;
+    const usableSpace = 70;
+    const nodeRadius = 7; // Approx size in % for collision
+    const wirePadding = 10; // Extra clearance from the wire lines
+
     let x, y, safe, attempts = 0;
-    const gridSize = 6;
-    const margin = 15; 
-    const usableSpace = 70; 
 
     do {
-        const gridX = Math.floor(Math.random() * gridSize);
-        const gridY = Math.floor(Math.random() * gridSize);
-        x = margin + (gridX * (usableSpace / (gridSize - 1))) + (Math.random() * 6 - 3);
-        y = margin + (gridY * (usableSpace / (gridSize - 1))) + (Math.random() * 6 - 3);
+        let gridX, gridY;
+
+        if (count === 0) {
+            // RULE: Start random between 4 corners (S0, S1, S4, S5)
+            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]];
+            const s = corners[Math.floor(Math.random() * corners.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
+            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else if (count === 1) {
+            // RULE: Jump to a random open sector that isn't the start
+            const startNode = existingMissions[0];
+            const startSector = SECTORS.find(s => 
+                (startNode.x >= margin + (s.x[0] * 14)) && (startNode.x <= margin + (s.x[1] * 14))
+            );
+            const otherSectors = SECTORS.filter(s => s !== startSector);
+            const s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
+            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else {
+            // RULE: Randomly pick from all 36 squares
+            gridX = Math.floor(Math.random() * 6);
+            gridY = Math.floor(Math.random() * 6);
+        }
+
+        // Convert grid to coordinates with Jitter
+        x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3);
+        y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
         
         safe = true;
         const newNode = { x, y };
+
+        // CONSTRAINT 1: No Node Overlap (Check all nodes)
         for (let m of (existingMissions || [])) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x, dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < 12) { safe = false; break; }
+            let dist = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
+            if (dist < 15) { safe = false; break; }
         }
-        if (safe && activeWire.length > 0) {
-            const lastNode = activeWire[activeWire.length - 1];
+
+        if (!safe) { attempts++; continue; }
+
+        // CONSTRAINT 2: No Wire Overlap (Ensure node center is away from existing lines)
+        if (activeWire.length > 1) {
             for (let i = 0; i < activeWire.length - 1; i++) {
-                if (activeWire[i] && activeWire[i+1]) {
-                    if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
-                        safe = false; break;
-                    }
+                if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) {
+                    safe = false; break;
                 }
             }
         }
+
+        if (!safe) { attempts++; continue; }
+
+        // CONSTRAINT 3: Wire Integrity (No crossing & No Boxing In)
+        if (activeWire.length > 0) {
+            const lastNode = activeWire[activeWire.length - 1];
+            
+            // Check if the NEW segment crosses ANY existing segment
+            for (let i = 0; i < activeWire.length - 1; i++) {
+                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
+                    safe = false; break;
+                }
+            }
+
+            // Anti-Boxing: Ensure the new node isn't too close to non-adjacent segments
+            // This prevents "threading the needle" which leads to getting trapped.
+            if (activeWire.length > 2) {
+                for (let i = 0; i < activeWire.length - 2; i++) {
+                    let distToOldWire = getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]);
+                    if (distToOldWire < 18) { safe = false; break; }
+                }
+            }
+        }
+        
         attempts++;
-    } while (!safe && attempts < 300);
+    } while (!safe && attempts < 500);
+
     return { x, y };
 }
-
 function getHorizonFromDate(dateStr, fallbackHorizon) {
     if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
     const today = new Date(); today.setHours(0,0,0,0);
