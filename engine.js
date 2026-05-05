@@ -386,20 +386,52 @@ function renderLevel3(container, footer) {
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
+
+    // --- NEW: DYNAMIC MISSION PRIORITIES DROPDOWN ON LEVEL 3 ---
+    if (missions.length > 0) {
+        const priorityContainer = document.createElement('div');
+        priorityContainer.className = 'priority-dropdown-container';
+        priorityContainer.style.cssText = 'position: absolute; top: 110px; z-index: 100;'; // Positioned below header
+
+        // Find the index of the first mission that isn't captured
+        let criticalIndex = missions.findIndex(m => !m.captured);
+        if (criticalIndex === -1) criticalIndex = 0; 
+
+        priorityContainer.innerHTML = `
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                MISSION PRIORITIES <span>v</span>
+            </button>
+            <div class="priority-list">
+                ${missions.map((m, i) => {
+                    const isCritical = (i === criticalIndex && !m.captured);
+                    return `
+                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" 
+                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                        <span class="p-num">${i + 1}</span>
+                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
+                        <span class="p-text">${m.name}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
+        container.appendChild(priorityContainer);
+    }
+
+    // --- SHIP NAVIGATION ---
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
-    
     if (activeTarget) {
         const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
         ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
         ship.setAttribute("fill", "var(--accent)");
-        ship.setAttribute("filter", `drop-shadow(0 0 15px ${accentColor})`); // Boosted ship glow to match node
+        ship.setAttribute("filter", `drop-shadow(0 0 15px ${accentColor})`);
         ship.style.cssText = `transform-origin: 0 0; animation: ship-patrol 5s linear infinite;`;
         orbitalGroup.appendChild(ship);
         svg.appendChild(orbitalGroup);
     }
 
+    // --- VECTOR LINES ---
     if (missions.length > 1) {
         for (let i = 0; i < missions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -409,6 +441,7 @@ function renderLevel3(container, footer) {
         }
     }
     
+    // --- MISSION NODES ---
     missions.forEach((m, i) => {
         const star = document.createElement('div'); 
         const isOverdue = m.overdue && !m.captured;
@@ -417,19 +450,14 @@ function renderLevel3(container, footer) {
         star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
-        // EXTREME HIERARCHY MATH
-        // Node 1: 130% Brightness
-        // Node 2: 65% Brightness (35% reduction from Node 1)
-        // Final Node: 20% Brightness (80% reduction from Node 1)
+        // HIERARCHY LUMINANCE
         const totalMissions = missions.length;
         let opacityValue;
         let glowSize;
-
         if (i === 0) {
-            opacityValue = 1.0; // Base for hex conversion, CSS filter will boost
-            glowSize = 25;       // Maximum Bloom
+            opacityValue = 1.0; 
+            glowSize = 25;       
         } else {
-            // Map the range [1 to last_index] to [65% to 20%]
             const decayProgress = (i - 1) / (totalMissions - 1 || 1);
             opacityValue = 0.65 - (decayProgress * 0.45);
             glowSize = 12 - (decayProgress * 8); 
@@ -437,20 +465,16 @@ function renderLevel3(container, footer) {
 
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        
-        // Apply logic to the styling
         const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
         node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
         node.style.borderColor = `${accentColor}${hexOpacity}`;
         
-        // Pushing Node 1 to 130% brightness via CSS filter
         if (i === 0) {
             node.style.filter = 'brightness(1.3) saturate(1.2)';
-            node.style.borderWidth = '3px'; // Slightly thicker for the lead node
+            node.style.borderWidth = '3px';
         } else {
             node.style.filter = `brightness(${opacityValue + 0.3})`;
         }
-
         node.textContent = i + 1;
         
         const label = document.createElement('div');
