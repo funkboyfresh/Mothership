@@ -131,31 +131,60 @@ function doLinesIntersect(p1, q1, p2, q2) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    const slotIndex = existingMissions.length % 10;
+    // We map to the 8-node wire limit (6 active + 2 completed)
+    const slotIndex = existingMissions.length % 8;
+    
+    // Define an 8-quadrant snaking path (4 columns, 2 rows)
     const columns = 4;
-    const rows = 3;
     const col = slotIndex % columns;
     const row = Math.floor(slotIndex / columns);
 
-    const cellWidth = 15; // Controlled width for partitioning
-    const cellHeight = 15;
+    // Grid math to keep nodes separated and away from HUD edges
+    // Cell width/height is roughly 20% of the screen
+    const cellWidth = 18; 
+    const cellHeight = 25;
+    
+    // baseX and baseY define the top-left of the reserved quadrant
+    const baseX = 12 + (col * 20); 
+    const baseY = 25 + (row * 30);
 
     let x, y, safe, attempts = 0;
-    const minDistance = 15; 
+    const minDistance = 18; 
 
     do {
-        const baseX = 15 + (col * 18); // Spread based on grid cell
-        const baseY = 15 + (row * 18);
-        x = baseX + Math.random() * cellWidth;
-        y = baseY + Math.random() * cellHeight;
+        // Jitter the position slightly within the quadrant for a "natural" look
+        x = baseX + (Math.random() * (cellWidth - 5));
+        y = baseY + (Math.random() * (cellHeight - 5));
+        
         safe = true;
+        const newNode = { x, y };
+
+        // Check against all missions to avoid overlapping background debris
         for (let m of existingMissions) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x, dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { safe = false; break; }
+            let dx = m.x - x;
+            let dy = m.y - y;
+            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
+                safe = false; 
+                break; 
+            }
         }
+
+        // Wire-Crossing Guard: Ensure the new path segment doesn't cross the existing wire
+        if (safe && existingMissions.length > 0) {
+            const wirePath = existingMissions.slice(-8); // Check only the current wire view
+            const lastNode = wirePath[wirePath.length - 1];
+            for (let i = 0; i < wirePath.length - 1; i++) {
+                if (doLinesIntersect(lastNode, newNode, wirePath[i], wirePath[i+1])) {
+                    safe = false; 
+                    break;
+                }
+            }
+        }
+        
         attempts++;
     } while (!safe && attempts < 100);
+
     return {x, y};
 }
 
@@ -532,21 +561,42 @@ function closeTaskModal() { const overlay = document.getElementById('task-modal-
 
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
-    if (!name) { alert("Mission must be named"); return; }
+    
+    // 1. Validation: Name Check
+    if (!name) { 
+        alert("Mission must be named"); 
+        return; 
+    }
+
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-    const hzMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) ? state.missions[state.sectorId][h] : [];
+    
+    // 2. UPDATED Firewall: Enforce the 6 ACTIVE mission limit for the wire
+    const hzMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) 
+        ? state.missions[state.sectorId][h] 
+        : [];
+    
     const activeInHz = hzMissions.filter(m => !m.captured).length;
-    if (!editModeId && activeInHz >= 10) { alert("Current mission must be completed before taking on new missions in this sector."); return; }
-    const dateStr = document.getElementById('modal-task-date').value, finalH = getHorizonFromDate(dateStr, h);
+
+    // Triggering the prompt if at or above 6 active tasks
+    if (!editModeId && activeInHz >= 6) { 
+        alert("Current mission must be completed before taking on new missions in this sector."); 
+        return; 
+    }
+
+    const dateStr = document.getElementById('modal-task-date').value;
+    const finalH = getHorizonFromDate(dateStr, h);
+    
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
 
     if (editModeId) {
+        // ... [Existing Edit Logic] ...
         let existingIdx = -1, existingHz = null;
         HORIZONS.forEach(hz => { const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId); if (idx !== -1) { existingIdx = idx; existingHz = hz; } });
         if (existingIdx !== -1) {
             if (existingHz === finalH) {
                 const m = state.missions[state.sectorId][finalH][existingIdx];
-                m.name = name; m.dueDate = dateStr || null; m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
+                m.name = name; m.dueDate = dateStr || null;
+                m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
             } else {
                 state.missions[state.sectorId][existingHz].splice(existingIdx, 1);
                 const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
@@ -554,10 +604,21 @@ function saveTaskModal() {
             }
         }
     } else {
+        // 3. Spatial Guard: Passing the pool to ensure non-overlap
         const coords = getSafeCoordinates(hzMissions);
-        state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
+        state.missions[state.sectorId][finalH].push({ 
+            id: Date.now(), 
+            name, 
+            subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
+            x: coords.x, 
+            y: coords.y, 
+            dueDate: dateStr || null 
+        });
     }
-    save(); closeTaskModal(); render();
+
+    save(); 
+    closeTaskModal(); 
+    render();
 }
 
 function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
