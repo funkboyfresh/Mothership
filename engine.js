@@ -105,112 +105,99 @@ function getDistanceToSegment(p, a, b) {
     return Math.sqrt((p.x - (a.x + t * (b.x - a.x)))**2 + (p.y - (a.y + t * (b.y - a.y)))**2);
 }
 
+const SECTORS = [
+    { id: 0, x: [0, 1], y: [0, 2] }, { id: 1, x: [0, 1], y: [3, 5] },
+    { id: 2, x: [2, 3], y: [0, 2] }, { id: 3, x: [2, 3], y: [3, 5] },
+    { id: 4, x: [4, 5], y: [0, 2] }, { id: 5, x: [4, 5], y: [3, 5] }
+];
+
 function getSafeCoordinates(existingMissions) {
-    const activeWire = (existingMissions || []).slice(-8);
     const count = (existingMissions || []).length;
+    const activeWire = (existingMissions || []).slice(-8);
     const margin = 15;
-    const usableSpace = 70; // Coordinate bounds: 15 to 85
+    const usableSpace = 70;
+    const wirePadding = 16; 
     
     let bestCandidate = null;
-    let bestScore = -Infinity;
+    let maxSpread = 0;
 
-    // Calculate the absolute opposite corner for Node 1
-    let oppositeTarget = { x: 50, y: 50 };
-    if (count === 1) {
-        const n0 = existingMissions[0];
-        oppositeTarget = {
-            x: n0.x < 50 ? 85 : 15,
-            y: n0.y < 50 ? 85 : 15
-        };
-    }
+    for (let attempts = 0; attempts < 1000; attempts++) {
+        let gridX, gridY;
 
-    // MONTE CARLO SIMULATION: 2000 attempts to find the perfect tactical location
-    for (let attempts = 0; attempts < 2000; attempts++) {
-        let x = margin + (Math.random() * usableSpace);
-        let y = margin + (Math.random() * usableSpace);
-        const newNode = { x, y };
+        if (count === 0) {
+            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]];
+            const s = corners[Math.floor(Math.random() * corners.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
+            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else if (count === 1) {
+            const startNode = existingMissions[0];
+            const startSector = SECTORS.find(s => 
+                (startNode.x >= margin + (s.x[0] * (usableSpace/5)) - 5) && 
+                (startNode.x <= margin + (s.x[1] * (usableSpace/5)) + 5)
+            ) || SECTORS[0]; 
+            
+            const otherSectors = SECTORS.filter(s => s !== startSector);
+            const s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1));
+            gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else {
+            gridX = Math.floor(Math.random() * 6);
+            gridY = Math.floor(Math.random() * 6);
+        }
+
+        let x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3);
+        let y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
+        
         let safe = true;
+        const newNode = { x, y };
+        let minNodeDist = Infinity;
 
-        // --- HARD CONSTRAINTS (Must pass to be considered) ---
-
-        // 1. Node vs Node Overlap (Must be far away from ALL existing nodes)
-        let minDistToAnyNode = Infinity;
         for (let m of (existingMissions || [])) {
             if (!m || isNaN(m.x)) continue;
-            let d = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
-            if (d < minDistToAnyNode) minDistToAnyNode = d;
-            if (d < 16) { safe = false; break; }
+            let dist = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
+            if (dist < minNodeDist) minNodeDist = dist;
+            if (dist < 18) { safe = false; break; } 
         }
+
+        if (!safe) continue;
+
+        if (activeWire.length > 1) {
+            for (let i = 0; i < activeWire.length - 1; i++) {
+                if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) {
+                    safe = false; break;
+                }
+            }
+        }
+
         if (!safe) continue;
 
         if (activeWire.length > 0) {
             const lastNode = activeWire[activeWire.length - 1];
-
-            // 2. New Wire vs Old Nodes (Ensure the NEW line segment doesn't cut through an existing node)
-            for (let m of (existingMissions || [])) {
-                if (!m || isNaN(m.x) || m.id === lastNode.id) continue;
-                if (getDistanceToSegment(m, lastNode, newNode) < 12) {
+            
+            for (let i = 0; i < activeWire.length - 1; i++) {
+                if (doLinesIntersect(lastNode, newNode, activeWire[i], activeWire[i+1])) {
                     safe = false; break;
                 }
             }
+
             if (!safe) continue;
 
-            // 3. New Node vs Old Wires (Ensure the NEW node doesn't land on an existing wire)
-            if (activeWire.length > 1) {
-                for (let i = 0; i < activeWire.length - 1; i++) {
-                    const p1 = activeWire[i];
-                    const p2 = activeWire[i+1];
-                    if (getDistanceToSegment(newNode, p1, p2) < 12) {
-                        safe = false; break;
-                    }
-                }
-            }
-            if (!safe) continue;
-
-            // 4. New Wire vs Old Wires (No Crossing Lines)
             if (activeWire.length > 2) {
                 for (let i = 0; i < activeWire.length - 2; i++) {
-                    const p1 = activeWire[i];
-                    const p2 = activeWire[i+1];
-                    if (doLinesIntersect(lastNode, newNode, p1, p2)) {
+                    if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < 20) {
                         safe = false; break;
                     }
                 }
             }
-            if (!safe) continue;
         }
-
-        // --- SOFT CONSTRAINTS (Scoring System) ---
-        let score = 0;
-
-        if (count === 0) {
-            // Node 0: Maximize distance from center (push to any corner)
-            score = Math.sqrt((x - 50)**2 + (y - 50)**2);
-        } else if (count === 1) {
-            // Node 1: Target a location ~30 units AWAY from the absolute opposite corner
-            let distToOpposite = Math.sqrt((x - oppositeTarget.x)**2 + (y - oppositeTarget.y)**2);
-            score = -Math.abs(distToOpposite - 30); 
-        } else {
-            // Node 2+: Maximize distance from existing clusters, while keeping wire lengths readable
-            const lastNode = activeWire[activeWire.length - 1];
-            let distToLast = Math.sqrt((x - lastNode.x)**2 + (y - lastNode.y)**2);
-            
-            let segmentPenalty = 0;
-            if (distToLast > 45) segmentPenalty = (distToLast - 45) * 2; // Penalize ultra-long jumps
-            if (distToLast < 20) segmentPenalty = (20 - distToLast) * 5; // Heavily penalize short, clustered jumps
-
-            score = minDistToAnyNode - segmentPenalty;
-        }
-
-        // Keep the candidate with the highest tactical score
-        if (score > bestScore) {
-            bestScore = score;
+        
+        if (safe && minNodeDist > maxSpread) {
+            maxSpread = minNodeDist === Infinity ? 1000 : minNodeDist;
             bestCandidate = newNode;
         }
     }
 
-    // Failsafe: If the grid is extremely congested, find any non-overlapping coordinate
-    return bestCandidate || { x: 50 + (Math.random()*20 - 10), y: 50 + (Math.random()*20 - 10) };
+    return bestCandidate || { x: 50 + (Math.random()*10), y: 50 + (Math.random()*10) };
 }
 
 // --- TIME MECHANICS ---
@@ -354,14 +341,6 @@ function renderLevel1(container, footer) {
         footer.style.display = 'flex'; 
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT SECTORS ]</button>`; 
     }
-    
-    const totalCaptured = getCapturedCount();
-    const globalTracker = document.createElement('div');
-    globalTracker.style.cssText = 'position: absolute; top: 20px; right: 20px; text-align: right; color: var(--text); font-size: 0.7rem; letter-spacing: 1px; z-index: 10; pointer-events: none;';
-    globalTracker.innerHTML = `
-        <div style="opacity: 0.5; font-size: 0.5rem; text-transform: uppercase;">GALAXY SECURED</div>
-        <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);">${totalCaptured} <span style="font-size: 0.8rem;">★</span></div>`;
-    container.appendChild(globalTracker);
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
