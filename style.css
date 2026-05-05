@@ -373,3 +373,52 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     from { transform: rotate(0deg) translateY(-40px) rotate(0deg); }
     to { transform: rotate(360deg) translateY(-40px) rotate(-360deg); }
 }
+
+/* Drag and Drop Visuals */
+.subtask-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.subtask-row.dragging {
+    opacity: 0.4;
+    background: var(--accent-glow);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--accent);
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 8px var(--accent-glow);
+    user-select: none;
+    padding: 0 5px;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Redesigned Remove Button */
+.subtask-remove-minimal {
+    background: none;
+    border: none;
+    color: var(--thrust);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0 10px;
+    line-height: 1;
+    text-shadow: 0 0 10px var(--thrust-glow);
+    transition: transform 0.2s, text-shadow 0.2s;
+}
+
+.subtask-remove-minimal:hover {
+    transform: scale(1.2);
+    text-shadow: 0 0 15px var(--thrust);
+}
