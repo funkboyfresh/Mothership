@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V9.0</title>
+    <title>Mission Control V9.1</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -54,13 +54,7 @@
         #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; transition: left 0.3s, top 0.3s; }
         
-        @keyframes drift-decay {
-            0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
-            25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); }
-            50% { transform: translate(-50%, -50%) rotate(-1deg) translate(-5px, -3px); }
-            75% { transform: translate(-50%, -50%) rotate(3deg) translate(6px, -2px); }
-            100% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
-        }
+        @keyframes drift-decay { 0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } 25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); } 50% { transform: translate(-50%, -50%) rotate(-1deg) translate(-5px, -3px); } 75% { transform: translate(-50%, -50%) rotate(3deg) translate(6px, -2px); } 100% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } }
         .star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
         .star-node.decaying { border-color: var(--thrust); box-shadow: 0 0 20px var(--thrust); color: var(--thrust); }
         .star-label.decaying { color: var(--thrust); text-shadow: 0 0 5px rgba(255, 42, 42, 0.8); }
@@ -132,13 +126,12 @@
         </div>
         <div id="view-container" class="view"></div>
         <div id="control-footer" class="control-footer" style="display:none">
-            <button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal()">+ INITIALIZE TARGET</button>
-        </div>
+            </div>
     </div>
 
     <div id="task-modal-overlay">
         <div class="task-modal">
-            <div class="modal-header">Target Initialization Protocol</div>
+            <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
             <div class="input-group">
                 <span class="input-label">Target Designation</span>
                 <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter mission parameters..." autocomplete="off">
@@ -153,7 +146,7 @@
             <div class="add-subtask-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
-                <button class="success-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
+                <button class="success-btn" id="modal-save-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
             </div>
         </div>
     </div>
@@ -169,7 +162,9 @@
         };
 
         let ignitionFlare = false;
-        let tempSubtasks = []; // Holds inputs during modal use
+        let tempSubtasks = []; 
+        let editModeId = null;
+        let defaultHorizonContext = 'TRAJECTORY';
 
         function updateAccentColor() {
             const hex = state.sector ? SECTOR_COLORS[state.sector] : '#00e5ff';
@@ -201,24 +196,28 @@
             return {x, y};
         }
 
+        function getHorizonFromDate(dateStr, fallbackHorizon) {
+            if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
+            const today = new Date(); today.setHours(0,0,0,0);
+            const dDate = new Date(dateStr + 'T00:00:00');
+            const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 7) return 'IMMINENT';
+            if (diffDays <= 14) return 'HORIZON';
+            return 'TRAJECTORY';
+        }
+
         function processTimeMechanics() {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const inOneWeek = new Date(today);
-            inOneWeek.setDate(today.getDate() + 7);
+            const today = new Date(); today.setHours(0,0,0,0);
 
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
-                if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
-                if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
-                if (state.missions[s]['NOW']) { state.missions[s]['IMMINENT'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
-
+                
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
                     for (let i = state.missions[s][h].length - 1; i >= 0; i--) {
                         let m = state.missions[s][h][i];
                         
-                        // Buffer fix
                         if (m.x === undefined || m.y === undefined) {
                             let coords = getSafeCoordinates(state.missions[s][h].slice(0, i));
                             m.x = coords.x; m.y = coords.y;
@@ -226,20 +225,18 @@
                         if (m.captured === undefined) m.captured = false;
                         if (m.overdue === undefined) m.overdue = false;
 
-                        // Temporal Physics Engine
                         if (m.dueDate && !m.captured) {
-                            let dDate = new Date(m.dueDate + 'T00:00:00'); 
+                            const dDate = new Date(m.dueDate + 'T00:00:00');
+                            const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
                             
-                            // 1. Orbital Decay (Past Due)
-                            if (dDate < today) {
-                                m.overdue = true;
-                            } else {
-                                m.overdue = false;
-                            }
-
-                            // 2. Gravitational Migration (Within 7 days pulls to IMMINENT)
-                            if (dDate <= inOneWeek && h !== 'IMMINENT') {
-                                state.missions[s]['IMMINENT'].push(m);
+                            m.overdue = diffDays < 0;
+                            
+                            let targetH = 'TRAJECTORY';
+                            if (diffDays <= 7) targetH = 'IMMINENT';
+                            else if (diffDays <= 14) targetH = 'HORIZON';
+                            
+                            if (targetH !== h) {
+                                state.missions[s][targetH].push(m);
                                 state.missions[s][h].splice(i, 1);
                             }
                         }
@@ -294,15 +291,23 @@
             
             zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
             bread.innerText = `${state.sector || 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
-            footer.style.display = state.level === 3 ? 'flex' : 'none';
+            
+            // Dynamic Contextual Footer
+            if (state.level === 2) {
+                footer.style.display = 'flex';
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY')">+ INITIALIZE TARGET</button>`;
+            } else if (state.level === 3) {
+                footer.style.display = 'flex';
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}')">+ INITIALIZE TARGET (${state.horizon})</button>`;
+            } else {
+                footer.style.display = 'none';
+            }
 
             if (state.level === 1) {
                 container.innerHTML = `<div class="view-level-title">LEVEL 1</div><h1 class="view-main-title">Sector Map</h1>`;
                 const grid = document.createElement('div'); grid.className = 'grid';
                 SECTORS.forEach(s => {
                     const cHex = SECTOR_COLORS[s];
-                    
-                    // Check if Sector is bleeding red
                     let isSectorOverdue = HORIZONS.some(h => state.missions[s][h].some(m => m.overdue && !m.captured));
                     
                     const box = document.createElement('div'); 
@@ -508,6 +513,7 @@
                 
                 orbHtml += `
                     <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
+                        <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT PARAMETERS</button>
                         <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
                     </div>
                 </div>`;
@@ -518,11 +524,42 @@
 
         // === TEMPORAL DATA CONSOLE LOGIC (MODAL) === //
 
-        function openTaskModal() {
+        function openTaskModal(horizonContext = null) {
+            editModeId = null;
+            defaultHorizonContext = horizonContext || 'TRAJECTORY';
+            
             document.getElementById('modal-task-name').value = '';
             document.getElementById('modal-task-date').value = '';
-            tempSubtasks = ['', '', '']; // Default 3
+            document.getElementById('modal-header-text').innerText = 'TARGET INITIALIZATION';
+            document.getElementById('modal-save-btn').innerText = 'LOCK TARGET';
+            
+            tempSubtasks = ['', '', '']; 
             renderModalSubtasks();
+            document.getElementById('task-modal-overlay').style.display = 'flex';
+        }
+
+        function openEditModal(id) {
+            editModeId = id;
+            let targetMission = null;
+            let targetHorizon = null;
+            
+            HORIZONS.forEach(h => {
+                const found = state.missions[state.sector][h].find(m => m.id === id);
+                if (found) { targetMission = found; targetHorizon = h; }
+            });
+            
+            if (!targetMission) return;
+            
+            defaultHorizonContext = targetHorizon;
+            document.getElementById('modal-task-name').value = targetMission.name;
+            document.getElementById('modal-task-date').value = targetMission.dueDate || '';
+            document.getElementById('modal-header-text').innerText = 'MODIFY TARGET PARAMETERS';
+            document.getElementById('modal-save-btn').innerText = 'UPDATE TARGET';
+            
+            tempSubtasks = targetMission.subs.map(s => s.t);
+            if(tempSubtasks.length === 0) tempSubtasks = [''];
+            renderModalSubtasks();
+            
             document.getElementById('task-modal-overlay').style.display = 'flex';
         }
 
@@ -574,36 +611,70 @@
             
             if (!name) { alert("Target designation required."); return; }
 
-            const validSubs = tempSubtasks.filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false}));
+            let validSubs = [];
+            let oldMission = null;
+            let oldHorizon = null;
             
-            let targetHorizon = state.horizon;
-            let isOverdue = false;
-
-            // Auto-calculate horizon based on date during creation
-            if (dateStr) {
-                const today = new Date(); today.setHours(0,0,0,0);
-                const inOneWeek = new Date(today); inOneWeek.setDate(today.getDate() + 7);
-                const dDate = new Date(dateStr + 'T00:00:00');
-                
-                if (dDate < today) isOverdue = true;
-                if (dDate <= inOneWeek) targetHorizon = 'IMMINENT';
+            if (editModeId) {
+                HORIZONS.forEach(h => {
+                    const found = state.missions[state.sector][h].find(m => m.id === editModeId);
+                    if (found) { oldMission = found; oldHorizon = h; }
+                });
             }
 
-            const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
-            
-            state.missions[state.sector][targetHorizon].push({ 
-                id: Date.now(), 
-                name: name, 
-                subs: validSubs, 
-                x: coords.x, 
-                y: coords.y, 
-                captured: false, 
-                overdue: isOverdue,
-                dueDate: dateStr || null
+            tempSubtasks.forEach(t => {
+                let text = t.trim();
+                if(text !== "") {
+                    let isChecked = false;
+                    if (oldMission) {
+                        let existing = oldMission.subs.find(s => s.t === text);
+                        if (existing) isChecked = existing.c;
+                    }
+                    validSubs.push({t: text, c: isChecked});
+                }
             });
+            
+            const targetHorizon = getHorizonFromDate(dateStr, defaultHorizonContext);
+
+            if (editModeId && oldMission) {
+                // Remove from old location
+                state.missions[state.sector][oldHorizon] = state.missions[state.sector][oldHorizon].filter(m => m.id !== editModeId);
+                
+                oldMission.name = name;
+                oldMission.dueDate = dateStr || null;
+                oldMission.subs = validSubs;
+                
+                // Assign new coordinates if it crossed a gravitational boundary
+                if (oldHorizon !== targetHorizon) {
+                    const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
+                    oldMission.x = coords.x;
+                    oldMission.y = coords.y;
+                }
+                
+                state.missions[state.sector][targetHorizon].push(oldMission);
+            } else {
+                const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
+                state.missions[state.sector][targetHorizon].push({ 
+                    id: Date.now(), 
+                    name: name, 
+                    subs: validSubs, 
+                    x: coords.x, 
+                    y: coords.y, 
+                    captured: false, 
+                    overdue: false,
+                    dueDate: dateStr || null
+                });
+            }
 
             save();
             closeTaskModal();
+            processTimeMechanics(); 
+            
+            // Stay with the target if we are in orbit
+            if (state.level === 4) {
+                state.horizon = targetHorizon; 
+            }
+            
             render();
         }
 
