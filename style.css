@@ -147,12 +147,13 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 }
 
 @keyframes drift-decay { 
-    0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } 
-    25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); } 
-    50% { transform: translate(-50%, -50%) rotate(-1deg) translate(-5px, -3px); } 
-    75% { transform: translate(-50%, -50%) rotate(3deg) translate(6px, -2px); } 
-    100% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } 
+    0% { transform: rotate(0deg) translate(0px, 0px); } 
+    25% { transform: rotate(2deg) translate(2px, 3px); } 
+    50% { transform: rotate(-1deg) translate(-2px, -2px); } 
+    75% { transform: rotate(3deg) translate(3px, -1px); } 
+    100% { transform: rotate(0deg) translate(0px, 0px); } 
 }
+/* Note: The transform in the animation no longer needs translate(-50%, -50%) */
 .star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
 
 /* FIX: Decaying nodes now PULSE RED */
