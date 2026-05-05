@@ -593,11 +593,34 @@ function closeSectorModal() { document.getElementById('sector-modal-overlay').st
 function renderSectorEditList() {
     const list = document.getElementById('sector-edit-list'), addBtn = document.getElementById('sector-add-btn');
     if(!list) return; list.innerHTML = '';
+    
     editingSectors.forEach((s, i) => {
-        const row = document.createElement('div'); row.className = 'subtask-row';
-        row.innerHTML = `<div style="position: relative; width: 24px; height: 36px; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66; background: rgba(0,0,0,0.5);"><input type="color" value="${s.color}" onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" style="position: absolute; width: 100%; height: 100%; opacity: 0;"><div style="position: absolute; bottom: 4px; left: 4px; right: 4px; height: 8px; background: ${s.color};"></div></div><input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value" style="flex: 1;"><button class="subtask-remove-minimal" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();">−</button>`;
+        const row = document.createElement('div'); 
+        row.className = 'subtask-row';
+        row.style.marginBottom = '12px';
+        
+        // Refined Neon Color Graphic: 80% Fill with Symmetrical Margins
+        const colorGraphic = `
+            <div style="position: relative; width: 24px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);">
+                <input type="color" value="${s.color}" 
+                    onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <div style="position: absolute; top: 8px; bottom: 4px; left: 4px; right: 4px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div>
+            </div>
+        `;
+        
+        row.innerHTML = `
+            ${colorGraphic}
+            <input type="text" class="modal-input" value="${s.name}" 
+                oninput="editingSectors[${i}].name = this.value" 
+                style="flex: 1; height: 36px;">
+            <button class="subtask-remove-minimal" 
+                onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" 
+                style="height: 36px; width: 36px; margin: 0;">−</button>
+        `;
         list.appendChild(row);
     });
+    
     if(addBtn) addBtn.style.display = editingSectors.length >= 9 ? 'none' : 'block';
 }
 
