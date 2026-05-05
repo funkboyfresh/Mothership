@@ -391,15 +391,11 @@ function renderLevel3(container, footer) {
     if (activeTarget) {
         const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
-        
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        // Points re-oriented so the "nose" follows the circle edge tangentially
         ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
         ship.setAttribute("fill", "var(--accent)");
-        ship.setAttribute("filter", `drop-shadow(0 0 12px ${accentColor})`);
-        // The rotate(90deg) in CSS combined with this math keeps it parallel to the path
+        ship.setAttribute("filter", `drop-shadow(0 0 15px ${accentColor})`); // Boosted ship glow to match node
         ship.style.cssText = `transform-origin: 0 0; animation: ship-patrol 5s linear infinite;`;
-        
         orbitalGroup.appendChild(ship);
         svg.appendChild(orbitalGroup);
     }
@@ -409,7 +405,7 @@ function renderLevel3(container, footer) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
             line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.2"); svg.appendChild(line);
         }
     }
     
@@ -421,22 +417,46 @@ function renderLevel3(container, footer) {
         star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
-        // HIERARCHY GLOW & OPACITY DECAY
+        // EXTREME HIERARCHY MATH
+        // Node 1: 130% Brightness
+        // Node 2: 65% Brightness (35% reduction from Node 1)
+        // Final Node: 20% Brightness (80% reduction from Node 1)
         const totalMissions = missions.length;
-        const decayStep = totalMissions > 1 ? 35 / (totalMissions - 1) : 0; 
-        const opacityValue = (100 - (i * (decayStep || 10))) / 100;
-        const glowSize = 18 - (i * 3); 
+        let opacityValue;
+        let glowSize;
+
+        if (i === 0) {
+            opacityValue = 1.0; // Base for hex conversion, CSS filter will boost
+            glowSize = 25;       // Maximum Bloom
+        } else {
+            // Map the range [1 to last_index] to [65% to 20%]
+            const decayProgress = (i - 1) / (totalMissions - 1 || 1);
+            opacityValue = 0.65 - (decayProgress * 0.45);
+            glowSize = 12 - (decayProgress * 8); 
+        }
 
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        // Apply spectral decay to the box-shadow and border
-        node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${Math.floor(opacityValue * 255).toString(16).padStart(2, '0')}`;
-        node.style.borderColor = `${accentColor}${Math.floor((opacityValue + 0.1) * 255).toString(16).padStart(2, '0')}`;
+        
+        // Apply logic to the styling
+        const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
+        node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
+        node.style.borderColor = `${accentColor}${hexOpacity}`;
+        
+        // Pushing Node 1 to 130% brightness via CSS filter
+        if (i === 0) {
+            node.style.filter = 'brightness(1.3) saturate(1.2)';
+            node.style.borderWidth = '3px'; // Slightly thicker for the lead node
+        } else {
+            node.style.filter = `brightness(${opacityValue + 0.3})`;
+        }
+
         node.textContent = i + 1;
         
         const label = document.createElement('div');
         label.className = 'star-label';
-        label.style.opacity = opacityValue; // Label fades with priority
+        label.style.opacity = opacityValue;
+        label.style.fontWeight = i === 0 ? '700' : '300';
         label.textContent = m.name; 
 
         star.appendChild(node);
