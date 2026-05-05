@@ -355,59 +355,121 @@ function renderLevel3(container, footer) {
         footer.innerHTML = `<button class="zoom-btn" style="flex:1; font-size: 0.8rem;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>
             <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()"><span style="font-size: 1.6rem; line-height: 0;">^</span> LOG</button>`; 
     }
+    
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
+    svg.id = "constellation-svg"; container.appendChild(svg);
+    
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
+    // --- DATA SCRUB & RATIO ENFORCEMENT ---
     const now = Date.now();
     const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+    
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
+    // Wire Constraint: Max 6 Active, Max 2 Captured (8 Total)
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
     const wireTasks = [...wireCaptured, ...wireActive];
+    
+    // Debris: Anything captured but older than 1 week or pushed off the 2-slot wire limit
     const debrisMissions = missions.filter(m => m.captured && !wireCaptured.includes(m)).slice(-20);
-    const priorityTasks = wireActive; 
 
+    // --- HUD REPOSITIONING ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
-    if (priorityTasks.length > 0) {
-        const priorityContainer = document.createElement('div'); priorityContainer.className = 'priority-dropdown-container';
+    // Dropdown: Purely active tasks
+    if (wireActive.length > 0) {
+        const priorityContainer = document.createElement('div');
+        priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-        priorityContainer.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span></button>
-            <div class="priority-list">${priorityTasks.map((m, i) => `<div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
-                <span class="p-num">${missions.indexOf(m) + 1}</span><span class="p-status">${i === 0 ? '[ MISSION CRITICAL ]' : ''}</span><span class="p-text">${m.name}</span></div>`).join('')}</div>`;
+        priorityContainer.innerHTML = `
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
+            </button>
+            <div class="priority-list">
+                ${wireActive.map((m, i) => `
+                    <div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" 
+                         style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                        <span class="p-num">${missions.indexOf(m) + 1}</span>
+                        <span class="p-status">${i === 0 ? '[ MISSION CRITICAL ]' : ''}</span>
+                        <span class="p-text">${m.name}</span>
+                    </div>`).join('')}
+            </div>`;
         container.appendChild(priorityContainer);
     }
+
+    // --- VECTOR LINES ---
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", wireTasks[i].x + "%"); line.setAttribute("y1", wireTasks[i].y + "%");
             line.setAttribute("x2", wireTasks[i+1].x + "%"); line.setAttribute("y2", wireTasks[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45"); svg.appendChild(line);
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); 
+            line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45");
+            svg.appendChild(line);
         }
     }
+    
+    // --- NODE RENDERING ---
     [...debrisMissions, ...wireTasks].forEach((m) => {
-        const star = document.createElement('div'); const isDebris = debrisMissions.includes(m), isCapturedOnWire = wireCaptured.includes(m);
+        const star = document.createElement('div'); 
+        const isDebris = debrisMissions.includes(m);
+        const isCapturedOnWire = wireCaptured.includes(m);
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
-        if (isDebris && !m.scale) { m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8; m.scale = 0.3 + (Math.random()*0.4); }
-        star.style.left = (m.x + (m.driftX || 0)) + '%'; star.style.top = (m.y + (m.driftY || 0)) + '%';
-        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
-        const node = document.createElement('div'); node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        if (isDebris) { node.style.transform = `scale(${m.scale})`; node.style.opacity = '0.45'; node.style.boxShadow = 'none'; }
-        else {
-            const isCritical = m.id === wireActive[0]?.id, op = isCritical ? 1.0 : 0.8, hex = Math.floor(op * 255).toString(16).padStart(2, '0');
-            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`; node.style.borderColor = `${accentColor}${hex}`;
-            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`; if (isCritical) node.style.borderWidth = '3px';
+        
+        if (isDebris && !m.scale) {
+            m.driftX = (Math.random() - 0.5) * 8; m.driftY = (Math.random() - 0.5) * 8;
+            m.scale = 0.3 + (Math.random() * 0.4); 
+        }
+
+        star.style.left = (m.x + (m.driftX || 0)) + '%'; 
+        star.style.top = (m.y + (m.driftY || 0)) + '%';
+
+        // RULE: Captured nodes and debris are NOT clickable
+        if (!m.captured) {
+            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+            star.style.cursor = 'pointer';
+        } else {
+            star.style.pointerEvents = 'none';
+        }
+        
+        const node = document.createElement('div');
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        
+        if (isDebris) {
+            node.style.transform = `scale(${m.scale})`;
+            node.style.opacity = '0.45'; 
+            node.style.boxShadow = 'none';
+        } else if (isCapturedOnWire) {
+            // RESTORED: Captured nodes on wire use 45% opacity and minimal glow
+            node.style.opacity = '0.45';
+            node.style.boxShadow = `0 0 5px ${accentColor}66`;
+            node.textContent = missions.indexOf(m) + 1;
+        } else {
+            // Active Node Logic
+            const isCritical = m.id === wireActive[0]?.id;
+            const op = isCritical ? 1.0 : 0.8;
+            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
+            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`;
+            node.style.borderColor = `${accentColor}${hex}`;
+            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
+            if (isCritical) node.style.borderWidth = '3px';
             node.textContent = missions.indexOf(m) + 1;
         }
-        const label = document.createElement('div'); label.className = 'star-label'; label.style.display = isDebris ? 'none' : 'block';
-        label.style.opacity = isCapturedOnWire ? '0.45' : '1'; label.textContent = m.name; 
+
+        const label = document.createElement('div');
+        label.className = 'star-label';
+        label.style.display = isDebris ? 'none' : 'block';
+        label.style.opacity = isCapturedOnWire ? '0.45' : '1';
+        label.textContent = m.name; 
+
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 }
