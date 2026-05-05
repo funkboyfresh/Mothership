@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V7.2</title>
+    <title>Mission Control V8.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -14,11 +14,15 @@
             --accent: #00e5ff; 
             --accent-glow: rgba(0, 229, 255, 0.6); 
             --captured: var(--accent); 
-            --thrust: #ffffff; 
+            --thrust: #ff2a2a; 
         }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
         #app { display: flex; flex-direction: column; height: 100%; }
-        #hud { padding: 15px; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow); transition: color 0.5s, text-shadow 0.5s; }
+        
+        #hud { padding: 15px; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow); transition: color 0.5s, text-shadow 0.5s; z-index: 200; position: relative; }
+        .hud-warning { color: var(--thrust) !important; text-shadow: 0 0 15px var(--thrust) !important; animation: flash-warning 1.5s infinite; }
+        @keyframes flash-warning { 0%, 100% { background: rgba(255, 42, 42, 0.1); } 50% { background: rgba(0, 0, 0, 0.8); } }
+
         #nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; min-height: 24px; align-items: center; z-index: 100; }
         .breadcrumb { font-size: 0.6rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 8px var(--accent-glow); }
         .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 4px 12px; border-radius: 2px; cursor: pointer; background: rgba(0,0,0,0.5); color: var(--accent); text-transform: uppercase; box-shadow: 0 0 10px var(--accent-glow); transition: all 0.3s; }
@@ -36,12 +40,29 @@
         .planet { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; position: relative; cursor: pointer; }
         .mini-ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.2); pointer-events: none; }
 
-        .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.4); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; }
+        .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
         .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
         .ring-label { position: absolute; top: 10px; text-shadow: 0 0 8px var(--accent); }
 
+        /* Particle System */
+        .particle { position: absolute; border-radius: 50%; background: var(--accent); box-shadow: 0 0 5px var(--accent-glow); pointer-events: none; animation: float-particle linear infinite alternate; }
+        @keyframes float-particle { 0% { transform: scale(0.8) translate(0, 0); opacity: 0.2; } 100% { transform: scale(1.2) translate(10px, -10px); opacity: 0.8; } }
+
         #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-        .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; }
+        .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; transition: left 0.3s, top 0.3s; }
+        
+        /* Orbital Decay Physics */
+        @keyframes drift-decay {
+            0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
+            25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); }
+            50% { transform: translate(-50%, -50%) rotate(-1deg) translate(-5px, -3px); }
+            75% { transform: translate(-50%, -50%) rotate(3deg) translate(6px, -2px); }
+            100% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
+        }
+        .star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
+        .star-node.decaying { border-color: var(--thrust); box-shadow: 0 0 20px var(--thrust); color: var(--thrust); }
+        .star-label.decaying { color: var(--thrust); text-shadow: 0 0 5px rgba(255, 42, 42, 0.8); }
+
         .star-node { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; box-shadow: 0 0 15px var(--accent-glow); }
         .star-node.captured { background: var(--accent); color: var(--bg); }
         .star-label { font-size: 0.6rem; margin-top: 6px; text-align: center; white-space: nowrap; font-weight: 300; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
@@ -98,7 +119,7 @@
 
     <script>
         const SECTORS = ['CAREER', 'FINANCIAL', 'PERSONAL', 'HEALTH'];
-        const HORIZONS = ['FUTURE', 'SOON', 'NOW'];
+        const HORIZONS = ['FAR', 'NEAR', 'NOW'];
         const SECTOR_COLORS = { 'CAREER': '#00e5ff', 'FINANCIAL': '#ffd700', 'PERSONAL': '#ff00ff', 'HEALTH': '#00ff88' };
 
         let state = {
@@ -112,7 +133,6 @@
             const hex = state.sector ? SECTOR_COLORS[state.sector] : '#00e5ff';
             document.documentElement.style.setProperty('--accent', hex);
             
-            // Generate glowing rgba version
             let c;
             if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
                 c= hex.substring(1).split('');
@@ -126,12 +146,18 @@
         function ensurePath() {
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
+                
+                // MIGRATION PROTOCOL: Shift old tags to new system
+                if (state.missions[s]['SOON']) { state.missions[s]['NEAR'] = state.missions[s]['SOON']; delete state.missions[s]['SOON']; }
+                if (state.missions[s]['FUTURE']) { state.missions[s]['FAR'] = state.missions[s]['FUTURE']; delete state.missions[s]['FUTURE']; }
+
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
                     state.missions[s][h].forEach(m => {
                         if (m.x === undefined) m.x = Math.floor(Math.random() * 70) + 15;
                         if (m.y === undefined) m.y = Math.floor(Math.random() * 60) + 20;
                         if (m.captured === undefined) m.captured = false;
+                        if (m.overdue === undefined) m.overdue = false; // Initialize decay state
                     });
                 });
             });
@@ -147,8 +173,32 @@
             container.classList.add('warp-transition');
         }
 
+        function checkDecayStatus() {
+            let hasDecay = false;
+            Object.keys(state.missions).forEach(s => {
+                HORIZONS.forEach(h => {
+                    if(state.missions[s][h]) {
+                        state.missions[s][h].forEach(m => {
+                            if (m.overdue && !m.captured) hasDecay = true;
+                        });
+                    }
+                });
+            });
+            const hud = document.getElementById('hud');
+            if (hasDecay) {
+                hud.innerText = "WARNING: ORBITAL DECAY DETECTED";
+                hud.classList.add('hud-warning');
+            } else {
+                hud.innerText = "SYSTEM ARCHITECTURE NOMINAL";
+                hud.classList.remove('hud-warning');
+            }
+        }
+
         function render() {
             updateAccentColor();
+            ensurePath();
+            checkDecayStatus();
+            
             const container = document.getElementById('view-container');
             const zoomBtn = document.getElementById('zoom-out');
             const bread = document.getElementById('breadcrumb');
@@ -186,9 +236,31 @@
                 center.style.position = 'relative'; center.style.width = '280px'; center.style.height = '280px';
                 center.style.display = 'flex'; center.style.alignItems = 'center'; center.style.justifyContent = 'center'; center.style.marginTop = '20px';
                 
+                // Procedural Radial Gradient Glow
+                center.style.background = 'radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%)';
+                center.style.borderRadius = '50%';
+
+                // Particle Engine
+                const particleSystem = document.createElement('div');
+                particleSystem.style.position = 'absolute'; particleSystem.style.width = '100%'; particleSystem.style.height = '100%'; particleSystem.style.pointerEvents = 'none'; particleSystem.style.zIndex = '1';
+                for(let i=0; i<80; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    const radius = Math.pow(Math.random(), 2) * 160; 
+                    const angle = Math.random() * Math.PI * 2;
+                    const x = 140 + radius * Math.cos(angle); 
+                    const y = 140 + radius * Math.sin(angle);
+                    const size = Math.random() * 2 + 1;
+                    p.style.width = size + 'px'; p.style.height = size + 'px';
+                    p.style.left = x + 'px'; p.style.top = y + 'px';
+                    p.style.animationDuration = (Math.random() * 3 + 1.5) + 's';
+                    p.style.animationDelay = (Math.random() * 2) + 's';
+                    particleSystem.appendChild(p);
+                }
+                center.appendChild(particleSystem);
+                
                 const h_data = [ 
-                    { id: 'FUTURE', size: 280, speed: 60 }, 
-                    { id: 'SOON', size: 190, speed: 30 }, 
+                    { id: 'FAR', size: 280, speed: 60 }, 
+                    { id: 'NEAR', size: 190, speed: 30 }, 
                     { id: 'NOW', size: 100, speed: 15 } 
                 ];
                 
@@ -204,13 +276,9 @@
                     label.innerText = d.id;
                     wrapper.appendChild(label);
 
-                    // Add rotating starfield for this ring
                     const starField = document.createElement('div');
-                    starField.style.position = 'absolute';
-                    starField.style.width = '100%';
-                    starField.style.height = '100%';
-                    starField.style.animation = `orbit-spin ${d.speed}s linear infinite`;
-                    starField.style.pointerEvents = 'none';
+                    starField.style.position = 'absolute'; starField.style.width = '100%'; starField.style.height = '100%';
+                    starField.style.animation = `orbit-spin ${d.speed}s linear infinite`; starField.style.pointerEvents = 'none';
 
                     const missions = state.missions[state.sector][d.id] || [];
                     missions.forEach((m, i) => {
@@ -220,13 +288,11 @@
                         const y = radius + radius * Math.sin(angle);
                         
                         const dot = document.createElement('div');
-                        dot.style.position = 'absolute';
-                        dot.style.width = '6px'; dot.style.height = '6px';
-                        dot.style.backgroundColor = 'var(--accent)';
+                        dot.style.position = 'absolute'; dot.style.width = '6px'; dot.style.height = '6px';
+                        dot.style.backgroundColor = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--accent)';
                         dot.style.borderRadius = '50%';
-                        dot.style.boxShadow = '0 0 8px var(--accent-glow)';
-                        dot.style.left = `calc(${x}px - 3px)`;
-                        dot.style.top = `calc(${y}px - 3px)`;
+                        dot.style.boxShadow = m.overdue && !m.captured ? '0 0 10px var(--thrust)' : '0 0 8px var(--accent-glow)';
+                        dot.style.left = `calc(${x}px - 3px)`; dot.style.top = `calc(${y}px - 3px)`;
                         starField.appendChild(dot);
                     });
 
@@ -243,9 +309,11 @@
                 } else {
                     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
                     missions.forEach((m, i) => {
-                        const star = document.createElement('div'); star.className = 'star-container';
+                        const decayClass = m.overdue && !m.captured ? 'decaying' : '';
+                        const star = document.createElement('div'); 
+                        star.className = `star-container ${decayClass}`;
                         star.style.left = m.x + '%'; star.style.top = m.y + '%'; star.onclick = () => selectMission(m.id);
-                        star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>${m.captured ? '<div class="captured-banner">TARGET ACQUIRED</div>' : ''}`;
+                        star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''} ${decayClass}">${i+1}</div><div class="star-label ${decayClass}">${m.name}</div>${m.captured ? '<div class="captured-banner">TARGET ACQUIRED</div>' : ''}`;
                         container.appendChild(star);
                         if (i < missions.length - 1) {
                             const next = missions[i+1];
@@ -267,10 +335,11 @@
                 const coreClass = ignitionFlare ? 'flare-active' : '';
                 ignitionFlare = false;
                 const coreFill = allDone ? 'var(--accent)' : 'var(--bg)';
+                const titleColor = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
                 
                 let orbHtml = `<div class="target-lock">
-                    <div class="view-level-title">LEVEL 4 // ${m.captured ? 'MISSION LOG' : 'ACTIVE TARGET'}</div>
-                    <h2 style="color:var(--text); font-size: 1.2rem; margin-top: 0; margin-bottom: 15px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
+                    <div class="view-level-title" style="color: ${m.overdue && !m.captured ? 'var(--thrust)' : ''}">LEVEL 4 // ${m.captured ? 'MISSION LOG' : (m.overdue ? 'DECAYING TARGET' : 'ACTIVE TARGET')}</div>
+                    <h2 style="color:${titleColor}; font-size: 1.2rem; margin-top: 0; margin-bottom: 15px; z-index:20; font-weight:400; text-shadow: 0 0 10px rgba(255,255,255,0.2);">${m.name}</h2>
                     
                     <div class="progress-wrapper">
                         <div class="progress-bar-container">
@@ -339,8 +408,8 @@
                 
                 orbHtml += `
                     <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
-                        <button class="mod-btn" onclick="editMission(${m.id}, event, true)">PARAMETERS</button>
-                        <button class="mod-btn" onclick="editMission(${m.id}, event, false)">RENAME</button>
+                        <button class="mod-btn" onclick="editMission(${m.id}, event, 'sub')">PARAMETERS</button>
+                        <button class="mod-btn" onclick="editMission(${m.id}, event, 'status')" style="${m.overdue && !m.captured ? 'color: var(--thrust); border-color: var(--thrust); box-shadow: 0 0 8px rgba(255,42,42,0.4);' : ''}">STATUS</button>
                         <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
                     </div>
                 </div>`;
@@ -355,7 +424,7 @@
             const subs = subsInput ? subsInput.split(',').filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false})) : [];
             const x = Math.floor(Math.random() * 70) + 15;
             const y = Math.floor(Math.random() * 50) + 25;
-            state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs, x, y, captured: false });
+            state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs, x, y, captured: false, overdue: false });
             save(); render();
         }
 
@@ -373,13 +442,15 @@
         function completeMission() {
             const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
             m.captured = true;
+            m.overdue = false; // clear decay on capture
             save(); state.level = 3; state.activeMissionId = null; render();
         }
         
-        function editMission(id, e, focusSub) {
+        function editMission(id, e, actionType) {
             if(e) e.stopPropagation();
             const m = state.missions[state.sector][state.horizon].find(x => x.id === id);
-            if(focusSub) {
+            
+            if(actionType === 'sub') {
                 const current = m.subs.map(s => s.t).join(', ');
                 const res = prompt("Modify Sub-missions:", current);
                 if(res !== null) {
@@ -389,9 +460,13 @@
                         return ex ? {t: ex.t, c: ex.c} : {t: n, c: false};
                     });
                 }
-            } else {
-                const res = prompt("Rename Mission:", m.name);
-                if(res) m.name = res;
+            } else if (actionType === 'status') {
+                const decayToggle = confirm("WARNING: Toggle Orbital Decay / Overdue Status?");
+                if (decayToggle) m.overdue = !m.overdue;
+                if (!decayToggle) {
+                    const res = prompt("Rename Mission:", m.name);
+                    if(res) m.name = res;
+                }
             }
             save(); render();
         }
@@ -411,7 +486,6 @@
             render(); 
         }
 
-        ensurePath();
         render();
     </script>
 </body>
