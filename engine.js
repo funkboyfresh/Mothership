@@ -131,61 +131,33 @@ function doLinesIntersect(p1, q1, p2, q2) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    // We map to the 8-node wire limit (6 active + 2 completed)
-    const slotIndex = existingMissions.length % 8;
-    
-    // Define an 8-quadrant snaking path (4 columns, 2 rows)
-    const columns = 4;
-    const col = slotIndex % columns;
-    const row = Math.floor(slotIndex / columns);
+    // Determine which of the 8 wire slots this mission belongs to
+    const slotIndex = (existingMissions.length) % 8;
 
-    // Grid math to keep nodes separated and away from HUD edges
-    // Cell width/height is roughly 20% of the screen
+    // Fixed Snaking Grid (4 columns, 2 rows)
+    // Sequence: 
+    // Top Row: 0 -> 1 -> 2 -> 3
+    // Bottom Row: 7 <- 6 <- 5 <- 4
+    const gridMap = [
+        { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 }, { col: 3, row: 0 }, // Top Left to Right
+        { col: 3, row: 1 }, { col: 2, row: 1 }, { col: 1, row: 1 }, { col: 0, row: 1 }  // Bottom Right to Left
+    ];
+
+    const targetCell = gridMap[slotIndex];
+
+    // Partition 70% of the screen into the grid
     const cellWidth = 18; 
     const cellHeight = 25;
     
-    // baseX and baseY define the top-left of the reserved quadrant
-    const baseX = 12 + (col * 20); 
-    const baseY = 25 + (row * 30);
+    // baseX and baseY define the strict quadrant center
+    const baseX = 15 + (targetCell.col * 20); 
+    const baseY = 25 + (targetCell.row * 35);
 
-    let x, y, safe, attempts = 0;
-    const minDistance = 18; 
+    // Apply a 'Soft Jitter' (±3%) so it doesn't look like a sterile spreadsheet
+    const x = baseX + (Math.random() * 6 - 3);
+    const y = baseY + (Math.random() * 6 - 3);
 
-    do {
-        // Jitter the position slightly within the quadrant for a "natural" look
-        x = baseX + (Math.random() * (cellWidth - 5));
-        y = baseY + (Math.random() * (cellHeight - 5));
-        
-        safe = true;
-        const newNode = { x, y };
-
-        // Check against all missions to avoid overlapping background debris
-        for (let m of existingMissions) {
-            if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x;
-            let dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
-                safe = false; 
-                break; 
-            }
-        }
-
-        // Wire-Crossing Guard: Ensure the new path segment doesn't cross the existing wire
-        if (safe && existingMissions.length > 0) {
-            const wirePath = existingMissions.slice(-8); // Check only the current wire view
-            const lastNode = wirePath[wirePath.length - 1];
-            for (let i = 0; i < wirePath.length - 1; i++) {
-                if (doLinesIntersect(lastNode, newNode, wirePath[i], wirePath[i+1])) {
-                    safe = false; 
-                    break;
-                }
-            }
-        }
-        
-        attempts++;
-    } while (!safe && attempts < 100);
-
-    return {x, y};
+    return { x, y };
 }
 
 function getHorizonFromDate(dateStr, fallbackHorizon) {
@@ -386,52 +358,44 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- DATA SCRUB & RATIO ENFORCEMENT ---
+    // --- DATA SCRUB ---
     const now = Date.now();
     const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
     
-    // 1. Filter Pools
     const activePool = missions.filter(m => !m.captured);
     const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
     
-    // 2. Enforce Limits (6 Active, 2 Completed)
+    // Wire Constraint: Max 6 Active, Max 2 Completed (8 Total)
     const wireActive = activePool.slice(0, 6);
     const wireCaptured = capturedPool.slice(-2);
+    const wireTasks = [...wireCaptured, ...wireActive];
     
-    // 3. Assemble Wire & Priorities
-    const wireTasks = [...wireCaptured, ...wireActive]; // Total 8 Max
-    const priorityTasks = wireActive; // Purely active tasks for the HUD
-
-    // 4. Handle Debris
+    // Debris: Anything captured but not on the 2-slot wire limit
     const debrisMissions = missions.filter(m => m.captured && !wireCaptured.includes(m)).slice(-20);
 
-    // --- REPOSITIONED HEADER ---
+    // --- HUD REPOSITIONING ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
-    // --- MISSION PRIORITIES (Active Tasks Only) ---
-    if (priorityTasks.length > 0) {
+    // Dropdown: Purely active tasks
+    if (wireActive.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-        
         priorityContainer.innerHTML = `
             <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES (${priorityTasks.length}/6) <span>v</span>
+                MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
             </button>
             <div class="priority-list">
-                ${priorityTasks.map((m, i) => {
-                    const isCritical = (i === 0); // First active task is critical
-                    return `
-                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''}" 
-                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                ${wireActive.map((m, i) => `
+                    <div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" 
+                         style="${i === 0 ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${missions.indexOf(m) + 1}</span>
-                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
+                        <span class="p-status">${i === 0 ? '[ MISSION CRITICAL ]' : ''}</span>
                         <span class="p-text">${m.name}</span>
-                    </div>`;
-                }).join('')}
+                    </div>`).join('')}
             </div>`;
         container.appendChild(priorityContainer);
     }
@@ -453,12 +417,10 @@ function renderLevel3(container, footer) {
         const star = document.createElement('div'); 
         const isDebris = debrisMissions.includes(m);
         const isCapturedOnWire = wireCaptured.includes(m);
-        
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
         
         if (isDebris && !m.scale) {
-            m.driftX = (Math.random() - 0.5) * 8;
-            m.driftY = (Math.random() - 0.5) * 8;
+            m.driftX = (Math.random() - 0.5) * 8; m.driftY = (Math.random() - 0.5) * 8;
             m.scale = 0.3 + (Math.random() * 0.4); 
         }
 
@@ -473,21 +435,15 @@ function renderLevel3(container, footer) {
             node.style.transform = `scale(${m.scale})`;
             node.style.opacity = '0.45'; 
             node.style.boxShadow = 'none';
-        } else if (isCapturedOnWire) {
-            node.style.opacity = '0.45';
-            node.style.boxShadow = `0 0 5px ${accentColor}66`;
-            node.textContent = missions.indexOf(m) + 1;
         } else {
             const isCritical = m.id === wireActive[0]?.id;
-            const opacityValue = isCritical ? 1.0 : 0.8;
-            const glowSize = isCritical ? 20 : 15;
-            const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
-            
-            node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
-            node.style.borderColor = `${accentColor}${hexOpacity}`;
+            const op = isCritical ? 1.0 : 0.8;
+            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
+            node.style.boxShadow = `0 0 ${isCritical ? 20 : 15}px ${accentColor}${hex}`;
+            node.style.borderColor = `${accentColor}${hex}`;
+            node.style.opacity = op;
             node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
             if (isCritical) node.style.borderWidth = '3px';
-            
             node.textContent = missions.indexOf(m) + 1;
         }
 
