@@ -321,7 +321,8 @@ function renderLevel4(container, footer) {
     const allDone = m.subs.length > 0 && completed === m.subs.length;
     
     const lock = document.createElement('div');
-    lock.className = 'target-lock warp-transition';
+    const isCritical = m.overdue && !m.captured;
+    lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`;
     
     const titleWrap = document.createElement('div');
     titleWrap.className = 'view-level-title';
