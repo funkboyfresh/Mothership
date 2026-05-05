@@ -370,7 +370,6 @@ function renderLevel2(container, footer, activeSector) {
 }
 
 function renderLevel3(container, footer) {
-    // FIX: Restoring the "Initialize Target" logic to the footer
     if(footer) { 
         footer.style.display = 'flex'; 
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; 
@@ -387,7 +386,6 @@ function renderLevel3(container, footer) {
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
-    
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
     
     if (activeTarget) {
@@ -395,9 +393,11 @@ function renderLevel3(container, footer) {
         orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
         
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        // Points re-oriented so the "nose" follows the circle edge tangentially
         ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
         ship.setAttribute("fill", "var(--accent)");
         ship.setAttribute("filter", `drop-shadow(0 0 12px ${accentColor})`);
+        // The rotate(90deg) in CSS combined with this math keeps it parallel to the path
         ship.style.cssText = `transform-origin: 0 0; animation: ship-patrol 5s linear infinite;`;
         
         orbitalGroup.appendChild(ship);
@@ -407,15 +407,9 @@ function renderLevel3(container, footer) {
     if (missions.length > 1) {
         for (let i = 0; i < missions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", missions[i].x + "%"); 
-            line.setAttribute("y1", missions[i].y + "%");
-            line.setAttribute("x2", missions[i+1].x + "%"); 
-            line.setAttribute("y2", missions[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); 
-            line.setAttribute("stroke-width", "1"); 
-            line.setAttribute("stroke-dasharray", "5,5"); 
-            line.setAttribute("opacity", "0.4"); 
-            svg.appendChild(line);
+            line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
+            line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
         }
     }
     
@@ -427,20 +421,22 @@ function renderLevel3(container, footer) {
         star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
+        // HIERARCHY GLOW & OPACITY DECAY
         const totalMissions = missions.length;
-        const decayStep = totalMissions > 1 ? 25 / (totalMissions - 1) : 0; 
+        const decayStep = totalMissions > 1 ? 35 / (totalMissions - 1) : 0; 
         const opacityValue = (100 - (i * (decayStep || 10))) / 100;
-        const glowSize = 15 - (i * 2); 
+        const glowSize = 18 - (i * 3); 
 
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        // Apply spectral decay to the box-shadow and border
         node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${Math.floor(opacityValue * 255).toString(16).padStart(2, '0')}`;
-        node.style.borderColor = `${accentColor}${Math.floor((opacityValue + 0.2) * 255).toString(16).padStart(2, '0')}`;
+        node.style.borderColor = `${accentColor}${Math.floor((opacityValue + 0.1) * 255).toString(16).padStart(2, '0')}`;
         node.textContent = i + 1;
         
         const label = document.createElement('div');
         label.className = 'star-label';
-        label.style.opacity = opacityValue;
+        label.style.opacity = opacityValue; // Label fades with priority
         label.textContent = m.name; 
 
         star.appendChild(node);
@@ -466,22 +462,35 @@ function renderLevel4(container, footer) {
         <h2 style="color: ${isCritical ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>
     `;
 
+ // --- DYNAMIC MISSION PRIORITIES ---
     if (m.subs.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
+        
         const activeSector = state.sectors.find(s => s.id === state.sectorId);
         const accentColor = activeSector ? activeSector.color : 'var(--accent)';
+
+        // Find the next available objective
+        let criticalIndex = m.subs.findIndex(s => !s.c);
+        if (criticalIndex === -1) criticalIndex = 0; 
+
         priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>▼</span></button>
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                MISSION PRIORITIES <span>v</span>
+            </button>
             <div class="priority-list">
-                ${m.subs.map((s, i) => `
-                    <div class="priority-item ${i === 0 ? 'first-critical' : ''}" 
-                         style="${i === 0 ? `--sector-color: ${accentColor}33; --sector-border: ${accentColor};` : ''}">
+                ${m.subs.map((s, i) => {
+                    const isCritical = (i === criticalIndex && !s.c);
+                    return `
+                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" 
+                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${i + 1}</span>
-                        <span class="p-status">${i === 0 ? '[ CRITICAL ]' : ''}</span>
+                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
                         <span class="p-text">${s.t}</span>
-                    </div>`).join('')}
-            </div>`;
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
         lock.appendChild(priorityContainer);
     }
     
