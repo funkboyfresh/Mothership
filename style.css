@@ -369,9 +369,31 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     border-radius: 2px;
 }
 
+/* Patrol Animation: Updated for Tangential Orientation */
 @keyframes ship-patrol {
-    from { transform: rotate(0deg) translateY(-40px) rotate(0deg); }
-    to { transform: rotate(360deg) translateY(-40px) rotate(-360deg); }
+    from { transform: rotate(0deg) translateY(-40px) rotate(90deg); }
+    to { transform: rotate(360deg) translateY(-40px) rotate(90deg); }
+}
+
+/* Base Star Node Glow (Modified in engine via inline styles) */
+.star-node {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #ffffff;
+    transition: all 0.3s;
+    pointer-events: none;
+    left: -26px;
+    top: -26px;
+    /* Box-shadow will be overridden by inline JS for hierarchy */
 }
 
 /* Drag and Drop Visuals */
