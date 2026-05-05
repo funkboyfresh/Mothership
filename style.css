@@ -188,3 +188,25 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .success-btn { width: 100%; padding: 15px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
 .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; cursor: pointer; }
 .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
+
+/* Stage-Specific Pulses */
+@keyframes pulse-orange {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 153, 0, 0.4); filter: brightness(1); }
+    50% { box-shadow: 0 0 25px rgba(255, 153, 0, 0.8); filter: brightness(1.3); }
+}
+
+@keyframes pulse-yellow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); filter: brightness(1); }
+    50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7); filter: brightness(1.2); }
+}
+
+/* Apply pulses to the nodes within the warning containers */
+.star-container.warning-24 .star-node {
+    animation: pulse-orange 2s infinite ease-in-out;
+    border-color: #ff9900 !important;
+}
+
+.star-container.warning-48 .star-node {
+    animation: pulse-yellow 2s infinite ease-in-out;
+    border-color: #ffd700 !important;
+}
