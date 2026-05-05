@@ -9,10 +9,10 @@
     --thrust-glow: rgba(255, 42, 42, 0.2);
 }
 body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
-/* Ambient Action Stations Vignette */
+/* Ambient Action Stations pulse */
 @keyframes screen-vignette-pulse {
-    0%, 100% { box-shadow: inset 0 0 80px rgba(255, 42, 42, 0.05); }
-    50% { box-shadow: inset 0 0 150px rgba(255, 42, 42, 0.25); }
+    0%, 100% { box-shadow: inset 0 0 100px rgba(255, 42, 42, 0.25); }
+    50% { box-shadow: inset 0 0 250px rgba(255, 42, 42, 0.7); }
 }
 
 #app { display: flex; flex-direction: column; height: 100%; position: relative; }
@@ -110,9 +110,11 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 .star-container { 
     position: absolute; 
+    width: 52px;  /* strictly locked to node size */
+    height: 52px; /* strictly locked to node size */
     display: flex; 
-    flex-direction: column; 
     align-items: center; 
+    justify-content: center; 
     transform: translate(-50%, -50%); 
     cursor: pointer; 
     z-index: 10; 
@@ -185,7 +187,20 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .orb-text { font-size: 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; text-align: left; line-height: 1.2; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
 
 /* CRITICAL OVERRIDES (Overdue Tasks) */
-.target-lock.critical { animation: screen-vignette-pulse 6s infinite ease-in-out; }
+/* Clear the animation from the padded box */
+.target-lock.critical { 
+    /* No animation here to prevent the margin effect */ 
+}
+
+/* Deploy a fixed overlay that ignores padding and covers the full viewport */
+.target-lock.critical::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 999;
+    animation: screen-vignette-pulse 4s infinite ease-in-out;
+}
 
 .target-lock.critical .progress-fill { 
     background: repeating-linear-gradient(-45deg, var(--thrust), var(--thrust) 10px, #8b0000 10px, #8b0000 20px);
