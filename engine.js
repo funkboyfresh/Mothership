@@ -1,7 +1,6 @@
 const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
 const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
 
-// --- MASTER DEFAULTS ---
 const defaultSectors = [
     { id: 'sec_career', name: 'CAREER', color: '#00e5ff', seed: {x: 0.3, y: 0.3} },
     { id: 'sec_finance', name: 'FINANCIAL', color: '#ffd700', seed: {x: 0.7, y: 0.3} },
@@ -17,19 +16,12 @@ let state = {
     missions: JSON.parse(localStorage.getItem('missions')) || {}
 };
 
-// --- EMERGENCY FAILSAFE: Ensure sectors always exist ---
-if (!state.sectors || state.sectors.length === 0) {
-    state.sectors = [...defaultSectors];
-}
+if (!state.sectors || state.sectors.length === 0) state.sectors = [...defaultSectors];
 
-// --- UTILITY: HAPTICS ---
 function triggerHaptic(pattern) {
-    if (state.hapticsEnabled && "vibrate" in navigator) {
-        navigator.vibrate(pattern);
-    }
+    if (state.hapticsEnabled && "vibrate" in navigator) navigator.vibrate(pattern);
 }
 
-// --- UTILITY: ENERGY & HUD ---
 function updateHUD() {
     const levelEl = document.getElementById('hud-level');
     const energyEl = document.getElementById('hud-energy-readout');
@@ -59,7 +51,6 @@ function triggerHyperDrive() {
     setTimeout(() => { overlay.style.display = 'none'; }, 1500);
 }
 
-// --- DATA PERSISTENCE ---
 function save() { 
     localStorage.setItem('sectors', JSON.stringify(state.sectors));
     localStorage.setItem('missions', JSON.stringify(state.missions)); 
@@ -72,7 +63,6 @@ function runDatabaseMigration() {
     let migrated = false;
     let newMissions = { ...state.missions };
     const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal' };
-
     Object.keys(newMissions).forEach(key => {
         if (!key.startsWith('sec_')) {
             const newId = legacyMap[key];
@@ -83,18 +73,15 @@ function runDatabaseMigration() {
                     newMissions[newId][h] = newMissions[newId][h].concat(newMissions[key][h]);
                 });
             }
-            delete newMissions[key];
-            migrated = true;
+            delete newMissions[key]; migrated = true;
         }
     });
     state.missions = newMissions;
-
     state.sectors.forEach(s => {
         if (!state.missions[s.id]) { state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; migrated = true; }
         HORIZONS.forEach(h => {
             if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
             state.missions[s.id][h].forEach((m, index, arr) => {
-                m.subs = m.subs || []; 
                 if (m.x === undefined || isNaN(m.x)) {
                     let coords = getSafeCoordinates(arr.slice(0, index));
                     m.x = coords.x; m.y = coords.y; migrated = true;
@@ -105,7 +92,6 @@ function runDatabaseMigration() {
     if (migrated) save();
 }
 
-// --- MATH BAYS ---
 function relaxLloyds(seeds, iterations) {
     let points = seeds.map(p => ({x: p.x, y: p.y}));
     for(let k=0; k<iterations; k++) {
@@ -119,7 +105,7 @@ function relaxLloyds(seeds, iterations) {
                     const [x0, y0] = polygon[j]; const [x1, y1] = polygon[j + 1];
                     const a = x0 * y1 - x1 * y0; area += a; cx += (x0 + x1) * a; cy += (y0 + y1) * a;
                 }
-                area *= 3; if (area !== 0) { points[i] = { x: cx / area, y: cy / area }; }
+                area *= 3; if (area !== 0) points[i] = { x: cx / area, y: cy / area };
             }
         }
     }
@@ -138,17 +124,6 @@ function getSafeCoordinates(existing) {
         attempts++;
     } while (!safe && attempts < 50);
     return {x, y};
-}
-
-// --- TEMPORAL ENGINE ---
-function getHorizonFromDate(dateStr, fallbackHorizon) {
-    if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
-    const today = new Date(); today.setHours(0,0,0,0);
-    const dDate = new Date(dateStr + 'T00:00:00');
-    const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 7) return 'IMMINENT';
-    if (diffDays <= 14) return 'HORIZON';
-    return 'TRAJECTORY';
 }
 
 function processTimeMechanics() {
@@ -187,7 +162,6 @@ function checkDecayStatus() {
     }
 }
 
-// --- RENDER ENGINE ---
 function safelyGetActiveMission() {
     if(!state.sectorId || !state.missions[state.sectorId]) return null;
     for (let h of HORIZONS) {
@@ -199,14 +173,10 @@ function safelyGetActiveMission() {
 
 function generateStarfield() {
     const field = document.getElementById('global-starfield');
-    if(!field) return;
-    field.innerHTML = '';
+    if(!field) return; field.innerHTML = '';
     for(let i=0; i<250; i++) {
-        const p = document.createElement('div');
-        p.className = 'void-particle';
-        p.style.width = Math.random() * 2 + 'px'; p.style.height = p.style.width;
-        p.style.left = Math.random() * 100 + '%'; p.style.top = Math.random() * 100 + '%';
-        p.style.animationDuration = (Math.random() * 5 + 3) + 's'; p.style.animationDelay = (Math.random() * 5) + 's';
+        const p = document.createElement('div'); p.className = 'void-particle';
+        p.style.cssText = `width:${Math.random()*2}px; height:${Math.random()*2}px; left:${Math.random()*100}%; top:${Math.random()*100}%; animation-duration:${Math.random()*5+3}s; animation-delay:${Math.random()*5}s;`;
         field.appendChild(p);
     }
 }
@@ -217,17 +187,14 @@ function render() {
     const zoomBtn = document.getElementById('zoom-out');
     const bread = document.getElementById('breadcrumb');
     const footer = document.getElementById('control-footer');
-    if(!container) return;
-    container.innerHTML = '';
+    if(!container) return; container.innerHTML = '';
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
     if (state.level === 1) {
-        if(footer) {
-            footer.style.display = 'flex';
-            footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`;
-        }
+        footer.style.display = 'flex';
+        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`;
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
         svg.id = "voronoi-map"; container.appendChild(svg);
         const w = container.clientWidth || window.innerWidth, h = container.clientHeight || window.innerHeight;
@@ -248,10 +215,8 @@ function render() {
         });
     } 
     else if (state.level === 2) {
-        if(footer) {
-            footer.style.display = 'flex';
-            footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`;
-        }
+        footer.style.display = 'flex';
+        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`;
         container.innerHTML = `<div class="view-level-title">LEVEL 2 // ${activeSector.name}</div><h1 class="view-main-title">Planetary Map</h1>`;
         const center = document.createElement('div'); center.className = 'warp-transition';
         center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
@@ -273,17 +238,16 @@ function render() {
         container.appendChild(center);
     }
     else if (state.level === 3) {
-        if(footer) {
-            footer.style.display = 'flex';
-            footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
-        }
+        footer.style.display = 'flex';
+        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
         container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
         const missions = state.missions[state.sectorId]?.[state.horizon] || [];
         if (missions.length > 0) {
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
             missions.forEach((m, i) => {
                 const star = document.createElement('div'); star.className = `star-container ${m.overdue && !m.captured ? 'decaying' : ''} warp-transition`;
-                star.style.left = m.x + '%'; star.style.top = m.y + '%'; star.onclick = () => { state.activeMissionId = m.id; state.level = 4; triggerHaptic(15); render(); };
+                star.style.cssText = `left:${m.x}%; top:${m.y}%;`;
+                star.onclick = () => { state.activeMissionId = m.id; state.level = 4; triggerHaptic(15); render(); };
                 star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>`;
                 container.appendChild(star);
             });
@@ -304,29 +268,13 @@ function render() {
     }
 }
 
-// --- MODAL & ACTION LOGIC ---
-function toggleSubTask(index) {
-    const m = safelyGetActiveMission();
-    if (m && m.subs[index]) {
-        m.subs[index].c = !m.subs[index].c;
-        if (m.subs[index].c) { triggerHaptic(30); addEnergy(5); } else { addEnergy(-5); }
-        save(); render();
-    }
-}
-function completeMission() {
-    const m = safelyGetActiveMission();
-    if (m) { m.captured = true; addEnergy(25); triggerHaptic([50, 30, 50]); save(); state.level = 3; render(); }
-}
-function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
-function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
-
-// --- SECTOR CONFIG ---
+function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
+function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
 function openSectorModal() { editingSectors = JSON.parse(JSON.stringify(state.sectors)); renderSectorEditList(); document.getElementById('sector-modal-overlay').style.display = 'flex'; }
 function closeSectorModal() { document.getElementById('sector-modal-overlay').style.display = 'none'; }
 function renderSectorEditList() {
     const list = document.getElementById('sector-edit-list'), addBtn = document.getElementById('sector-add-btn');
-    if(!list) return;
-    list.innerHTML = '';
+    if(!list) return; list.innerHTML = '';
     editingSectors.forEach((s, i) => {
         const row = document.createElement('div'); row.className = 'subtask-row';
         row.innerHTML = `<input type="color" value="${s.color}" onchange="editingSectors[${i}].color = this.value"><input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value"><button class="subtask-remove" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();">-</button>`;
@@ -340,7 +288,6 @@ function saveSectorModal() {
     state.sectors = JSON.parse(JSON.stringify(editingSectors)); save(); closeSectorModal(); render();
 }
 
-// --- TASK CONFIG ---
 function openTaskModal(h, f) { editModeId = null; defaultHorizonContext = h; isHorizonFixed = f; document.getElementById('modal-horizon-select').value = h; document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; tempSubtasks = ['', '', '']; renderModalSubtasks(); document.getElementById('task-modal-overlay').style.display = 'flex'; }
 function renderModalSubtasks() { const list = document.getElementById('modal-subtasks-list'); if(!list) return; list.innerHTML = ''; tempSubtasks.forEach((sub, i) => { const row = document.createElement('div'); row.className = 'subtask-row'; row.innerHTML = `<input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value"><button class="subtask-remove" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">-</button>`; list.appendChild(row); }); }
 function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
@@ -374,20 +321,27 @@ function saveTaskModal() {
     const finalH = getHorizonFromDate(dateStr, h);
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
     const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
-    
     if (editModeId) {
-        HORIZONS.forEach(hz => {
-            if(state.missions[state.sectorId][hz]) state.missions[state.sectorId][hz] = state.missions[state.sectorId][hz].filter(m => m.id !== editModeId);
-        });
+        HORIZONS.forEach(hz => { if(state.missions[state.sectorId][hz]) state.missions[state.sectorId][hz] = state.missions[state.sectorId][hz].filter(m => m.id !== editModeId); });
     }
-
     state.missions[state.sectorId][finalH].push({ id: editModeId || Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
     save(); closeTaskModal(); render();
 }
 
-function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
-function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
+function toggleSubTask(index) {
+    const m = safelyGetActiveMission();
+    if (m && m.subs[index]) {
+        m.subs[index].c = !m.subs[index].c;
+        if (m.subs[index].c) { triggerHaptic(30); addEnergy(5); } else { addEnergy(-5); }
+        save(); render();
+    }
+}
+function completeMission() {
+    const m = safelyGetActiveMission();
+    if (m) { m.captured = true; addEnergy(25); triggerHaptic([50, 30, 50]); save(); state.level = 3; render(); }
+}
+function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
+function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
 
-// BOOT
 runDatabaseMigration(); generateStarfield(); render();
 window.addEventListener('resize', () => { if(state.level === 1) render(); });
