@@ -292,25 +292,33 @@ function renderLevel2(container, footer, activeSector) {
     const center = document.createElement('div'); center.className = 'warp-transition';
     center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
     
+    // Particle Density Starfield
     const gravityWell = document.createElement('div');
     gravityWell.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; border-radius:50%;';
-    
-    // UPDATED: 225 particles (50% increase), localized to the orbit band
-    const innerMin = 30; // Starts near the Imminent ring
-    const outerMax = 140 + (140 * 0.25); // Max radius + 25% overflow
-
+    const innerMin = 30, outerMax = 140 + (140 * 0.25);
     for (let i = 0; i < 225; i++) {
         const p = document.createElement('div');
-        // Constraints random particles to stay between the core and the 25% outer margin
         const r = innerMin + (Math.random() * (outerMax - innerMin));
         const angle = Math.random() * Math.PI * 2;
-        const x = 140 + r * Math.cos(angle);
-        const y = 140 + r * Math.sin(angle);
-        const size = Math.random() * 1.5 + 0.5;
+        const x = 140 + r * Math.cos(angle), y = 140 + r * Math.sin(angle), size = Math.random() * 1.5 + 0.5;
         p.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:#fff; border-radius:50%; opacity:${Math.random() * 0.4 + 0.1}; left:${x}px; top:${y}px; animation: orbit-spin ${40 + Math.random() * 80}s linear infinite;`;
         gravityWell.appendChild(p);
     }
     center.appendChild(gravityWell);
+
+    // --- NEW: SVG Overlay for Curved Text Paths ---
+    const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
+    textSvg.setAttribute("viewBox", "0 0 280 280");
+
+    // Define the paths for the text to follow (Middle and Outer rings)
+    textSvg.innerHTML = `
+        <defs>
+            <path id="path-horizon" d="M 45,140 A 95,95 0 0,1 235,140" />
+            <path id="path-trajectory" d="M 0,140 A 140,140 0 0,1 280,140" />
+        </defs>
+    `;
+    center.appendChild(textSvg);
 
     [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ].forEach(d => {
         const overdue = state.missions[state.sectorId]?.[d.id]?.some(m => m.overdue && !m.captured);
@@ -318,9 +326,32 @@ function renderLevel2(container, footer, activeSector) {
         wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px';
         wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
         
-        const label = document.createElement('div'); label.className = 'ring-label'; label.innerText = d.id; wrapper.appendChild(label);
+        // Handle Labels
+        if (d.id === 'IMMINENT') {
+            // Centered in the middle of the smallest circle
+            const label = document.createElement('div');
+            label.className = 'ring-label';
+            label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0;';
+            label.innerText = d.id;
+            wrapper.appendChild(label);
+        } else {
+            // Curved text paths for Horizon and Trajectory
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("fill", overdue ? "var(--thrust)" : "var(--accent)");
+            text.style.cssText = 'font-size: 0.6rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
+            
+            const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
+            tp.setAttribute("href", `#path-${d.id.toLowerCase()}`);
+            tp.setAttribute("startOffset", "50%");
+            tp.setAttribute("text-anchor", "middle");
+            tp.setAttribute("dominant-baseline", "hanging"); // Places text underneath the arch
+            tp.textContent = d.id;
+            
+            text.appendChild(tp);
+            textSvg.appendChild(text);
+        }
+
         const starField = document.createElement('div'); starField.style.cssText = `position:absolute; width:100%; height:100%; animation: orbit-spin ${d.speed}s linear infinite; pointer-events:none;`;
-        
         const missions = state.missions[state.sectorId]?.[d.id] || [];
         missions.forEach((m, i) => {
             const angle = (i / missions.length) * Math.PI * 2, r = d.size/2;
@@ -332,7 +363,6 @@ function renderLevel2(container, footer, activeSector) {
     });
     container.appendChild(center);
 }
-
 function renderLevel3(container, footer) {
     if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
     
