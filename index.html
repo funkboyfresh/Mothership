@@ -27,7 +27,10 @@
         <!-- Gamified HUD -->
         <div id="hud">
             <div class="hud-top-row">
-                <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="settings-gear" onclick="openSettingsModal()">⚙</div>
+                    <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
+                </div>
                 <span class="hud-energy-text" id="hud-energy-readout">CAPACITOR 0%</span>
             </div>
             <div class="capacitor-container">
@@ -39,7 +42,6 @@
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb">GALAXY</div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <div class="zoom-btn" onclick="openSettingsModal()">⚙</div>
                 <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
             </div>
         </div>
