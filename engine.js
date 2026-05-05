@@ -1,13 +1,11 @@
 const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
 const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
-
 // --- MASTER DEFAULTS ---
 const defaultSectors = [
     { id: 'sec_career', name: 'CAREER', color: '#00e5ff', seed: {x: 0.3, y: 0.3} },
     { id: 'sec_finance', name: 'FINANCIAL', color: '#ffd700', seed: {x: 0.7, y: 0.3} },
     { id: 'sec_personal', name: 'PERSONAL', color: '#ff00ff', seed: {x: 0.5, y: 0.7} }
 ];
-
 let state = {
     level: 1, sectorId: null, horizon: null, activeMissionId: null,
     playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
@@ -55,7 +53,8 @@ function triggerHyperDrive() {
     const overlay = document.getElementById('level-up-overlay');
     if(!overlay) return;
     overlay.style.display = 'flex'; overlay.style.animation = 'none';
-    void overlay.offsetWidth; overlay.style.animation = 'hyper-flash 1.5s forwards ease-out';
+    void overlay.offsetWidth;
+    overlay.style.animation = 'hyper-flash 1.5s forwards ease-out';
     setTimeout(() => { overlay.style.display = 'none'; }, 1500);
 }
 
@@ -72,7 +71,6 @@ function runDatabaseMigration() {
     let migrated = false;
     let newMissions = { ...state.missions };
     const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal' };
-
     Object.keys(newMissions).forEach(key => {
         if (!key.startsWith('sec_')) {
             const newId = legacyMap[key];
@@ -116,10 +114,14 @@ function relaxLloyds(seeds, iterations) {
             if (polygon) {
                 let cx = 0, cy = 0, area = 0;
                 for (let j = 0, len = polygon.length; j < len - 1; j++) {
-                    const [x0, y0] = polygon[j]; const [x1, y1] = polygon[j + 1];
-                    const a = x0 * y1 - x1 * y0; area += a; cx += (x0 + x1) * a; cy += (y0 + y1) * a;
+                    const [x0, y0] = polygon[j];
+                    const [x1, y1] = polygon[j + 1];
+                    const a = x0 * y1 - x1 * y0; area += a;
+                    cx += (x0 + x1) * a; cy += (y0 + y1) * a;
                 }
-                area *= 3; if (area !== 0) { points[i] = { x: cx / area, y: cy / area }; }
+                area *= 3;
+                if (area !== 0) { points[i] = { x: cx / area, y: cy / area };
+                }
             }
         }
     }
@@ -129,11 +131,13 @@ function relaxLloyds(seeds, iterations) {
 function getSafeCoordinates(existing) {
     let x, y, safe, attempts = 0;
     do {
-        x = 15 + Math.random() * 70; y = 25 + Math.random() * 50; safe = true;
+        x = 15 + Math.random() * 70;
+        y = 25 + Math.random() * 50; safe = true;
         for (let m of existing) {
             if (!m || isNaN(m.x)) continue;
             let dx = m.x - x, dy = m.y - y;
-            if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; }
+            if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break;
+            }
         }
         attempts++;
     } while (!safe && attempts < 50);
@@ -179,10 +183,12 @@ function checkDecayStatus() {
     const levelReadout = document.getElementById('hud-level');
     const energyReadout = document.getElementById('hud-energy-readout');
     if (hasDecay) {
-        if(levelReadout) { levelReadout.innerText = "WARNING: DECAY DETECTED"; levelReadout.classList.add('hud-warning'); }
+        if(levelReadout) { levelReadout.innerText = "WARNING: DECAY DETECTED";
+        levelReadout.classList.add('hud-warning'); }
         if(energyReadout) energyReadout.classList.add('hud-warning');
     } else {
-        if(levelReadout) { levelReadout.innerText = `PILOT LEVEL ${state.playerLevel}`; levelReadout.classList.remove('hud-warning'); }
+        if(levelReadout) { levelReadout.innerText = `PILOT LEVEL ${state.playerLevel}`; levelReadout.classList.remove('hud-warning');
+        }
         if(energyReadout) energyReadout.classList.remove('hud-warning');
     }
 }
@@ -205,8 +211,10 @@ function generateStarfield() {
         const p = document.createElement('div');
         p.className = 'void-particle';
         p.style.width = Math.random() * 2 + 'px'; p.style.height = p.style.width;
-        p.style.left = Math.random() * 100 + '%'; p.style.top = Math.random() * 100 + '%';
-        p.style.animationDuration = (Math.random() * 5 + 3) + 's'; p.style.animationDelay = (Math.random() * 5) + 's';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 5 + 3) + 's';
+        p.style.animationDelay = (Math.random() * 5) + 's';
         field.appendChild(p);
     }
 }
@@ -221,7 +229,16 @@ function render() {
     container.innerHTML = '';
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
-    if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
+
+    // FIX: Apply active sector color to the app theme
+    if (activeSector) {
+        document.documentElement.style.setProperty('--accent', activeSector.color);
+    } else {
+        document.documentElement.style.setProperty('--accent', '#00e5ff'); 
+    }
+
+    if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ?
+        '> ' + state.horizon : ''}`;
     
     if (state.level === 1) {
         if(footer) {
@@ -243,7 +260,8 @@ function render() {
             path.onclick = () => { state.sectorId = s.id; state.level = 2; triggerHaptic(15); render(); }; svg.appendChild(path);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", seeds[i].x * w); text.setAttribute("y", seeds[i].y * h);
-            text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text");
+            text.setAttribute("fill", color);
+            text.setAttribute("class", "voronoi-text");
             text.style.textShadow = `0 0 10px ${color}`; text.textContent = s.name; svg.appendChild(text);
         });
     } 
@@ -278,22 +296,48 @@ function render() {
             footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
         }
         container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
+        
         const missions = state.missions[state.sectorId]?.[state.horizon] || [];
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.id = "constellation-svg"; 
+        container.appendChild(svg);
+
         if (missions.length > 0) {
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
+            // DRAW CONNECTIONS
+            if (missions.length > 1) {
+                for (let i = 0; i < missions.length - 1; i++) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", missions[i].x + "%");
+                    line.setAttribute("y1", missions[i].y + "%");
+                    line.setAttribute("x2", missions[i+1].x + "%");
+                    line.setAttribute("y2", missions[i+1].y + "%");
+                    line.setAttribute("stroke", "var(--accent)");
+                    line.setAttribute("stroke-width", "1");
+                    line.setAttribute("stroke-dasharray", "5,5");
+                    line.setAttribute("opacity", "0.4");
+                    svg.appendChild(line);
+                }
+            }
+
             missions.forEach((m, i) => {
-                const star = document.createElement('div'); star.className = `star-container ${m.overdue && !m.captured ? 'decaying' : ''} warp-transition`;
-                star.style.left = m.x + '%'; star.style.top = m.y + '%'; star.onclick = () => { state.activeMissionId = m.id; state.level = 4; triggerHaptic(15); render(); };
+                const star = document.createElement('div'); 
+                star.className = `star-container ${m.overdue && !m.captured ? 'decaying' : ''} warp-transition`;
+                star.style.left = m.x + '%'; 
+                star.style.top = m.y + '%'; 
+                star.onclick = () => { state.activeMissionId = m.id; state.level = 4; triggerHaptic(15); render(); };
                 star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>`;
                 container.appendChild(star);
             });
         }
     }
     else if (state.level === 4) {
-        if(footer) footer.style.display = 'none'; const m = safelyGetActiveMission();
+        if(footer) footer.style.display = 'none';
+        const m = safelyGetActiveMission();
         if (!m) { zoomOut(); return; }
-        const completed = m.subs.filter(s => s.c).length, progress = m.subs.length ? Math.round((completed / m.subs.length) * 100) : 0, allDone = m.subs.length > 0 && completed === m.subs.length;
-        let orbHtml = `<div class="target-lock warp-transition"><div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color:${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2><div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div><div class="orbital-system"><svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
+        const completed = m.subs.filter(s => s.c).length, progress = m.subs.length ?
+        Math.round((completed / m.subs.length) * 100) : 0, allDone = m.subs.length > 0 && completed === m.subs.length;
+        let orbHtml = `<div class="target-lock warp-transition"><div class="view-level-title">LEVEL 4 // ${m.captured ?
+            'ARCHIVE' : 'ACTIVE'}</div><h2 style="color:${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2><div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div><div class="orbital-system"><svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
         m.subs.forEach((s, i) => {
             const angle = (i / m.subs.length) * Math.PI * 2, x = 170 + 100 * Math.cos(angle), y = 170 + 100 * Math.sin(angle);
             orbHtml += `<div style="position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;" onclick="${m.captured ? '' : `toggleSubTask(${i})`}"><div class="orbital-node-box ${s.c ? 'checked' : ''}"><div class="orb-check">${s.c ? '✓' : ''}</div><div class="orb-text">${s.t}</div></div></div>`;
@@ -309,20 +353,26 @@ function toggleSubTask(index) {
     const m = safelyGetActiveMission();
     if (m && m.subs[index]) {
         m.subs[index].c = !m.subs[index].c;
-        if (m.subs[index].c) { triggerHaptic(30); addEnergy(5); } else { addEnergy(-5); }
+        if (m.subs[index].c) { triggerHaptic(30); addEnergy(5);
+        } else { addEnergy(-5); }
         save(); render();
     }
 }
 function completeMission() {
     const m = safelyGetActiveMission();
-    if (m) { m.captured = true; addEnergy(25); triggerHaptic([50, 30, 50]); save(); state.level = 3; render(); }
+    if (m) { m.captured = true; addEnergy(25); triggerHaptic([50, 30, 50]);
+    save(); state.level = 3; render(); }
 }
-function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
-function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
+function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); });
+    save(); state.level = 3; render(); } }
+function zoomOut() { state.level = Math.max(1, state.level - 1);
+    if (state.level === 1) { state.sectorId = null; state.horizon = null; } render();
+}
 
 // --- SECTOR CONFIG ---
 function openSectorModal() { editingSectors = JSON.parse(JSON.stringify(state.sectors)); renderSectorEditList(); document.getElementById('sector-modal-overlay').style.display = 'flex'; }
-function closeSectorModal() { document.getElementById('sector-modal-overlay').style.display = 'none'; }
+function closeSectorModal() { document.getElementById('sector-modal-overlay').style.display = 'none';
+}
 function renderSectorEditList() {
     const list = document.getElementById('sector-edit-list'), addBtn = document.getElementById('sector-add-btn');
     if(!list) return;
@@ -334,17 +384,23 @@ function renderSectorEditList() {
     });
     if(addBtn) addBtn.style.display = editingSectors.length >= 9 ? 'none' : 'block';
 }
-function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({ id: 'sec_' + Date.now(), name: 'NEW SECTOR', color: AUTO_PALETTE[editingSectors.length % AUTO_PALETTE.length], seed: { x: Math.random(), y: Math.random() } }); renderSectorEditList(); } }
+function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({ id: 'sec_' + Date.now(), name: 'NEW SECTOR', color: AUTO_PALETTE[editingSectors.length % AUTO_PALETTE.length], seed: { x: Math.random(), y: Math.random() } });
+    renderSectorEditList(); } }
 function saveSectorModal() {
     editingSectors.forEach(s => { if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; });
     state.sectors = JSON.parse(JSON.stringify(editingSectors)); save(); closeSectorModal(); render();
 }
 
 // --- TASK CONFIG ---
-function openTaskModal(h, f) { editModeId = null; defaultHorizonContext = h; isHorizonFixed = f; document.getElementById('modal-horizon-select').value = h; document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; tempSubtasks = ['', '', '']; renderModalSubtasks(); document.getElementById('task-modal-overlay').style.display = 'flex'; }
-function renderModalSubtasks() { const list = document.getElementById('modal-subtasks-list'); if(!list) return; list.innerHTML = ''; tempSubtasks.forEach((sub, i) => { const row = document.createElement('div'); row.className = 'subtask-row'; row.innerHTML = `<input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value"><button class="subtask-remove" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">-</button>`; list.appendChild(row); }); }
+function openTaskModal(h, f) { editModeId = null; defaultHorizonContext = h;
+    isHorizonFixed = f; document.getElementById('modal-horizon-select').value = h; document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; tempSubtasks = ['', '', '']; renderModalSubtasks();
+    document.getElementById('task-modal-overlay').style.display = 'flex'; }
+function renderModalSubtasks() { const list = document.getElementById('modal-subtasks-list'); if(!list) return; list.innerHTML = '';
+    tempSubtasks.forEach((sub, i) => { const row = document.createElement('div'); row.className = 'subtask-row'; row.innerHTML = `<input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value"><button class="subtask-remove" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">-</button>`; list.appendChild(row); });
+}
 function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
-function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none'; }
+function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none';
+}
 
 function openEditModal(id) {
     editModeId = id; let targetMission = null; let targetHorizon = null;
@@ -368,13 +424,13 @@ function openEditModal(id) {
 }
 
 function saveTaskModal() {
-    const name = document.getElementById('modal-task-name').value.trim(); if (!name) return;
+    const name = document.getElementById('modal-task-name').value.trim();
+    if (!name) return;
     const dateStr = document.getElementById('modal-task-date').value;
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
     const finalH = getHorizonFromDate(dateStr, h);
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
     const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
-    
     if (editModeId) {
         HORIZONS.forEach(hz => {
             if(state.missions[state.sectorId][hz]) state.missions[state.sectorId][hz] = state.missions[state.sectorId][hz].filter(m => m.id !== editModeId);
@@ -386,7 +442,8 @@ function saveTaskModal() {
 }
 
 function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
-function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
+function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save();
+    document.getElementById('settings-modal-overlay').style.display = 'none'; }
 
 // BOOT
 runDatabaseMigration(); generateStarfield(); render();
