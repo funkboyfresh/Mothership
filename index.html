@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V8.1</title>
+    <title>Mission Control V8.2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
@@ -44,14 +44,12 @@
         .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
         .ring-label { position: absolute; top: 10px; text-shadow: 0 0 8px var(--accent); }
 
-        /* Particle System */
         .particle { position: absolute; border-radius: 50%; background: var(--accent); box-shadow: 0 0 5px var(--accent-glow); pointer-events: none; animation: float-particle linear infinite alternate; }
         @keyframes float-particle { 0% { transform: scale(0.8) translate(0, 0); opacity: 0.2; } 100% { transform: scale(1.2) translate(10px, -10px); opacity: 0.8; } }
 
         #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         .star-container { position: absolute; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; transition: left 0.3s, top 0.3s; }
         
-        /* Orbital Decay Physics */
         @keyframes drift-decay {
             0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); }
             25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); }
@@ -84,9 +82,8 @@
         .counter-spin { animation: orbit-counter-spin 60s linear infinite; }
         .flare-active { animation: core-ignition 0.6s ease-out; }
         
-        /* Opaque Hull Plating for Nodes to clip SVG lines visually */
-        .orbital-node-box { background: var(--bg); border: 1px solid var(--accent); padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 140px; transition: all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
-        .orbital-node-box.checked { box-shadow: 0 0 15px var(--accent-glow); }
+        .orbital-node-box { background: rgba(10, 10, 10, 0.95); border: 1px solid var(--accent); padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: 140px; transition: all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .orbital-node-box.checked { background: rgba(255,255,255,0.05); box-shadow: 0 0 15px var(--accent-glow); }
         .orb-check { width: 14px; height: 14px; border: 1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size: 0.5rem; flex-shrink: 0; color: var(--bg); transition: all 0.3s; box-shadow: 0 0 5px var(--accent-glow);}
         .orbital-node-box.checked .orb-check { background: var(--accent); }
         .orb-text { font-size: 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; text-align: left; line-height: 1.2; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
@@ -120,7 +117,7 @@
 
     <script>
         const SECTORS = ['CAREER', 'FINANCIAL', 'PERSONAL', 'HEALTH'];
-        const HORIZONS = ['FUTURE', 'SOON', 'NOW'];
+        const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
         const SECTOR_COLORS = { 'CAREER': '#00e5ff', 'FINANCIAL': '#ffd700', 'PERSONAL': '#ff00ff', 'HEALTH': '#00ff88' };
 
         let state = {
@@ -144,19 +141,61 @@
             }
         }
 
+        // Spatial collision avoidance algorithm for Constellation Map
+        function getSafeCoordinates(existingMissions) {
+            let x, y, safe;
+            let attempts = 0;
+            do {
+                x = Math.floor(Math.random() * 70) + 15;
+                y = Math.floor(Math.random() * 50) + 25;
+                safe = true;
+                for (let m of existingMissions) {
+                    if (m.x === undefined || m.y === undefined) continue;
+                    let dx = m.x - x;
+                    let dy = m.y - y;
+                    if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; } // Minimum 18% viewport spacing buffer
+                }
+                attempts++;
+            } while (!safe && attempts < 50);
+            return {x, y};
+        }
+
         function ensurePath() {
             SECTORS.forEach(s => {
                 if (!state.missions[s]) state.missions[s] = {};
                 
-                // MIGRATION PROTOCOL: Shift FAR/NEAR back to FUTURE/SOON automatically
-                if (state.missions[s]['FAR']) { state.missions[s]['FUTURE'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
-                if (state.missions[s]['NEAR']) { state.missions[s]['SOON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
+                // MIGRATION PROTOCOL: Deep taxonomy hardcode
+                if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
+                if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
+                if (state.missions[s]['NOW']) { state.missions[s]['IMMINENT'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
+                // Failsafes for older artifacts
+                if (state.missions[s]['FUTURE']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FUTURE']; delete state.missions[s]['FUTURE']; }
+                if (state.missions[s]['SOON']) { state.missions[s]['HORIZON'] = state.missions[s]['SOON']; delete state.missions[s]['SOON']; }
 
                 HORIZONS.forEach(h => {
                     if (!state.missions[s][h]) state.missions[s][h] = [];
-                    state.missions[s][h].forEach(m => {
-                        if (m.x === undefined) m.x = Math.floor(Math.random() * 70) + 15;
-                        if (m.y === undefined) m.y = Math.floor(Math.random() * 60) + 20;
+                    state.missions[s][h].forEach((m, index, arr) => {
+                        // Apply Spatial Buffer retroactively to overlapping nodes
+                        if (m.x === undefined || m.y === undefined) {
+                            let coords = getSafeCoordinates(arr.slice(0, index));
+                            m.x = coords.x; m.y = coords.y;
+                        } else {
+                            let safe = false, attempts = 0;
+                            while(!safe && attempts < 20) {
+                                safe = true;
+                                for(let i=0; i<index; i++) {
+                                    let other = arr[i];
+                                    let dx = m.x - other.x; let dy = m.y - other.y;
+                                    if(Math.sqrt(dx*dx + dy*dy) < 18) {
+                                        safe = false;
+                                        m.x = Math.floor(Math.random() * 70) + 15;
+                                        m.y = Math.floor(Math.random() * 50) + 25;
+                                        break;
+                                    }
+                                }
+                                attempts++;
+                            }
+                        }
                         if (m.captured === undefined) m.captured = false;
                         if (m.overdue === undefined) m.overdue = false; 
                     });
@@ -258,9 +297,9 @@
                 center.appendChild(particleSystem);
                 
                 const h_data = [ 
-                    { id: 'FUTURE', size: 280, speed: 60 }, 
-                    { id: 'SOON', size: 190, speed: 30 }, 
-                    { id: 'NOW', size: 100, speed: 15 } 
+                    { id: 'TRAJECTORY', size: 280, speed: 60 }, 
+                    { id: 'HORIZON', size: 190, speed: 30 }, 
+                    { id: 'IMMINENT', size: 100, speed: 15 } 
                 ];
                 
                 h_data.forEach(d => {
@@ -360,7 +399,6 @@
                 const shipParts = [ {x: 170, y: 70}, {x: 230, y: 220}, {x: 110, y: 220}, {x: 170, y: 190}, {x: 200, y: 200}, {x: 140, y: 200} ];
 
                 m.subs.forEach((s, i) => {
-                    // Stable pseudo-random positioning
                     const hash = (i * 17) + s.t.length + (s.t.charCodeAt(0) || 0);
                     const rand = Math.abs(Math.sin(hash));
                     const radius = 80 + rand * 45;
@@ -431,9 +469,8 @@
             const name = prompt("Mission Name?"); if(!name) return;
             const subsInput = prompt("Sub-missions? (comma separated)");
             const subs = subsInput ? subsInput.split(',').filter(t => t.trim() !== "").map(t => ({t: t.trim(), c: false})) : [];
-            const x = Math.floor(Math.random() * 70) + 15;
-            const y = Math.floor(Math.random() * 50) + 25;
-            state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs, x, y, captured: false, overdue: false });
+            const coords = getSafeCoordinates(state.missions[state.sector][state.horizon]);
+            state.missions[state.sector][state.horizon].push({ id: Date.now(), name, subs, x: coords.x, y: coords.y, captured: false, overdue: false });
             save(); render();
         }
 
