@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V9.2</title>
+    <title>Mission Control V10.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
+    <script src="https://unpkg.com/d3-delaunay@6.0.2/dist/d3-delaunay.min.js"></script>
     <style>
         :root { 
             --bg: #0a0a0a; 
@@ -18,30 +20,36 @@
             --thrust-glow: rgba(255, 42, 42, 0.2);
         }
         body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
-        #app { display: flex; flex-direction: column; height: 100%; }
+        #app { display: flex; flex-direction: column; height: 100%; position: relative; }
         
         #hud { padding: 15px; background: rgba(0,0,0,0.8); border-bottom: 1px solid var(--border); text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow); transition: color 0.5s, text-shadow 0.5s; z-index: 200; position: relative; }
         .hud-warning { color: var(--thrust) !important; text-shadow: 0 0 15px var(--thrust) !important; animation: flash-warning 1.5s infinite; }
         @keyframes flash-warning { 0%, 100% { background: rgba(255, 42, 42, 0.1); } 50% { background: rgba(0, 0, 0, 0.8); } }
 
-        #nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; min-height: 24px; align-items: center; z-index: 100; }
+        #nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; min-height: 24px; align-items: center; z-index: 100; position: relative; }
         .breadcrumb { font-size: 0.6rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 8px var(--accent-glow); }
         .zoom-btn { font-size: 0.6rem; border: 1px solid var(--accent); padding: 4px 12px; border-radius: 2px; cursor: pointer; background: rgba(0,0,0,0.5); color: var(--accent); text-transform: uppercase; box-shadow: 0 0 10px var(--accent-glow); transition: all 0.3s; }
         .zoom-btn:active { background: var(--accent); color: var(--bg); }
-        .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 20px; flex-direction: column; }
         
+        .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 20px; flex-direction: column; z-index: 10; }
+        
+        /* High-Density Void & Grid */
+        .grid-bg { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .dense-starfield { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 1; pointer-events: none; }
+        .void-particle { position: absolute; border-radius: 50%; background: #fff; opacity: 0.5; animation: void-drift linear infinite alternate; }
+        @keyframes void-drift { 0% { transform: translate(0, 0) scale(0.8); opacity: 0.2; } 100% { transform: translate(15px, -15px) scale(1.2); opacity: 0.7; } }
+
         @keyframes warp-drive { 0% { opacity: 0; transform: scale(0.8); filter: blur(4px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
         .warp-transition { animation: warp-drive 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
         .view-level-title { font-size: 0.7rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 5px; opacity: 0.8; z-index: 5; text-shadow: 0 0 8px var(--accent-glow); }
         .view-main-title { font-size: 1.4rem; margin-top: 0; margin-bottom: 20px; font-weight: 300; text-transform: uppercase; z-index: 5; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; width: 100%; max-width: 400px; height: 60%; z-index: 5; margin: 0 auto; }
-        .sector-box { border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); border-radius: 8px; transition: all 0.3s; }
-        .sector-box.overdue { background: var(--thrust-glow); border-color: var(--thrust); box-shadow: 0 0 20px rgba(255, 42, 42, 0.4); color: var(--thrust); }
-        
-        .planet { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; position: relative; cursor: pointer; }
-        .mini-ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.2); pointer-events: none; }
+        /* SVG Voronoi Map */
+        #voronoi-map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
+        .voronoi-cell { cursor: pointer; transition: fill 0.3s, filter 0.3s; }
+        .voronoi-cell:hover { filter: brightness(1.5); }
+        .voronoi-text { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; letter-spacing: 2px; text-transform: uppercase; }
 
         .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
         .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
@@ -95,40 +103,37 @@
         .success-btn { width: 80%; max-width: 300px; padding: 20px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 25px var(--accent-glow); border-radius: 4px; transition: transform 0.1s; }
         .success-btn:active { transform: scale(0.96); }
         
-        .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; }
+        .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
         .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; margin: 0 5px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 8px var(--accent-glow); }
         .mod-btn:hover { background: var(--accent); color: var(--bg); }
 
-        /* Custom Modal System */
-        #task-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 300; display: none; align-items: center; justify-content: center; }
-        .task-modal { background: #111; border: 1px solid var(--accent); box-shadow: 0 0 25px var(--accent-glow); border-radius: 8px; width: 90%; max-width: 350px; padding: 20px; color: var(--text); display: flex; flex-direction: column; max-height: 85vh; }
+        /* General Modals */
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: #111; border: 1px solid var(--accent); box-shadow: 0 0 25px var(--accent-glow); border-radius: 8px; width: 90%; max-width: 380px; padding: 20px; color: var(--text); display: flex; flex-direction: column; max-height: 85vh; }
         .modal-header { font-size: 0.9rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 5px var(--accent-glow); text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .input-group { margin-bottom: 15px; }
         .input-label { font-size: 0.6rem; color: var(--border); text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
-        
-        /* Stylized Select Dropdown */
-        select.modal-input {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
+        select.modal-input { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; appearance: none; -webkit-appearance: none; }
         .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.8rem; }
         .modal-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input[type="color"] { padding: 0; border: none; height: 35px; cursor: pointer; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 4px; }
+        
         .subtasks-container { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
         .subtask-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .subtask-remove { background: var(--thrust); color: #fff; border: none; border-radius: 4px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; box-shadow: 0 0 8px var(--thrust-glow); }
-        .add-subtask-bar { width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px dashed var(--accent); color: var(--accent); text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: bold; margin-bottom: 15px; }
-        .add-subtask-bar:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 8px var(--accent-glow); }
-        .add-subtask-bar.disabled { opacity: 0.3; pointer-events: none; }
+        .add-btn-bar { width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px dashed var(--accent); color: var(--accent); text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: bold; margin-bottom: 15px; }
+        .add-btn-bar:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 8px var(--accent-glow); }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
     </style>
 </head>
 <body>
     <div id="app">
+        <div class="grid-bg"></div>
+        <div class="dense-starfield" id="global-starfield"></div>
+
         <div id="hud">SYSTEM ARCHITECTURE NOMINAL</div>
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb">GALAXY</div>
@@ -139,15 +144,13 @@
             </div>
     </div>
 
-    <div id="task-modal-overlay">
-        <div class="task-modal">
+    <div id="task-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
             <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
-            
             <div class="input-group">
                 <span class="input-label">Target Designation</span>
                 <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter target name..." autocomplete="off">
             </div>
-            
             <div class="input-group" id="modal-horizon-group">
                 <span class="input-label">Mission Parameters (Orbit)</span>
                 <select id="modal-horizon-select" class="modal-input">
@@ -156,17 +159,13 @@
                     <option value="TRAJECTORY">TRAJECTORY (> 14 Days / Undefined)</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <span class="input-label">Temporal Deadline (Optional)</span>
                 <input type="date" id="modal-task-date" class="modal-input">
             </div>
-            
             <span class="input-label">Sub-Routines (Max 10)</span>
-            <div class="subtasks-container" id="modal-subtasks-list">
-                </div>
-            <div class="add-subtask-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
-            
+            <div class="subtasks-container" id="modal-subtasks-list"></div>
+            <div class="add-btn-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
                 <button class="success-btn" id="modal-save-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
@@ -174,24 +173,122 @@
         </div>
     </div>
 
+    <div id="sector-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">TERRITORIAL GEOMETRY MAP</div>
+            <div class="subtasks-container" id="sector-edit-list"></div>
+            <div class="add-btn-bar" onclick="addNewSector()">+ ADD SECTOR</div>
+            <div class="modal-actions">
+                <button class="mod-btn" style="flex:1" onclick="closeSectorModal()">CANCEL</button>
+                <button class="success-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveSectorModal()">INITIALIZE MAP</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const SECTORS = ['CAREER', 'FINANCIAL', 'PERSONAL', 'HEALTH'];
         const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
-        const SECTOR_COLORS = { 'CAREER': '#00e5ff', 'FINANCIAL': '#ffd700', 'PERSONAL': '#ff00ff', 'HEALTH': '#00ff88' };
+        const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
+
+        // --- MIGRATION & INIT ---
+        let defaultSectors = [
+            { id: 'sec_career', name: 'CAREER', color: '#00e5ff', seed: {x: 0.3, y: 0.3} },
+            { id: 'sec_finance', name: 'FINANCIAL', color: '#ffd700', seed: {x: 0.7, y: 0.3} },
+            { id: 'sec_personal', name: 'PERSONAL', color: '#ff00ff', seed: {x: 0.5, y: 0.7} }
+        ];
 
         let state = {
-            level: 1, sector: null, horizon: null, activeMissionId: null,
+            level: 1, sectorId: null, horizon: null, activeMissionId: null,
+            sectors: JSON.parse(localStorage.getItem('sectors')) || defaultSectors,
             missions: JSON.parse(localStorage.getItem('missions')) || {}
         };
 
-        let ignitionFlare = false;
-        let tempSubtasks = []; 
-        let editModeId = null;
-        let defaultHorizonContext = 'TRAJECTORY';
-        let isHorizonFixed = false; // Tracks if the dropdown should be hidden
+        // Migrate old key-based missions to ID-based
+        function runDatabaseMigration() {
+            let migrated = false;
+            let newMissions = { ...state.missions };
+            
+            // Map legacy strings to the hardcoded default IDs
+            const legacyMap = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal', 'HEALTH': 'sec_personal' }; // Dump health into personal if exists
+
+            Object.keys(newMissions).forEach(key => {
+                if (!key.startsWith('sec_')) {
+                    const newId = legacyMap[key];
+                    if (newId) {
+                        if (!newMissions[newId]) newMissions[newId] = {};
+                        // Merge old arrays into new
+                        Object.keys(newMissions[key]).forEach(h => {
+                            if (!newMissions[newId][h]) newMissions[newId][h] = [];
+                            newMissions[newId][h] = newMissions[newId][h].concat(newMissions[key][h]);
+                        });
+                    }
+                    delete newMissions[key];
+                    migrated = true;
+                }
+            });
+
+            state.missions = newMissions;
+
+            // Ensure every sector ID has valid arrays
+            state.sectors.forEach(s => {
+                if (!state.missions[s.id]) state.missions[s.id] = {};
+                
+                // Temporal Taxonomy Fixes
+                if (state.missions[s.id]['FAR']) { state.missions[s.id]['TRAJECTORY'] = state.missions[s.id]['FAR']; delete state.missions[s.id]['FAR']; }
+                if (state.missions[s.id]['NEAR']) { state.missions[s.id]['HORIZON'] = state.missions[s.id]['NEAR']; delete state.missions[s.id]['NEAR']; }
+                if (state.missions[s.id]['NOW']) { state.missions[s.id]['IMMINENT'] = state.missions[s.id]['NOW']; delete state.missions[s.id]['NOW']; }
+
+                HORIZONS.forEach(h => {
+                    if (!state.missions[s.id][h]) state.missions[s.id][h] = [];
+                    state.missions[s.id][h].forEach((m, index, arr) => {
+                        // Spatial buffer
+                        if (m.x === undefined || m.y === undefined) {
+                            let coords = getSafeCoordinates(arr.slice(0, index));
+                            m.x = coords.x; m.y = coords.y;
+                        } else {
+                            let safe = false, attempts = 0;
+                            while(!safe && attempts < 20) {
+                                safe = true;
+                                for(let i=0; i<index; i++) {
+                                    let other = arr[i];
+                                    let dx = m.x - other.x; let dy = m.y - other.y;
+                                    if(Math.sqrt(dx*dx + dy*dy) < 18) {
+                                        safe = false;
+                                        m.x = Math.floor(Math.random() * 70) + 15; m.y = Math.floor(Math.random() * 50) + 25;
+                                        break;
+                                    }
+                                }
+                                attempts++;
+                            }
+                        }
+                        if (m.captured === undefined) m.captured = false;
+                        if (m.overdue === undefined) m.overdue = false; 
+                    });
+                });
+            });
+
+            if (migrated) save();
+        }
+
+        // --- GLOBAL VISUALS --- //
+        function generateStarfield() {
+            const field = document.getElementById('global-starfield');
+            field.innerHTML = '';
+            for(let i=0; i<250; i++) {
+                const p = document.createElement('div');
+                p.className = 'void-particle';
+                p.style.width = Math.random() * 2 + 'px';
+                p.style.height = p.style.width;
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDuration = (Math.random() * 5 + 3) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
+                field.appendChild(p);
+            }
+        }
 
         function updateAccentColor() {
-            const hex = state.sector ? SECTOR_COLORS[state.sector] : '#00e5ff';
+            const activeSector = state.sectors.find(s => s.id === state.sectorId);
+            const hex = activeSector ? activeSector.color : '#00e5ff';
             document.documentElement.style.setProperty('--accent', hex);
             
             let c;
@@ -202,6 +299,42 @@
                 const rgba = 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+',0.6)';
                 document.documentElement.style.setProperty('--accent-glow', rgba);
             }
+        }
+
+        function triggerWarp() {
+            const container = document.getElementById('view-container');
+            container.classList.remove('warp-transition');
+            void container.offsetWidth; 
+            container.classList.add('warp-transition');
+        }
+
+        // --- CORE MATH --- //
+        function relaxLloyds(seeds, iterations) {
+            // Approximates centroid of Voronoi cells to make polygons visually balanced
+            let points = [...seeds];
+            for(let k=0; k<iterations; k++) {
+                const delaunay = d3.Delaunay.from(points, p => p.x, p => p.y);
+                const voronoi = delaunay.voronoi([0, 0, 1, 1]);
+                for (let i = 0; i < points.length; i++) {
+                    const polygon = voronoi.cellPolygon(i);
+                    if (polygon) {
+                        let cx = 0, cy = 0, area = 0;
+                        for (let j = 0, len = polygon.length; j < len - 1; j++) {
+                            const [x0, y0] = polygon[j];
+                            const [x1, y1] = polygon[j + 1];
+                            const a = x0 * y1 - x1 * y0;
+                            area += a;
+                            cx += (x0 + x1) * a;
+                            cy += (y0 + y1) * a;
+                        }
+                        area *= 3;
+                        if (area !== 0) {
+                            points[i] = { x: cx / area, y: cy / area };
+                        }
+                    }
+                }
+            }
+            return points;
         }
 
         function getSafeCoordinates(existingMissions) {
@@ -233,39 +366,20 @@
 
         function processTimeMechanics() {
             const today = new Date(); today.setHours(0,0,0,0);
-
-            SECTORS.forEach(s => {
-                if (!state.missions[s]) state.missions[s] = {};
-                
-                if (state.missions[s]['FAR']) { state.missions[s]['TRAJECTORY'] = state.missions[s]['FAR']; delete state.missions[s]['FAR']; }
-                if (state.missions[s]['NEAR']) { state.missions[s]['HORIZON'] = state.missions[s]['NEAR']; delete state.missions[s]['NEAR']; }
-                if (state.missions[s]['NOW']) { state.missions[s]['IMMINENT'] = state.missions[s]['NOW']; delete state.missions[s]['NOW']; }
-
+            state.sectors.forEach(s => {
                 HORIZONS.forEach(h => {
-                    if (!state.missions[s][h]) state.missions[s][h] = [];
-                    for (let i = state.missions[s][h].length - 1; i >= 0; i--) {
-                        let m = state.missions[s][h][i];
-                        
-                        if (m.x === undefined || m.y === undefined) {
-                            let coords = getSafeCoordinates(state.missions[s][h].slice(0, i));
-                            m.x = coords.x; m.y = coords.y;
-                        }
-                        if (m.captured === undefined) m.captured = false;
-                        if (m.overdue === undefined) m.overdue = false;
-
+                    for (let i = state.missions[s.id][h].length - 1; i >= 0; i--) {
+                        let m = state.missions[s.id][h][i];
                         if (m.dueDate && !m.captured) {
                             const dDate = new Date(m.dueDate + 'T00:00:00');
                             const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-                            
                             m.overdue = diffDays < 0;
-                            
                             let targetH = 'TRAJECTORY';
                             if (diffDays <= 7) targetH = 'IMMINENT';
                             else if (diffDays <= 14) targetH = 'HORIZON';
-                            
                             if (targetH !== h) {
-                                state.missions[s][targetH].push(m);
-                                state.missions[s][h].splice(i, 1);
+                                state.missions[s.id][targetH].push(m);
+                                state.missions[s.id][h].splice(i, 1);
                             }
                         }
                     }
@@ -274,21 +388,12 @@
             save();
         }
 
-        function save() { localStorage.setItem('missions', JSON.stringify(state.missions)); }
-
-        function triggerWarp() {
-            const container = document.getElementById('view-container');
-            container.classList.remove('warp-transition');
-            void container.offsetWidth; 
-            container.classList.add('warp-transition');
-        }
-
         function checkDecayStatus() {
             let hasDecay = false;
-            Object.keys(state.missions).forEach(s => {
+            state.sectors.forEach(s => {
                 HORIZONS.forEach(h => {
-                    if(state.missions[s][h]) {
-                        state.missions[s][h].forEach(m => {
+                    if(state.missions[s.id][h]) {
+                        state.missions[s.id][h].forEach(m => {
                             if (m.overdue && !m.captured) hasDecay = true;
                         });
                     }
@@ -304,6 +409,12 @@
             }
         }
 
+        function save() { 
+            localStorage.setItem('sectors', JSON.stringify(state.sectors));
+            localStorage.setItem('missions', JSON.stringify(state.missions)); 
+        }
+
+        // --- RENDERING --- //
         function render() {
             updateAccentColor();
             processTimeMechanics();
@@ -318,49 +429,74 @@
             container.innerHTML = '';
             
             zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
-            bread.innerText = `${state.sector || 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
             
-            // Dynamic Contextual Footer
-            if (state.level === 2) {
-                footer.style.display = 'flex';
-                // Level 2 shows the dropdown (isFixed = false)
-                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`;
-            } else if (state.level === 3) {
-                footer.style.display = 'flex';
-                // Level 3 hides the dropdown (isFixed = true)
-                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
-            } else {
-                footer.style.display = 'none';
-            }
-
+            const activeSector = state.sectors.find(s => s.id === state.sectorId);
+            const secName = activeSector ? activeSector.name : 'GALAXY';
+            bread.innerText = `${secName} ${state.horizon ? '> ' + state.horizon : ''}`;
+            
             if (state.level === 1) {
-                container.innerHTML = `<div class="view-level-title">LEVEL 1</div><h1 class="view-main-title">Sector Map</h1>`;
-                const grid = document.createElement('div'); grid.className = 'grid';
-                SECTORS.forEach(s => {
-                    const cHex = SECTOR_COLORS[s];
-                    let isSectorOverdue = HORIZONS.some(h => state.missions[s][h].some(m => m.overdue && !m.captured));
+                footer.style.display = 'flex';
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`;
+                
+                // Voronoi SVG Setup
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
+                svg.id = "voronoi-map"; 
+                container.appendChild(svg);
+                
+                // Force layout calculation
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+
+                // Run Lloyd's Relaxation on seeds
+                let seeds = state.sectors.map(s => ({x: s.seed.x, y: s.seed.y}));
+                seeds = relaxLloyds(seeds, 5);
+                
+                // Update seeds back to state for consistency
+                seeds.forEach((seed, i) => { state.sectors[i].seed = seed; });
+
+                const mappedSeeds = seeds.map(s => [s.x * w, s.y * h]);
+                const delaunay = d3.Delaunay.from(mappedSeeds);
+                const voronoi = delaunay.voronoi([0, 0, w, h]);
+
+                state.sectors.forEach((s, i) => {
+                    const pathData = voronoi.renderCell(i);
+                    const isOverdue = HORIZONS.some(hz => state.missions[s.id][hz].some(m => m.overdue && !m.captured));
                     
-                    const box = document.createElement('div'); 
-                    box.className = `sector-box ${isSectorOverdue ? 'overdue' : ''}`;
+                    const cellColor = isOverdue ? 'var(--thrust)' : s.color;
+                    const fillOpacity = isOverdue ? 0.2 : 0.05;
                     
-                    let planetHtml = `<div class="planet" onclick="selectSector('${s}')" style="${!isSectorOverdue ? `border-color: ${cHex}; box-shadow: 0 0 20px ${cHex}66; color: ${cHex}; text-shadow: 0 0 8px ${cHex};` : ''}">
-                        <div style="z-index: 5;">${s}</div>
-                        <div class="mini-ring" style="width: 80px; height: 80px; animation: orbit-spin 10s linear infinite;"></div>
-                        <div class="mini-ring" style="width: 60px; height: 60px; animation: orbit-counter-spin 15s linear infinite;"></div>
-                        <div class="mini-ring" style="width: 40px; height: 40px; animation: orbit-spin 20s linear infinite;"></div>
-                    </div>`;
-                    
-                    box.innerHTML = planetHtml;
-                    grid.appendChild(box);
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", pathData);
+                    path.setAttribute("fill", cellColor);
+                    path.setAttribute("fill-opacity", fillOpacity);
+                    path.setAttribute("stroke", cellColor);
+                    path.setAttribute("stroke-width", "2");
+                    path.setAttribute("class", "voronoi-cell");
+                    path.onclick = () => selectSector(s.id);
+                    svg.appendChild(path);
+
+                    const cx = mappedSeeds[i][0];
+                    const cy = mappedSeeds[i][1];
+
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", cx);
+                    text.setAttribute("y", cy);
+                    text.setAttribute("fill", cellColor);
+                    text.setAttribute("class", "voronoi-text");
+                    text.style.textShadow = `0 0 10px ${cellColor}`;
+                    text.textContent = s.name;
+                    svg.appendChild(text);
                 });
-                container.appendChild(grid);
+
             } 
             else if (state.level === 2) {
-                container.innerHTML = `<div class="view-level-title">LEVEL 2 // ${state.sector}</div><h1 class="view-main-title">Planetary Map</h1>`;
+                footer.style.display = 'flex';
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`;
+                
+                container.innerHTML = `<div class="view-level-title">LEVEL 2 // ${secName}</div><h1 class="view-main-title">Planetary Map</h1>`;
                 const center = document.createElement('div');
                 center.style.position = 'relative'; center.style.width = '280px'; center.style.height = '280px';
                 center.style.display = 'flex'; center.style.alignItems = 'center'; center.style.justifyContent = 'center'; center.style.marginTop = '20px';
-                
                 center.style.background = 'radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%)';
                 center.style.borderRadius = '50%';
 
@@ -370,8 +506,7 @@
                     const p = document.createElement('div'); p.className = 'particle';
                     const radius = Math.pow(Math.random(), 2) * 200; 
                     const angle = Math.random() * Math.PI * 2;
-                    const x = 140 + radius * Math.cos(angle); 
-                    const y = 140 + radius * Math.sin(angle);
+                    const x = 140 + radius * Math.cos(angle); const y = 140 + radius * Math.sin(angle);
                     const size = Math.random() * 2 + 1;
                     p.style.width = size + 'px'; p.style.height = size + 'px';
                     p.style.left = x + 'px'; p.style.top = y + 'px';
@@ -381,37 +516,28 @@
                 }
                 center.appendChild(particleSystem);
                 
-                const h_data = [ 
-                    { id: 'TRAJECTORY', size: 280, speed: 60 }, 
-                    { id: 'HORIZON', size: 190, speed: 30 }, 
-                    { id: 'IMMINENT', size: 100, speed: 15 } 
-                ];
+                const h_data = [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ];
                 
                 h_data.forEach(d => {
-                    let isRingOverdue = state.missions[state.sector][d.id].some(m => m.overdue && !m.captured);
-                    
+                    let isRingOverdue = state.missions[state.sectorId][d.id].some(m => m.overdue && !m.captured);
                     const wrapper = document.createElement('div');
                     wrapper.className = `ring-circle ${isRingOverdue ? 'overdue' : ''}`;
-                    wrapper.style.width = d.size + 'px'; 
-                    wrapper.style.height = d.size + 'px';
+                    wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px';
                     wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
                     
                     const label = document.createElement('div');
-                    label.className = 'ring-label';
-                    label.innerText = d.id;
+                    label.className = 'ring-label'; label.innerText = d.id;
                     wrapper.appendChild(label);
 
                     const starField = document.createElement('div');
                     starField.style.position = 'absolute'; starField.style.width = '100%'; starField.style.height = '100%';
                     starField.style.animation = `orbit-spin ${d.speed}s linear infinite`; starField.style.pointerEvents = 'none';
 
-                    const missions = state.missions[state.sector][d.id] || [];
+                    const missions = state.missions[state.sectorId][d.id] || [];
                     missions.forEach((m, i) => {
                         const angle = (i / missions.length) * Math.PI * 2;
                         const radius = d.size / 2;
-                        const x = radius + radius * Math.cos(angle);
-                        const y = radius + radius * Math.sin(angle);
-                        
+                        const x = radius + radius * Math.cos(angle); const y = radius + radius * Math.sin(angle);
                         const dot = document.createElement('div');
                         dot.style.position = 'absolute'; dot.style.width = '6px'; dot.style.height = '6px';
                         dot.style.backgroundColor = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--accent)';
@@ -427,8 +553,11 @@
                 container.appendChild(center);
             }
             else if (state.level === 3) {
+                footer.style.display = 'flex';
+                footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`;
+
                 container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
-                const missions = state.missions[state.sector][state.horizon];
+                const missions = state.missions[state.sectorId][state.horizon];
                 if (missions.length === 0) {
                     container.innerHTML += `<div style="margin-top: 60px; font-size: 0.8rem; color: var(--border); letter-spacing: 2px;">NO ARCHITECTURE DETECTED IN ${state.horizon} ORBIT</div>`;
                 } else {
@@ -451,7 +580,8 @@
                 }
             }
             else if (state.level === 4) {
-                const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
+                footer.style.display = 'none';
+                const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
                 const totalTasks = m.subs.length;
                 const completedTasks = m.subs.filter(s => s.c).length;
                 const progressPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
@@ -544,6 +674,7 @@
                 orbHtml += `
                     <div style="display:flex; justify-content:center; margin-top: auto; padding-bottom: 20px; z-index: 10;">
                         <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT PARAMETERS</button>
+                        <button class="mod-btn" onclick="editMissionStatus(${m.id}, event)" style="${m.overdue && !m.captured ? 'color: var(--thrust); border-color: var(--thrust); box-shadow: 0 0 8px rgba(255,42,42,0.4);' : ''}">STATUS</button>
                         <button class="mod-btn" onclick="deleteMission(${m.id}, event)" style="color:#ff2a2a; border-color:#ff2a2a; box-shadow: 0 0 8px rgba(255, 42, 42, 0.4);">DESTROY</button>
                     </div>
                 </div>`;
@@ -552,111 +683,134 @@
             }
         }
 
-        // === TEMPORAL DATA CONSOLE LOGIC (MODAL) === //
-
-        function openTaskModal(horizonContext = null, isFixed = false) {
-            editModeId = null;
-            defaultHorizonContext = horizonContext || 'TRAJECTORY';
-            isHorizonFixed = isFixed;
+        // === SECTOR MODAL (EDIT MAP) === //
+        let editingSectors = [];
+        
+        function openSectorModal() {
+            editingSectors = JSON.parse(JSON.stringify(state.sectors)); // Deep copy
+            renderSectorEditList();
+            document.getElementById('sector-modal-overlay').style.display = 'flex';
+        }
+        function closeSectorModal() { document.getElementById('sector-modal-overlay').style.display = 'none'; }
+        
+        function renderSectorEditList() {
+            const list = document.getElementById('sector-edit-list');
+            list.innerHTML = '';
+            editingSectors.forEach((s, i) => {
+                const row = document.createElement('div');
+                row.className = 'subtask-row';
+                row.innerHTML = `
+                    <input type="color" value="${s.color}" onchange="updateEditSector(${i}, 'color', this.value)" style="width: 40px; flex-shrink: 0;">
+                    <input type="text" class="modal-input" placeholder="Sector Designation" value="${s.name}" oninput="updateEditSector(${i}, 'name', this.value)">
+                    <button class="subtask-remove" onclick="removeEditSector(${i})">-</button>
+                `;
+                list.appendChild(row);
+            });
+        }
+        
+        function updateEditSector(i, key, val) { editingSectors[i][key] = val; }
+        
+        function removeEditSector(i) {
+            if (confirm("WARNING: Destroying a sector deletes all missions within it. Proceed?")) {
+                editingSectors.splice(i, 1);
+                renderSectorEditList();
+            }
+        }
+        
+        function addNewSector() {
+            const newColor = AUTO_PALETTE[Math.floor(Math.random() * AUTO_PALETTE.length)];
+            editingSectors.push({
+                id: 'sec_' + Date.now(),
+                name: 'NEW SECTOR',
+                color: newColor,
+                seed: { x: 0.1 + Math.random() * 0.8, y: 0.1 + Math.random() * 0.8 }
+            });
+            renderSectorEditList();
+        }
+        
+        function saveSectorModal() {
+            if (editingSectors.length < 1) { alert("Must have at least 1 active sector."); return; }
             
+            // Clean up deleted sectors in missions
+            const newIds = editingSectors.map(s => s.id);
+            Object.keys(state.missions).forEach(id => {
+                if (!newIds.includes(id)) delete state.missions[id];
+            });
+            
+            // Ensure missions exist for new sectors
+            editingSectors.forEach(s => {
+                if (!state.missions[s.id]) {
+                    state.missions[s.id] = { 'TRAJECTORY': [], 'HORIZON': [], 'IMMINENT': [] };
+                }
+            });
+
+            state.sectors = editingSectors;
+            save();
+            closeSectorModal();
+            render();
+        }
+
+        // === TARGET CONSOLE === //
+        function openTaskModal(horizonContext = null, isFixed = false) {
+            editModeId = null; defaultHorizonContext = horizonContext || 'TRAJECTORY'; isHorizonFixed = isFixed;
             document.getElementById('modal-task-name').value = '';
             document.getElementById('modal-task-date').value = '';
             document.getElementById('modal-header-text').innerText = 'TARGET INITIALIZATION';
             document.getElementById('modal-save-btn').innerText = 'LOCK TARGET';
-            
             document.getElementById('modal-horizon-select').value = defaultHorizonContext;
             document.getElementById('modal-horizon-group').style.display = isFixed ? 'none' : 'block';
-            
-            tempSubtasks = ['', '', '']; 
-            renderModalSubtasks();
+            tempSubtasks = ['', '', '']; renderModalSubtasks();
             document.getElementById('task-modal-overlay').style.display = 'flex';
         }
 
         function openEditModal(id) {
-            editModeId = id;
-            let targetMission = null;
-            let targetHorizon = null;
-            
+            editModeId = id; let targetMission = null; let targetHorizon = null;
             HORIZONS.forEach(h => {
-                const found = state.missions[state.sector][h].find(m => m.id === id);
+                const found = state.missions[state.sectorId][h].find(m => m.id === id);
                 if (found) { targetMission = found; targetHorizon = h; }
             });
-            
             if (!targetMission) return;
-            
-            defaultHorizonContext = targetHorizon;
-            isHorizonFixed = true; // Hard lock dropdown in edit view, time dictates placement
-            
+            defaultHorizonContext = targetHorizon; isHorizonFixed = true; 
             document.getElementById('modal-task-name').value = targetMission.name;
             document.getElementById('modal-task-date').value = targetMission.dueDate || '';
             document.getElementById('modal-header-text').innerText = 'MODIFY TARGET PARAMETERS';
             document.getElementById('modal-save-btn').innerText = 'UPDATE TARGET';
-            
             document.getElementById('modal-horizon-select').value = defaultHorizonContext;
             document.getElementById('modal-horizon-group').style.display = 'none';
-            
             tempSubtasks = targetMission.subs.map(s => s.t);
             if(tempSubtasks.length === 0) tempSubtasks = [''];
             renderModalSubtasks();
-            
             document.getElementById('task-modal-overlay').style.display = 'flex';
         }
 
-        function closeTaskModal() {
-            document.getElementById('task-modal-overlay').style.display = 'none';
-        }
-
+        function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none'; }
+        
         function renderModalSubtasks() {
             const list = document.getElementById('modal-subtasks-list');
             const addBtn = document.getElementById('modal-add-btn');
             list.innerHTML = '';
-            
             tempSubtasks.forEach((sub, i) => {
-                const row = document.createElement('div');
-                row.className = 'subtask-row';
-                row.innerHTML = `
-                    <input type="text" class="modal-input" placeholder="Sub-routine definition..." value="${sub}" oninput="updateTempSubtask(${i}, this.value)">
-                    <button class="subtask-remove" onclick="removeModalSubtask(${i})">-</button>
-                `;
+                const row = document.createElement('div'); row.className = 'subtask-row';
+                row.innerHTML = `<input type="text" class="modal-input" placeholder="Sub-routine definition..." value="${sub}" oninput="updateTempSubtask(${i}, this.value)"><button class="subtask-remove" onclick="removeModalSubtask(${i})">-</button>`;
                 list.appendChild(row);
             });
-
-            if (tempSubtasks.length >= 10) {
-                addBtn.classList.add('disabled');
-                addBtn.innerText = "MAXIMUM SUB-ROUTINES REACHED";
-            } else {
-                addBtn.classList.remove('disabled');
-                addBtn.innerText = "+";
-            }
+            if (tempSubtasks.length >= 10) { addBtn.classList.add('disabled'); addBtn.innerText = "MAXIMUM REACHED"; } 
+            else { addBtn.classList.remove('disabled'); addBtn.innerText = "+"; }
         }
 
         function updateTempSubtask(index, val) { tempSubtasks[index] = val; }
-        
-        function removeModalSubtask(index) {
-            tempSubtasks.splice(index, 1);
-            renderModalSubtasks();
-        }
-
-        function addModalSubtask() {
-            if (tempSubtasks.length < 10) {
-                tempSubtasks.push('');
-                renderModalSubtasks();
-            }
-        }
+        function removeModalSubtask(index) { tempSubtasks.splice(index, 1); renderModalSubtasks(); }
+        function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
 
         function saveTaskModal() {
             const name = document.getElementById('modal-task-name').value.trim();
             const dateStr = document.getElementById('modal-task-date').value;
-            
             if (!name) { alert("Target designation required."); return; }
 
-            let validSubs = [];
-            let oldMission = null;
-            let oldHorizon = null;
-            
+            let validSubs = []; let oldMission = null; let oldHorizon = null;
             if (editModeId) {
                 HORIZONS.forEach(h => {
-                    const found = state.missions[state.sector][h].find(m => m.id === editModeId);
+                    const found = state.missions[state.sectorId][h].find(m => m.id === editModeId);
                     if (found) { oldMission = found; oldHorizon = h; }
                 });
             }
@@ -665,86 +819,76 @@
                 let text = t.trim();
                 if(text !== "") {
                     let isChecked = false;
-                    if (oldMission) {
-                        let existing = oldMission.subs.find(s => s.t === text);
-                        if (existing) isChecked = existing.c;
-                    }
+                    if (oldMission) { let existing = oldMission.subs.find(s => s.t === text); if (existing) isChecked = existing.c; }
                     validSubs.push({t: text, c: isChecked});
                 }
             });
             
-            // Context logic: If hidden, use default Context. If visible, use Dropdown value.
             const selectedHorizon = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-            // Time Override: If date is present, it overrules the manual selection
             const targetHorizon = getHorizonFromDate(dateStr, selectedHorizon);
 
             if (editModeId && oldMission) {
-                state.missions[state.sector][oldHorizon] = state.missions[state.sector][oldHorizon].filter(m => m.id !== editModeId);
-                
-                oldMission.name = name;
-                oldMission.dueDate = dateStr || null;
-                oldMission.subs = validSubs;
-                
+                state.missions[state.sectorId][oldHorizon] = state.missions[state.sectorId][oldHorizon].filter(m => m.id !== editModeId);
+                oldMission.name = name; oldMission.dueDate = dateStr || null; oldMission.subs = validSubs;
                 if (oldHorizon !== targetHorizon) {
-                    const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
+                    const coords = getSafeCoordinates(state.missions[state.sectorId][targetHorizon]);
                     oldMission.x = coords.x; oldMission.y = coords.y;
                 }
-                
-                state.missions[state.sector][targetHorizon].push(oldMission);
+                state.missions[state.sectorId][targetHorizon].push(oldMission);
             } else {
-                const coords = getSafeCoordinates(state.missions[state.sector][targetHorizon]);
-                state.missions[state.sector][targetHorizon].push({ 
-                    id: Date.now(), 
-                    name: name, 
-                    subs: validSubs, 
-                    x: coords.x, 
-                    y: coords.y, 
-                    captured: false, 
-                    overdue: false,
-                    dueDate: dateStr || null
+                const coords = getSafeCoordinates(state.missions[state.sectorId][targetHorizon]);
+                state.missions[state.sectorId][targetHorizon].push({ 
+                    id: Date.now(), name: name, subs: validSubs, x: coords.x, y: coords.y, captured: false, overdue: false, dueDate: dateStr || null
                 });
             }
-
-            save();
-            closeTaskModal();
-            processTimeMechanics(); 
-            
+            save(); closeTaskModal(); processTimeMechanics(); 
             if (state.level === 4) { state.horizon = targetHorizon; }
             render();
         }
 
-        function selectSector(s) { state.sector = s; state.level = 2; render(); }
+        function selectSector(id) { state.sectorId = id; state.level = 2; render(); }
         function selectMission(id) { state.activeMissionId = id; state.level = 4; render(); }
-        
         function toggleSub(index, e) {
             e.stopPropagation();
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-            m.subs[index].c = !m.subs[index].c;
-            if(m.subs[index].c) ignitionFlare = true;
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
+            m.subs[index].c = !m.subs[index].c; if(m.subs[index].c) ignitionFlare = true;
             save(); render();
         }
-        
         function completeMission() {
-            const m = state.missions[state.sector][state.horizon].find(x => x.id === state.activeMissionId);
-            m.captured = true; m.overdue = false; 
-            save(); state.level = 3; state.activeMissionId = null; render();
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === state.activeMissionId);
+            m.captured = true; m.overdue = false; save(); state.level = 3; state.activeMissionId = null; render();
         }
         
+        function editMissionStatus(id, e) {
+            if(e) e.stopPropagation();
+            const m = state.missions[state.sectorId][state.horizon].find(x => x.id === id);
+            const decayToggle = confirm("WARNING: Toggle Orbital Decay / Overdue Status?");
+            if (decayToggle) m.overdue = !m.overdue;
+            if (!decayToggle) { const res = prompt("Rename Mission:", m.name); if(res) m.name = res; }
+            save(); render();
+        }
+
         function deleteMission(id, e) {
             if(e) e.stopPropagation();
             if(confirm("Destroy this target permanently?")) {
-                state.missions[state.sector][state.horizon] = state.missions[state.sector][state.horizon].filter(m => m.id !== id);
+                state.missions[state.sectorId][state.horizon] = state.missions[state.sectorId][state.horizon].filter(m => m.id !== id);
                 save(); state.level = 3; state.activeMissionId = null; render();
             }
         }
-        
         function zoomOut() { 
             if (state.level === 4) { state.activeMissionId = null; state.level = 3; }
             else if (state.level === 3) { state.level = 2; state.horizon = null; } 
-            else if (state.level === 2) { state.level = 1; state.sector = null; }
+            else if (state.level === 2) { state.level = 1; state.sectorId = null; }
             render(); 
         }
 
+        // Init
+        runDatabaseMigration();
+        generateStarfield();
+        
+        // Re-calculate Voronoi map on window resize to keep math accurate
+        window.addEventListener('resize', () => { if(state.level === 1) render(); });
+        
         render();
     </script>
 </body>
