@@ -502,3 +502,29 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .breadcrumb {
     margin-bottom: 5px;
 }
+
+/* Update Log Button Text and Arrow */
+.zoom-btn {
+    font-size: 0.8rem; /* Matched size */
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+/* Debris Floating Animation */
+@keyframes debris-float {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(10px, 10px); }
+}
+
+.debris-node {
+    animation: debris-float 10s infinite alternate ease-in-out;
+    pointer-events: none; /* Debris is non-interactive background elements */
+}
+
+/* Priority Item Lightened Text */
+.priority-item.task-captured .p-text {
+    opacity: 0.5 !important;
+}
