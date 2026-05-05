@@ -125,7 +125,6 @@ function relaxLloyds(seeds, iterations) {
     return points;
 }
 
-// --- NAVIGATIONAL GEOMETRY ---
 function doLinesIntersect(p1, q1, p2, q2) {
     const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
     return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
@@ -249,7 +248,7 @@ function render() {
 }
 
 function renderLevel1(container, footer) {
-    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`; }
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT SECTORS ]</button>`; }
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "voronoi-map"; container.appendChild(svg);
     const w = container.clientWidth, h = container.clientHeight;
     let seeds = relaxLloyds(state.sectors.map(s => s.seed), 10);
@@ -356,9 +355,8 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
     const allCaptured = missions.filter(m => m.captured), allActive = missions.filter(m => !m.captured).slice(0, 10);
-    let retentionCount = 10;
-    if (allCaptured.length > 5 || (allCaptured.length >= 1 && allActive.length >= 10)) retentionCount = 5;
-    const wireTasks = [...allCaptured.slice(-retentionCount), ...allActive].slice(-10);
+    const maxHud = 10, rem = Math.max(0, maxHud - allActive.length);
+    const wireTasks = [...allCaptured.slice(-rem), ...allActive];
     const debrisMissions = allCaptured.filter(m => !wireTasks.includes(m)).slice(-20);
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
@@ -458,54 +456,25 @@ function renderModalSubtasks() {
     });
 }
 
-function closeTaskModal() { 
-    // Ensure the modal actually closes regardless of state
-    const overlay = document.getElementById('task-modal-overlay');
-    if (overlay) overlay.style.display = 'none'; 
-}
+function closeTaskModal() { const overlay = document.getElementById('task-modal-overlay'); if (overlay) overlay.style.display = 'none'; }
 
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
-    
-    // 1. Validation: Name Check
-    if (!name) { 
-        alert("Mission must be named"); 
-        return; 
-    }
-
+    if (!name) { alert("Mission must be named"); return; }
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-    
-    // 2. Fixed Capacity Check: Only check ACTIVE tasks in the SPECIFIC selected horizon
-    const horizonMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) 
-        ? state.missions[state.sectorId][h] 
-        : [];
-    
-    const activeInHorizon = horizonMissions.filter(m => !m.captured).length;
-
-    if (!editModeId && activeInHorizon >= 10) { 
-        alert("Current mission must be completed before taking on new missions in this sector."); 
-        return; 
-    }
-
-    const dateStr = document.getElementById('modal-task-date').value;
-    const finalH = getHorizonFromDate(dateStr, h);
-    
+    const hzMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) ? state.missions[state.sectorId][h] : [];
+    const activeInHz = hzMissions.filter(m => !m.captured).length;
+    if (!editModeId && activeInHz >= 10) { alert("Current mission must be completed before taking on new missions in this sector."); return; }
+    const dateStr = document.getElementById('modal-task-date').value, finalH = getHorizonFromDate(dateStr, h);
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
 
     if (editModeId) {
-        // Find and replace logic
         let existingIdx = -1, existingHz = null;
-        HORIZONS.forEach(hz => {
-            const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId);
-            if (idx !== -1) { existingIdx = idx; existingHz = hz; }
-        });
-        
+        HORIZONS.forEach(hz => { const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId); if (idx !== -1) { existingIdx = idx; existingHz = hz; } });
         if (existingIdx !== -1) {
             if (existingHz === finalH) {
                 const m = state.missions[state.sectorId][finalH][existingIdx];
-                m.name = name; 
-                m.dueDate = dateStr || null;
-                m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
+                m.name = name; m.dueDate = dateStr || null; m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
             } else {
                 state.missions[state.sectorId][existingHz].splice(existingIdx, 1);
                 const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
@@ -513,21 +482,10 @@ function saveTaskModal() {
             }
         }
     } else {
-        // Initialization logic
-        const coords = getSafeCoordinates(horizonMissions);
-        state.missions[state.sectorId][finalH].push({ 
-            id: Date.now(), 
-            name, 
-            subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-            x: coords.x, 
-            y: coords.y, 
-            dueDate: dateStr || null 
-        });
+        const coords = getSafeCoordinates(hzMissions);
+        state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
     }
-
-    save(); 
-    closeTaskModal(); // Closes the modal after successful save
-    render();
+    save(); closeTaskModal(); render();
 }
 
 function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
@@ -552,16 +510,29 @@ function renderSectorEditList() {
     editingSectors.forEach((s, i) => {
         const row = document.createElement('div'); row.className = 'subtask-row'; row.style.marginBottom = '12px';
         const colorGraphic = `<div style="position: relative; width: 24px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);"><input type="color" value="${s.color}" onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;"><div style="position: absolute; top: 4px; bottom: 4px; left: 4px; right: 4px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div></div>`;
-        row.innerHTML = `${colorGraphic}<input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value" style="flex: 1; height: 36px;"><button class="subtask-remove-minimal" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" style="height: 36px; width: 36px; margin: 0;">−</button>`;
+        row.innerHTML = `${colorGraphic}<input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value" style="flex: 1; height: 36px;"><button class="mod-btn" onclick="resetSectorMissions('${s.id}')" style="height: 36px; font-size: 0.5rem; color: var(--thrust); border-color: var(--thrust);">RESET</button><button class="subtask-remove-minimal" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" style="height: 36px; width: 36px; margin: 0;">−</button>`;
         list.appendChild(row);
     });
     if(addBtn) addBtn.style.display = editingSectors.length >= 9 ? 'none' : 'block';
 }
 
+function resetSectorMissions(sectorId) { if(confirm(`Wipe all mission data for this sector?`)) { state.missions[sectorId] = { TRAJECTORY: [], HORIZON: [], IMMINENT: [] }; save(); render(); alert("Sector data purged."); } }
+function factoryReset() { if(confirm("TERMINAL ACTION: Wipe all pilot data, sectors, and logs? This cannot be undone.")) { localStorage.clear(); location.reload(); } }
 function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({ id: 'sec_' + Date.now(), name: 'NEW SECTOR', color: AUTO_PALETTE[editingSectors.length % AUTO_PALETTE.length], seed: { x: Math.random(), y: Math.random() } }); renderSectorEditList(); } }
 function saveSectorModal() { editingSectors.forEach(s => { if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; }); state.sectors = JSON.parse(JSON.stringify(editingSectors)); save(); closeSectorModal(); render(); }
 function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
 function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
+
+function openEditModal(id) {
+    editModeId = id; let targetMission = null;
+    HORIZONS.forEach(h => { const found = state.missions[state.sectorId]?.[h]?.find(m => m.id === id); if (found) { targetMission = found; } });
+    if (!targetMission) return;
+    document.getElementById('modal-task-name').value = targetMission.name;
+    document.getElementById('modal-task-date').value = targetMission.dueDate || '';
+    tempSubtasks = targetMission.subs.map(s => s.t);
+    if(tempSubtasks.length === 0) tempSubtasks = ['']; renderModalSubtasks();
+    document.getElementById('task-modal-overlay').style.display = 'flex';
+}
 
 function togglePilotLog() {
     let logModal = document.getElementById('pilot-log-modal');
@@ -570,9 +541,7 @@ function togglePilotLog() {
         logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; }; document.body.appendChild(logModal);
     }
     let allLogs = [];
-    state.sectors.forEach(s => {
-        HORIZONS.forEach(h => { (state.missions[s.id]?.[h] || []).forEach(m => { if (m.captured && m.completionTimestamp) { allLogs.push({...m, sectorName: s.name, sectorColor: s.color}); } }); });
-    });
+    state.sectors.forEach(s => { HORIZONS.forEach(h => { (state.missions[s.id]?.[h] || []).forEach(m => { if (m.captured && m.completionTimestamp) { allLogs.push({...m, sectorName: s.name, sectorColor: s.color}); } }); }); });
     allLogs.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
     const displayLogs = allLogs.slice(0, 50);
     const logContent = displayLogs.length > 0 ? displayLogs.map(m => {
