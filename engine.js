@@ -17,7 +17,7 @@ let state = {
     hapticsEnabled: localStorage.getItem('hapticsEnabled') !== 'false',
     sectors: JSON.parse(localStorage.getItem('sectors')) || [...defaultSectors],
     missions: JSON.parse(localStorage.getItem('missions')) || {},
-    shipPos: { x: 50, y: 50 } // Navigation hardware initialized
+    shipPos: { x: 50, y: 50 } 
 };
 
 if (!state.sectors || state.sectors.length === 0) { state.sectors = [...defaultSectors]; }
@@ -195,7 +195,7 @@ function safelyGetActiveMission() {
 }
 
 function render() {
-    document.getElementById('app').classList.remove('critical-mode'); // Clears alert state globally
+    document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); processTimeMechanics(); checkDecayStatus();
     const container = document.getElementById('view-container');
     const zoomBtn = document.getElementById('zoom-out');
@@ -207,12 +207,8 @@ function render() {
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
-
-    // Lock in the base color
     const currentAccent = activeSector ? activeSector.color : '#00e5ff';
     document.documentElement.style.setProperty('--accent', currentAccent);
-    
-    // Auto-generate the glow by attaching a 60% alpha channel ('99') to the hex code
     document.documentElement.style.setProperty('--accent-glow', currentAccent + '99');
 
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
@@ -256,7 +252,6 @@ function renderLevel1(container, footer) {
 
             const missions = state.missions[s.id]?.[ring.id] || [];
             if (missions.length > 0) {
-                // NEW: Animated group for orbital rotation
                 const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 group.style.transformOrigin = `${cx}px ${cy}px`;
                 group.style.animation = `orbit-spin ${ring.s}s linear infinite`;
@@ -312,10 +307,6 @@ function renderLevel2(container, footer, activeSector) {
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
     textSvg.setAttribute("viewBox", "0 0 280 280");
-
-    // NEW MATH: Adjusted path radii to sit halfway between rings
-    // Horizon: halfway between 100px and 190px (radius 50 and 95) = 72.5
-    // Trajectory: halfway between 190px and 280px (radius 95 and 140) = 117.5
     textSvg.innerHTML = `
         <defs>
             <path id="path-horizon" d="M 67.5,140 A 72.5,72.5 0 0,1 212.5,140" />
@@ -338,16 +329,14 @@ function renderLevel2(container, footer, activeSector) {
             wrapper.appendChild(label);
         } else {
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("fill", "#ffffff"); // Forced White
+            text.setAttribute("fill", "#ffffff"); 
             text.style.cssText = 'font-size: 0.6rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
-            
             const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
             tp.setAttribute("href", `#path-${d.id.toLowerCase()}`);
             tp.setAttribute("startOffset", "50%");
             tp.setAttribute("text-anchor", "middle");
-            tp.setAttribute("dominant-baseline", "middle"); // Centered vertically on the path
+            tp.setAttribute("dominant-baseline", "middle");
             tp.textContent = d.id;
-            
             text.appendChild(tp);
             textSvg.appendChild(text);
         }
@@ -364,28 +353,64 @@ function renderLevel2(container, footer, activeSector) {
     });
     container.appendChild(center);
 }
+
 function renderLevel3(container, footer) {
-    // ... existing header code ...
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
+    
+    const header = document.createElement('div');
+    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
+    container.appendChild(header);
 
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
+    svg.id = "constellation-svg"; 
+    container.appendChild(svg);
     
-    // Determine ship position: Docked at the first uncaptured mission
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
+    
     if (activeTarget) {
         state.shipPos = { x: activeTarget.x, y: activeTarget.y };
+        const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        ship.setAttribute("points", "-8,-8 12,0 -8,8 -4,0"); 
+        ship.setAttribute("fill", "var(--accent)");
+        ship.setAttribute("filter", "drop-shadow(0 0 8px var(--accent-glow))");
+        ship.style.transition = "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)";
+        ship.style.transform = `translate(${state.shipPos.x}%, ${state.shipPos.y}%)`;
+        svg.appendChild(ship);
     }
 
-    // DRAW THE SHIP
-    const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    ship.setAttribute("points", "-8,-8 12,0 -8,8 -4,0"); // Sleek delta-wing shape
-    ship.setAttribute("fill", "var(--accent)");
-    ship.setAttribute("filter", "drop-shadow(0 0 8px var(--accent-glow))");
-    ship.style.transition = "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)";
-    ship.style.transform = `translate(${state.shipPos.x}%, ${state.shipPos.y}%)`;
-    svg.appendChild(ship);
-
-    // ... existing line drawing and mission node code ...
+    if (missions.length > 1) {
+        for (let i = 0; i < missions.length - 1; i++) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", missions[i].x + "%"); 
+            line.setAttribute("y1", missions[i].y + "%");
+            line.setAttribute("x2", missions[i+1].x + "%"); 
+            line.setAttribute("y2", missions[i+1].y + "%");
+            line.setAttribute("stroke", "var(--accent)"); 
+            line.setAttribute("stroke-width", "1"); 
+            line.setAttribute("stroke-dasharray", "5,5"); 
+            line.setAttribute("opacity", "0.4"); 
+            svg.appendChild(line);
+        }
+    }
+    
+    missions.forEach((m, i) => {
+        const star = document.createElement('div'); 
+        const isOverdue = m.overdue && !m.captured;
+        star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
+        star.style.left = m.x + '%'; 
+        star.style.top = m.y + '%';
+        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+        const node = document.createElement('div');
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        node.textContent = i + 1;
+        const label = document.createElement('div');
+        label.className = 'star-label';
+        label.textContent = m.name; 
+        star.appendChild(node);
+        star.appendChild(label);
+        container.appendChild(star);
+    });
 }
 
 function renderLevel4(container, footer) {
@@ -397,12 +422,7 @@ function renderLevel4(container, footer) {
     
     const lock = document.createElement('div');
     const isCritical = m.overdue && !m.captured;
-    
-    // Deploys the global vignette if the task is critical
-    if (isCritical) {
-        document.getElementById('app').classList.add('critical-mode');
-    }
-
+    if (isCritical) { document.getElementById('app').classList.add('critical-mode'); }
     lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`;
     
     const titleWrap = document.createElement('div');
@@ -412,7 +432,7 @@ function renderLevel4(container, footer) {
     
     const title = document.createElement('h2');
     title.style.color = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
-    title.textContent = m.name; // Sanitized via textContent
+    title.textContent = m.name; 
     lock.appendChild(title);
     
     lock.insertAdjacentHTML('beforeend', `<div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div>`);
@@ -426,29 +446,29 @@ function renderLevel4(container, footer) {
         const subNode = document.createElement('div');
         subNode.style.cssText = `position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;`;
         if (!m.captured) subNode.onclick = () => toggleSubTask(i);
-        
         const box = document.createElement('div');
         box.className = `orbital-node-box ${s.c ? 'checked' : ''}`;
-        
         const check = document.createElement('div');
         check.className = 'orb-check';
         check.textContent = s.c ? '✓' : '';
-        
         const text = document.createElement('div');
         text.className = 'orb-text';
-        text.textContent = s.t; // Sanitized via textContent
-        
+        text.textContent = s.t; 
         box.appendChild(check);
         box.appendChild(text);
         subNode.appendChild(box);
         orbSys.appendChild(subNode);
     });
-    
     lock.appendChild(orbSys);
     
     const btnWrap = document.createElement('div');
     btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto;';
-    btnWrap.innerHTML = `<button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button><button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>`;
+    btnWrap.innerHTML = `
+        <button class="mod-btn" onclick="moveMission(-1)">▲ PRIORITY</button>
+        <button class="mod-btn" onclick="moveMission(1)">▼ PRIORITY</button>
+        <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button>
+        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>
+    `;
     lock.appendChild(btnWrap);
     
     if (allDone && !m.captured) {
@@ -457,7 +477,6 @@ function renderLevel4(container, footer) {
         modal.innerHTML = `<h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button>`;
         lock.appendChild(modal);
     }
-    
     container.appendChild(lock);
 }
 
@@ -497,6 +516,19 @@ function renderModalSubtasks() {
 
 function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
 function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none'; }
+
+function moveMission(direction) {
+    const m = safelyGetActiveMission();
+    if (!m) return;
+    const missions = state.missions[state.sectorId][state.horizon];
+    const index = missions.findIndex(x => x.id === m.id);
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < missions.length) {
+        missions.splice(index, 1);
+        missions.splice(newIndex, 0, m);
+        save(); render();
+    }
+}
 
 function openEditModal(id) {
     editModeId = id; let targetMission = null; let targetHorizon = null;
@@ -554,34 +586,17 @@ function closeSectorModal() { document.getElementById('sector-modal-overlay').st
 function renderSectorEditList() {
     const list = document.getElementById('sector-edit-list'), addBtn = document.getElementById('sector-add-btn');
     if(!list) return; list.innerHTML = '';
-    
     editingSectors.forEach((s, i) => {
-        const row = document.createElement('div'); 
-        row.className = 'subtask-row';
+        const row = document.createElement('div'); row.className = 'subtask-row';
         row.style.marginBottom = '12px';
-        
-        // Custom Neon Color Graphic
         const colorGraphic = `
             <div style="position: relative; width: 24px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);">
-                <input type="color" value="${s.color}" 
-                    onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" 
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <input type="color" value="${s.color}" onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
                 <div style="position: absolute; bottom: 4px; left: 4px; right: 4px; height: 8px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div>
-            </div>
-        `;
-        
-        row.innerHTML = `
-            ${colorGraphic}
-            <input type="text" class="modal-input" value="${s.name}" 
-                oninput="editingSectors[${i}].name = this.value" 
-                style="flex: 1; height: 36px;">
-            <button class="subtask-remove" 
-                onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" 
-                style="height: 36px; width: 36px;">-</button>
-        `;
+            </div>`;
+        row.innerHTML = `${colorGraphic}<input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value" style="flex: 1; height: 36px;"><button class="subtask-remove" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" style="height: 36px; width: 36px;">-</button>`;
         list.appendChild(row);
     });
-    
     if(addBtn) addBtn.style.display = editingSectors.length >= 9 ? 'none' : 'block';
 }
 function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({ id: 'sec_' + Date.now(), name: 'NEW SECTOR', color: AUTO_PALETTE[editingSectors.length % AUTO_PALETTE.length], seed: { x: Math.random(), y: Math.random() } }); renderSectorEditList(); } }
