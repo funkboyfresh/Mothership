@@ -374,144 +374,99 @@ function renderLevel3(container, footer) {
         footer.style.display = 'flex'; 
         footer.innerHTML = `
             <button class="zoom-btn" style="flex:1; font-size: 0.8rem;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>
-            <button class="zoom-btn" style="width: 60px; margin-left: 10px;" onclick="togglePilotLog()">^ LOG</button>
+            <button class="zoom-btn" style="width: 85px; margin-left: 10px; font-size: 0.8rem;" onclick="togglePilotLog()">^ LOG</button>
         `; 
     }
     
-    // Header moved to bottom (rendered later in this function)
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
-    svg.id = "constellation-svg"; 
-    container.appendChild(svg);
+    svg.id = "constellation-svg"; container.appendChild(svg);
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- MISSION PRIORITIES (Repositioned 2 widths up) ---
-    if (missions.length > 0) {
+    const activeMissions = missions.filter(m => !m.captured).slice(0, 10);
+    const debrisMissions = missions.filter(m => m.captured).slice(-20); // Hard cap at 20 debris
+
+    // --- REPOSITIONED MISSION PRIORITIES (Up 1 Bar Width) ---
+    if (activeMissions.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        // Adjusted top to sit directly under the Zoom Out button
-        priorityContainer.style.cssText = 'position: absolute; top: 45px; z-index: 100; left: 20px;'; 
-
-        let criticalIndex = missions.findIndex(m => !m.captured);
-        if (criticalIndex === -1) criticalIndex = 0; 
+        priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
+        let criticalIndex = activeMissions.findIndex(m => !m.captured);
 
         priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES <span>v</span>
-            </button>
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
             <div class="priority-list">
-                ${missions.slice(-10).map((m, i) => { // Capped at 10
-                    const isCritical = (i === criticalIndex && !m.captured);
-                    return `
-                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" 
-                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                ${activeMissions.map((m, i) => `
+                    <div class="priority-item ${i === criticalIndex ? 'mission-critical-active' : ''}" 
+                         style="${i === criticalIndex ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${i + 1}</span>
-                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
+                        <span class="p-status">${i === criticalIndex ? '[ MISSION CRITICAL ]' : ''}</span>
                         <span class="p-text">${m.name}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-        `;
+                    </div>`).join('')}
+            </div>`;
         container.appendChild(priorityContainer);
     }
 
-    // --- VECTOR LINES (Oldest Disconnect Logic) ---
-    // Only draw lines for the last 10 missions
-    const activeChain = missions.slice(-10);
-    if (activeChain.length > 1) {
-        for (let i = 0; i < activeChain.length - 1; i++) {
+    // --- VECTOR LINES (Active Wire Only) ---
+    if (activeMissions.length > 1) {
+        for (let i = 0; i < activeMissions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", activeChain[i].x + "%"); line.setAttribute("y1", activeChain[i].y + "%");
-            line.setAttribute("x2", activeChain[i+1].x + "%"); line.setAttribute("y2", activeChain[i+1].y + "%");
+            line.setAttribute("x1", activeMissions[i].x + "%"); line.setAttribute("y1", activeMissions[i].y + "%");
+            line.setAttribute("x2", activeMissions[i+1].x + "%"); line.setAttribute("y2", activeMissions[i+1].y + "%");
             line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.2"); svg.appendChild(line);
         }
     }
     
-    // --- MISSION NODES (Brightness Shedding) ---
-    missions.forEach((m, i) => {
+    // --- NODE RENDERING (Active + Floating Debris) ---
+    [...debrisMissions, ...activeMissions].forEach((m, i) => {
         const star = document.createElement('div'); 
-        const isOverdue = m.overdue && !m.captured;
-        star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
-        star.style.left = m.x + '%'; star.style.top = m.y + '%';
-        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+        const isDebris = m.captured;
+        star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
         
-        let opacityValue;
-        const isLegacy = (missions.length > 10 && i < missions.length - 10);
-
-        if (isLegacy) {
-            opacityValue = 0.15; // Shedded Node
-        } else if (m.captured) {
-            opacityValue = 0.3; // Recently captured
-        } else if (m.id === activeChain.find(x => !x.captured)?.id) {
-            opacityValue = 1.0; // Critical
-        } else {
-            opacityValue = 0.8; // Follow-up
+        // Randomize debris factors if not set
+        if (isDebris && !m.driftX) {
+            m.driftX = (Math.random() - 0.5) * 6;
+            m.driftY = (Math.random() - 0.5) * 6;
+            m.scale = 0.2 + (Math.random() * 0.3); // 50% to 80% reduction
         }
 
-        const node = document.createElement('div');
-        node.className = `star-node ${m.captured ? 'captured' : ''}`;
-        const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
-        node.style.boxShadow = `0 0 ${isLegacy ? 0 : 15}px ${accentColor}${hexOpacity}`;
-        node.style.borderColor = `${accentColor}${hexOpacity}`;
-        node.style.opacity = opacityValue;
-        node.textContent = i + 1;
+        star.style.left = (m.x + (isDebris ? m.driftX : 0)) + '%'; 
+        star.style.top = (m.y + (isDebris ? m.driftY : 0)) + '%';
+        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
+        const node = document.createElement('div');
+        node.className = `star-node ${isDebris ? 'captured' : ''}`;
+        
+        if (isDebris) {
+            node.style.transform = `scale(${m.scale})`;
+            node.style.opacity = '0.15';
+            node.style.boxShadow = 'none';
+        } else {
+            const isCritical = m.id === activeMissions[0]?.id;
+            const opacityValue = isCritical ? 1.0 : 0.8;
+            const glowSize = isCritical ? 20 : 15;
+            const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
+            node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
+            node.style.borderColor = `${accentColor}${hexOpacity}`;
+            node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
+            node.textContent = activeMissions.indexOf(m) + 1;
+        }
+
         const label = document.createElement('div');
         label.className = 'star-label';
-        label.style.opacity = opacityValue;
+        label.style.display = isDebris ? 'none' : 'block';
         label.textContent = m.name; 
 
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 
-    // --- BOTTOM HEADER ALIGNMENT ---
+    // --- REPOSITIONED HEADER (Bottom-Heavy Alignment) ---
     const header = document.createElement('div');
-    header.style.cssText = 'position: absolute; bottom: 85px; text-align: center; width: 100%; pointer-events: none;';
+    header.style.cssText = 'position: absolute; bottom: 55px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
-}
-
-// --- PILOT LOG SYSTEM ---
-function togglePilotLog() {
-    let logModal = document.getElementById('pilot-log-modal');
-    if (!logModal) {
-        logModal = document.createElement('div');
-        logModal.id = 'pilot-log-modal';
-        logModal.className = 'modal-overlay';
-        logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; };
-        document.body.appendChild(logModal);
-    }
-    
-    const completedMissions = [];
-    state.sectors.forEach(s => {
-        HORIZONS.forEach(h => {
-            (state.missions[s.id]?.[h] || []).forEach(m => {
-                if (m.captured && m.completionTimestamp) completedMissions.push(m);
-            });
-        });
-    });
-
-    completedMissions.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
-
-    logModal.innerHTML = `
-        <div class="modal-box" style="max-width: 450px;">
-            <div class="modal-header">PILOT FLIGHT LOG</div>
-            <div class="subtasks-container" style="max-height: 60vh;">
-                ${completedMissions.length ? completedMissions.map(m => {
-                    const d = new Date(m.completionTimestamp);
-                    return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
-                        <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
-                        on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
-                        at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>`;
-                }).join('') : '<div style="text-align:center; opacity:0.5; padding: 20px;">NO LOGS RECORDED</div>'}
-            </div>
-            <button class="mod-btn" onclick="document.getElementById('pilot-log-modal').style.display='none'">DISMISS</button>
-        </div>
-    `;
-    logModal.style.display = 'flex';
 }
 
 function renderLevel4(container, footer) {
@@ -654,45 +609,40 @@ function openEditModal(id) {
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
     if (!name) return;
-    const dateStr = document.getElementById('modal-task-date').value;
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
+    const currentMissions = state.missions[state.sectorId]?.[h] || [];
+
+    // --- MISSION CAPACITY FIREWALL (10 Active Max) ---
+    if (!editModeId && currentMissions.filter(m => !m.captured).length >= 10) {
+        alert("Current mission must be completed before taking on new missions");
+        return;
+    }
+
+    const dateStr = document.getElementById('modal-task-date').value;
     const finalH = getHorizonFromDate(dateStr, h);
-    
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
 
     if (editModeId) {
-        // Find existing mission index and horizon
-        let existingIndex = -1;
-        let existingHorizon = null;
-        
+        let existingIndex = -1, existingHorizon = null;
         HORIZONS.forEach(hz => {
             const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId);
-            if (idx !== -1) {
-                existingIndex = idx;
-                existingHorizon = hz;
-            }
+            if (idx !== -1) { existingIndex = idx; existingHorizon = hz; }
         });
-
         if (existingIndex !== -1) {
-            // Update in-place if horizon hasn't changed
             if (existingHorizon === finalH) {
                 const m = state.missions[state.sectorId][finalH][existingIndex];
-                m.name = name;
-                m.dueDate = dateStr || null;
+                m.name = name; m.dueDate = dateStr || null;
                 m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
             } else {
-                // If horizon changed, we have to move it (rare), but keep standard push
                 state.missions[state.sectorId][existingHorizon].splice(existingIndex, 1);
                 const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
                 state.missions[state.sectorId][finalH].push({ id: editModeId, name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
             }
         }
     } else {
-        // New Mission initialization
         const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
         state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
     }
-    
     save(); closeTaskModal(); render();
 }
 
