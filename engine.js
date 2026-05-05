@@ -8,7 +8,10 @@ const defaultSectors = [
 ];
 
 let state = {
-    level: 1, sectorId: null, horizon: null, activeMissionId: null,
+    level: 1, 
+    sectorId: null, 
+    horizon: null, 
+    activeMissionId: null,
     playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
     energy: parseInt(localStorage.getItem('energy')) || 0,
     hapticsEnabled: localStorage.getItem('hapticsEnabled') !== 'false',
@@ -21,7 +24,62 @@ let editModeId = null, defaultHorizonContext = null, isHorizonFixed = false, tem
 
 if (!state.sectors || state.sectors.length === 0) { state.sectors = [...defaultSectors]; }
 
-// --- CORE UTILITIES ---
+// --- GEOMETRY & NAVIGATION ---
+function doLinesIntersect(p1, q1, p2, q2) {
+    const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
+}
+
+function getDistanceToSegment(p, a, b) {
+    const l2 = (a.x - b.x)**2 + (a.y - b.y)**2;
+    if (l2 === 0) return Math.sqrt((p.x - a.x)**2 + (p.y - a.y)**2);
+    let t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2));
+    return Math.sqrt((p.x - (a.x + t * (b.x - a.x)))**2 + (p.y - (a.y + t * (b.y - a.y)))**2);
+}
+
+const SECTORS = [
+    { id: 0, x: [0, 1], y: [0, 2] }, { id: 1, x: [0, 1], y: [3, 5] },
+    { id: 2, x: [2, 3], y: [0, 2] }, { id: 3, x: [2, 3], y: [3, 5] },
+    { id: 4, x: [4, 5], y: [0, 2] }, { id: 5, x: [4, 5], y: [3, 5] }
+];
+
+function getSafeCoordinates(existingMissions) {
+    const count = (existingMissions || []).length, activeWire = (existingMissions || []).slice(-8);
+    const margin = 15, usableSpace = 70, wirePadding = 14; 
+    let x, y, safe, attempts = 0;
+    do {
+        let gridX, gridY;
+        if (count === 0) {
+            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]], s = corners[Math.floor(Math.random() * corners.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else if (count === 1) {
+            const startNode = existingMissions[0], startSector = SECTORS.find(s => (startNode.x >= margin + (s.x[0] * 14) - 5) && (startNode.x <= margin + (s.x[1] * 14) + 5));
+            const otherSectors = SECTORS.filter(s => s !== startSector), s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
+            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
+        } else {
+            gridX = Math.floor(Math.random() * 6); gridY = Math.floor(Math.random() * 6);
+        }
+        x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3); y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
+        safe = true; const newNode = { x, y };
+        for (let m of (existingMissions || [])) { if (m && !isNaN(m.x) && Math.sqrt((m.x - x)**2 + (m.y - y)**2) < 16) { safe = false; break; } }
+        if (!safe) { attempts++; continue; }
+        if (activeWire.length > 1) {
+            for (let i = 0; i < activeWire.length - 1; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) { safe = false; break; } }
+        }
+        if (!safe) { attempts++; continue; }
+        if (activeWire.length > 0) {
+            const last = activeWire[activeWire.length - 1];
+            for (let i = 0; i < activeWire.length - 1; i++) { if (doLinesIntersect(last, newNode, activeWire[i], activeWire[i+1])) { safe = false; break; } }
+            if (safe && activeWire.length > 2) {
+                for (let i = 0; i < activeWire.length - 2; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < 18) { safe = false; break; } }
+            }
+        }
+        attempts++;
+    } while (!safe && attempts < 600);
+    return { x, y };
+}
+
+// --- CORE LOGIC ---
 function triggerHaptic(pattern) { if (state.hapticsEnabled && "vibrate" in navigator) { navigator.vibrate(pattern); } }
 
 function updateHUD() {
@@ -48,69 +106,6 @@ function save() {
     localStorage.setItem('missions', JSON.stringify(state.missions)); 
     localStorage.setItem('energy', state.energy); localStorage.setItem('playerLevel', state.playerLevel);
     localStorage.setItem('hapticsEnabled', state.hapticsEnabled);
-}
-
-// --- NAVIGATION & SPATIAL GEOMETRY ---
-function doLinesIntersect(p1, q1, p2, q2) {
-    const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
-    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
-}
-
-function getDistanceToSegment(p, a, b) {
-    const l2 = (a.x - b.x)**2 + (a.y - b.y)**2;
-    if (l2 === 0) return Math.sqrt((p.x - a.x)**2 + (p.y - a.y)**2);
-    let t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2));
-    return Math.sqrt((p.x - (a.x + t * (b.x - a.x)))**2 + (p.y - (a.y + t * (b.y - a.y)))**2);
-}
-
-const SECTORS = [
-    { id: 0, x: [0, 1], y: [0, 2] }, { id: 1, x: [0, 1], y: [3, 5] },
-    { id: 2, x: [2, 3], y: [0, 2] }, { id: 3, x: [2, 3], y: [3, 5] },
-    { id: 4, x: [4, 5], y: [0, 2] }, { id: 5, x: [4, 5], y: [3, 5] }
-];
-
-function getSafeCoordinates(existingMissions) {
-    const count = (existingMissions || []).length, activeWire = (existingMissions || []).slice(-8);
-    const margin = 15, usableSpace = 70, wirePadding = 12;
-    let x, y, safe, attempts = 0;
-    do {
-        let gridX, gridY;
-        if (count === 0) {
-            const corners = [SECTORS[0], SECTORS[1], SECTORS[4], SECTORS[5]], s = corners[Math.floor(Math.random() * corners.length)];
-            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
-        } else if (count === 1) {
-            const startNode = existingMissions[0], startSector = SECTORS.find(s => (startNode.x >= margin + (s.x[0] * 14) - 5) && (startNode.x <= margin + (s.x[1] * 14) + 5));
-            const otherSectors = SECTORS.filter(s => s !== startSector), s = otherSectors[Math.floor(Math.random() * otherSectors.length)];
-            gridX = s.x[0] + Math.floor(Math.random() * (s.x[1] - s.x[0] + 1)); gridY = s.y[0] + Math.floor(Math.random() * (s.y[1] - s.y[0] + 1));
-        } else {
-            gridX = Math.floor(Math.random() * 6); gridY = Math.floor(Math.random() * 6);
-        }
-        x = margin + (gridX * (usableSpace / 5)) + (Math.random() * 6 - 3); y = margin + (gridY * (usableSpace / 5)) + (Math.random() * 6 - 3);
-        safe = true; const newNode = { x, y };
-        for (let m of (existingMissions || [])) { if (m && !isNaN(m.x) && Math.sqrt((m.x - x)**2 + (m.y - y)**2) < 15) { safe = false; break; } }
-        if (!safe) { attempts++; continue; }
-        if (activeWire.length > 1) {
-            for (let i = 0; i < activeWire.length - 1; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < wirePadding) { safe = false; break; } }
-        }
-        if (!safe) { attempts++; continue; }
-        if (activeWire.length > 0) {
-            const last = activeWire[activeWire.length - 1];
-            for (let i = 0; i < activeWire.length - 1; i++) { if (doLinesIntersect(last, newNode, activeWire[i], activeWire[i+1])) { safe = false; break; } }
-            if (safe && activeWire.length > 2) {
-                for (let i = 0; i < activeWire.length - 2; i++) { if (getDistanceToSegment(newNode, activeWire[i], activeWire[i+1]) < 18) { safe = false; break; } }
-            }
-        }
-        attempts++;
-    } while (!safe && attempts < 500);
-    return { x, y };
-}
-
-// --- TIME MECHANICS ---
-function getHorizonFromDate(dateStr, fallbackHorizon) {
-    if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
-    const today = new Date(); today.setHours(0,0,0,0);
-    const diffDays = Math.ceil((new Date(dateStr + 'T00:00:00') - today) / 86400000);
-    return diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
 }
 
 function processTimeMechanics() {
@@ -252,9 +247,10 @@ function renderLevel3(container, footer) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", wireTasks[i].x + "%"); line.setAttribute("y1", wireTasks[i].y + "%"); line.setAttribute("x2", wireTasks[i+1].x + "%"); line.setAttribute("y2", wireTasks[i+1].y + "%"); line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45"); svg.appendChild(line);
         }
     }
+    // RESTORED: Unified rendering loop to prevent double wire/node logic
     [...debrisMissions, ...wireTasks].forEach((m) => {
-        const star = document.createElement('div'), isDebris = debrisMissions.includes(m), isCapOnWire = wireCaptured.includes(m), isDecay = m.overdue;
-        let warnClass = ''; if (isDecay && !m.captured) warnClass = 'decaying'; else if (m.warningLevel === 24) warnClass = 'warning-24'; else if (m.warningLevel === 48) warnClass = 'warning-48';
+        const star = document.createElement('div'), isDebris = debrisMissions.includes(m), isCapOnWire = wireCaptured.includes(m), isOverdue = m.overdue;
+        let warnClass = ''; if (isOverdue && !m.captured) warnClass = 'decaying'; else if (m.warningLevel === 24) warnClass = 'warning-24'; else if (m.warningLevel === 48) warnClass = 'warning-48';
         star.className = `star-container ${isDebris ? 'debris-node' : ''} ${warnClass} warp-transition`;
         if (isDebris && !m.scale) { m.driftX = (Math.random()-0.5)*8; m.driftY = (Math.random()-0.5)*8; m.scale = 0.3 + (Math.random()*0.4); }
         star.style.left = (m.x + (m.driftX || 0)) + '%'; star.style.top = (m.y + (m.driftY || 0)) + '%';
@@ -262,12 +258,21 @@ function renderLevel3(container, footer) {
         const node = document.createElement('div'); node.className = `star-node ${m.captured ? 'captured' : ''}`;
         if (isDebris) { node.style.transform = `scale(${m.scale})`; node.style.opacity = '0.45'; node.style.boxShadow = 'none'; }
         else if (isCapOnWire) {
-            let aColor = accentColor; if (isDecay) aColor = 'var(--thrust)'; else if (m.warningLevel === 24) aColor = '#ff9900'; else if (m.warningLevel === 48) aColor = '#ffd700';
-            node.style.opacity = '0.45'; node.style.boxShadow = `0 0 5px ${aColor}66`; node.style.borderColor = aColor; node.textContent = missions.indexOf(m) + 1;
+            // NEW: Styling - Sector outline, Warning color fill
+            let warningFill = accentColor; 
+            if (isOverdue) warningFill = 'var(--thrust)'; 
+            else if (m.warningLevel === 24) warningFill = '#ff9900'; 
+            else if (m.warningLevel === 48) warningFill = '#ffd700';
+            node.style.opacity = '0.55'; 
+            node.style.background = warningFill; 
+            node.style.borderColor = accentColor; 
+            node.style.color = '#ffffff'; 
+            node.style.boxShadow = `0 0 5px ${warningFill}66`;
+            node.textContent = missions.indexOf(m) + 1;
         } else {
             const isCrit = m.id === wireActive[0]?.id, op = isCrit ? 1.0 : 0.8, hex = Math.floor(op * 255).toString(16).padStart(2, '0');
             let bColor = accentColor, gColor = accentColor + hex;
-            if (isDecay) { bColor = 'var(--thrust)'; gColor = 'rgba(255, 42, 42, 0.6)'; } else if (m.warningLevel === 24) { bColor = '#ff9900'; gColor = 'rgba(255, 153, 0, 0.6)'; } else if (m.warningLevel === 48) { bColor = '#ffd700'; gColor = 'rgba(255, 215, 0, 0.6)'; }
+            if (isOverdue) { bColor = 'var(--thrust)'; gColor = 'rgba(255, 42, 42, 0.6)'; } else if (m.warningLevel === 24) { bColor = '#ff9900'; gColor = 'rgba(255, 153, 0, 0.6)'; } else if (m.warningLevel === 48) { bColor = '#ffd700'; gColor = 'rgba(255, 215, 0, 0.6)'; }
             node.style.boxShadow = `0 0 ${isCrit ? 20 : 15}px ${gColor}`; node.style.borderColor = bColor; node.style.filter = `brightness(${isCrit ? 1.15 : 1.0})`; if (isCrit) node.style.borderWidth = '3px'; node.textContent = missions.indexOf(m) + 1;
         }
         const label = document.createElement('div'); label.className = 'star-label'; label.style.display = isDebris ? 'none' : 'block'; label.style.opacity = isCapOnWire ? '0.45' : '1'; label.textContent = m.name; star.appendChild(node); star.appendChild(label); container.appendChild(star);
@@ -304,12 +309,6 @@ function renderLevel4(container, footer) {
 }
 
 // --- MISSION MODAL & INTERACTION ---
-function moveMission(direction) {
-    const m = safelyGetActiveMission(); if (!m) return;
-    const missions = state.missions[state.sectorId][state.horizon], index = missions.findIndex(x => x.id === m.id), newIdx = index + direction;
-    if (newIdx >= 0 && newIdx < missions.length) { missions.splice(index, 1); missions.splice(newIdx, 0, m); save(); render(); }
-}
-
 function openTaskModal(h, f) { 
     editModeId = null; defaultHorizonContext = h; isHorizonFixed = f; document.getElementById('modal-task-name').value = ''; document.getElementById('modal-task-date').value = '';
     document.getElementById('modal-horizon-select').value = h; document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; 
@@ -349,7 +348,7 @@ function toggleSubTask(idx) { const m = safelyGetActiveMission(); if (m?.subs[id
 function completeMission() { const m = safelyGetActiveMission(); if (m) { m.captured = true; m.completionTimestamp = Date.now(); addEnergy(25); triggerHaptic([50, 30, 50]); save(); state.level = 3; render(); } }
 function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
 
-// --- SECTOR & SYSTEM CONFIG ---
+// --- SECTOR CONFIG ---
 function openSectorModal() { editingSectors = JSON.parse(JSON.stringify(state.sectors)); renderSectorEditList(); document.getElementById('sector-modal-overlay').style.display = 'flex'; }
 function closeSectorModal() { document.getElementById('sector-modal-overlay').style.display = 'none'; }
 function renderSectorEditList() {
@@ -381,7 +380,6 @@ function togglePilotLog() {
     logModal.innerHTML = `<div class="modal-box" style="max-width: 450px;"><div class="modal-header">PILOT FLIGHT LOG [LAST 50]</div><div class="subtasks-container" style="max-height: 60vh;">${logContent}</div><button class="mod-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('pilot-log-modal').style.display='none'">DISMISS</button></div>`; logModal.style.display = 'flex';
 }
 
-// --- INITIALIZATION ---
 function runDatabaseMigration() {
     let m = false, nM = { ...state.missions }, lM = { 'CAREER': 'sec_career', 'FINANCIAL': 'sec_finance', 'PERSONAL': 'sec_personal' };
     Object.keys(nM).forEach(k => { if (!k.startsWith('sec_')) { let nId = lM[k]; if (nId) { if (!nM[nId]) nM[nId] = {}; HORIZONS.forEach(h => { if (nM[k][h]) nM[nId][h] = (nM[nId][h] || []).concat(nM[k][h]); }); } delete nM[k]; m = true; } });
