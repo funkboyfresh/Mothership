@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V12.5</title>
+    <title>Mission Control V12.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Link to the Style Bay -->
     <link rel="stylesheet" href="style.css">
+    <!-- Physics Engines -->
     <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
     <script src="https://unpkg.com/d3-delaunay@6.0.2/dist/d3-delaunay.min.js"></script>
 </head>
 <body>
     <div id="app">
+        <!-- Hyper-Drive Overlay -->
         <div id="level-up-overlay">
             <h1 style="font-size: 3rem; color: var(--bg); text-align: center; letter-spacing: 5px; margin:0;">HYPER-DRIVE<br>ENGAGED</h1>
             <p style="color: var(--bg); font-weight: bold; letter-spacing: 2px;">PILOT LEVEL UP</p>
         </div>
 
+        <!-- Persistent Void Layers -->
         <div class="grid-bg"></div>
         <div class="dense-starfield" id="global-starfield"></div>
 
+        <!-- Gamified HUD -->
         <div id="hud">
             <div class="hud-top-row">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="hud-settings-btn" onclick="openSettingsModal()">⚙</div>
-                    <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
-                </div>
+                <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
                 <span class="hud-energy-text" id="hud-energy-readout">CAPACITOR 0%</span>
             </div>
             <div class="capacitor-container">
@@ -36,15 +38,20 @@
 
         <div id="nav-bar">
             <div id="breadcrumb" class="breadcrumb">GALAXY</div>
-            <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="zoom-btn" onclick="openSettingsModal()">⚙</div>
+                <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
+            </div>
         </div>
         
         <div id="view-container" class="view"></div>
+        
         <div id="control-footer" class="control-footer" style="display:none"></div>
     </div>
 
-    <div id="task-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'task')">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <!-- Target Modal -->
+    <div id="task-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
             <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
             <div class="input-group">
                 <span class="input-label">Target Designation</span>
@@ -67,38 +74,40 @@
             <div class="add-btn-bar" id="modal-add-btn" onclick="addModalSubtask()">+</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeTaskModal()">CANCEL</button>
-                <button class="success-btn" id="modal-save-btn" style="flex:1" onclick="saveTaskModal()">LOCK TARGET</button>
+                <button class="success-btn" id="modal-save-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
             </div>
         </div>
     </div>
 
-    <div id="sector-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'sector')">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <!-- Sector Edit Modal -->
+    <div id="sector-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
             <div class="modal-header">TERRITORIAL GEOMETRY MAP</div>
             <div class="subtasks-container" id="sector-edit-list"></div>
             <div class="add-btn-bar" id="sector-add-btn" onclick="addNewSector()">+ ADD SECTOR</div>
             <div class="modal-actions">
                 <button class="mod-btn" style="flex:1" onclick="closeSectorModal()">CANCEL</button>
-                <button class="success-btn" style="flex:1" onclick="saveSectorModal()">INITIALIZE MAP</button>
+                <button class="success-btn" style="flex:1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveSectorModal()">INITIALIZE MAP</button>
             </div>
         </div>
     </div>
 
-    <div id="settings-modal-overlay" class="modal-overlay" onclick="handleBackdropClick(event, 'settings')">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <!-- Settings Modal -->
+    <div id="settings-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
             <div class="modal-header">SYSTEM CONFIGURATION</div>
             <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="input-label" style="margin:0;">HAPTIC FEEDBACK</span>
                 <input type="checkbox" id="settings-haptics-toggle" checked style="width: 20px; height: 20px; accent-color: var(--accent);">
             </div>
-            <p class="settings-description">Engage physical vibration motor on mobile devices during critical events and routine updates.</p>
+            <p style="font-size: 0.55rem; color: var(--border); line-height: 1.4; margin-top: -10px; margin-bottom: 20px;">Engage physical vibration motor on mobile devices during critical events and routine updates.</p>
             <div class="modal-actions">
-                <button class="mod-btn" style="flex:1" onclick="closeSettingsModal(false)">CANCEL</button>
-                <button class="success-btn" style="flex:1" onclick="closeSettingsModal(true)">SAVE CONFIG</button>
+                <button class="success-btn" style="width: 100%; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="closeSettingsModal()">SAVE CONFIG</button>
             </div>
         </div>
     </div>
 
+    <!-- Link to the Engine Bay -->
     <script src="engine.js"></script>
 </body>
 </html>
