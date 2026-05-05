@@ -129,15 +129,12 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 #constellation-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 .star-container { 
     position: absolute; 
-    width: 52px;  /* strictly locked to node size */
-    height: 52px; /* strictly locked to node size */
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    transform: translate(-50%, -50%); 
-    cursor: pointer; 
+    width: 0;   /* Collapsed to a single mathematical point */
+    height: 0;  /* Collapsed to a single mathematical point */
+    display: block; 
     z-index: 10; 
     transition: left 0.3s, top 0.3s; 
+    /* REMOVED: transform, flex, and dimensions */
 }
 
 /* Invisible expanded touch target - doesn't affect visual centering */
@@ -171,6 +168,7 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 
 /* Update the star-node to be white by default as well */
 .star-node { 
+    position: absolute;
     width: 52px; 
     height: 52px; 
     border-radius: 50%; 
@@ -181,21 +179,26 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     justify-content: center; 
     font-size: 0.7rem; 
     font-weight: bold; 
-    color: #ffffff; /* Forced White */
+    color: #ffffff; 
     box-shadow: 0 0 15px var(--accent-glow); 
     transition: all 0.3s; 
-    pointer-events: none; /* Allows clicks to pass to container for better centering */
+    pointer-events: none;
+    /* Hard-offset to center the node on the container's 0,0 point */
+    left: -26px; 
+    top: -26px; 
 }
 .star-node.captured { background: var(--accent); color: var(--bg); }
 /* Ensure the label is also white */
 .star-label { 
     position: absolute; 
-    top: 60px; 
+    top: 35px; /* Adjusted for the new coordinate center */
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 0.6rem; 
     text-align: center; 
     white-space: nowrap; 
     font-weight: 300; 
-    color: #ffffff; /* Forced White */
+    color: #ffffff; 
     text-shadow: 0 0 5px rgba(0,0,0,0.8); 
 }
 
