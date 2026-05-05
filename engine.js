@@ -387,13 +387,12 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- NEW: DYNAMIC MISSION PRIORITIES DROPDOWN ON LEVEL 3 ---
+    // --- MISSION PRIORITIES DROPDOWN ---
     if (missions.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        priorityContainer.style.cssText = 'position: absolute; top: 110px; z-index: 100;'; // Positioned below header
+        priorityContainer.style.cssText = 'position: absolute; top: 110px; z-index: 100;';
 
-        // Find the index of the first mission that isn't captured
         let criticalIndex = missions.findIndex(m => !m.captured);
         if (criticalIndex === -1) criticalIndex = 0; 
 
@@ -417,7 +416,7 @@ function renderLevel3(container, footer) {
         container.appendChild(priorityContainer);
     }
 
-    // --- SHIP NAVIGATION ---
+    // --- SHIP PATROL ---
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
     if (activeTarget) {
         const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -431,7 +430,7 @@ function renderLevel3(container, footer) {
         svg.appendChild(orbitalGroup);
     }
 
-    // --- VECTOR LINES ---
+    // --- HIERARCHY LINES ---
     if (missions.length > 1) {
         for (let i = 0; i < missions.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -441,25 +440,23 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- MISSION NODES ---
+    // --- NODE RENDERING WITH EXTREME DECAY ---
     missions.forEach((m, i) => {
         const star = document.createElement('div'); 
         const isOverdue = m.overdue && !m.captured;
         star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
-        star.style.left = m.x + '%'; 
-        star.style.top = m.y + '%';
+        star.style.left = m.x + '%'; star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
-        // HIERARCHY LUMINANCE
         const totalMissions = missions.length;
-        let opacityValue;
-        let glowSize;
+        let opacityValue, glowSize;
+
         if (i === 0) {
             opacityValue = 1.0; 
             glowSize = 25;       
         } else {
             const decayProgress = (i - 1) / (totalMissions - 1 || 1);
-            opacityValue = 0.65 - (decayProgress * 0.45);
+            opacityValue = 0.65 - (decayProgress * 0.45); // Node 2 starts at 65%, last node at 20%
             glowSize = 12 - (decayProgress * 8); 
         }
 
@@ -627,14 +624,47 @@ function openEditModal(id) {
 }
 
 function saveTaskModal() {
-    const name = document.getElementById('modal-task-name').value.trim(); if (!name) return;
+    const name = document.getElementById('modal-task-name').value.trim(); 
+    if (!name) return;
     const dateStr = document.getElementById('modal-task-date').value;
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
     const finalH = getHorizonFromDate(dateStr, h);
+    
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
-    const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
-    if (editModeId) { HORIZONS.forEach(hz => { if(state.missions[state.sectorId][hz]) state.missions[state.sectorId][hz] = state.missions[state.sectorId][hz].filter(m => m.id !== editModeId); }); }
-    state.missions[state.sectorId][finalH].push({ id: editModeId || Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
+
+    if (editModeId) {
+        // Find existing mission index and horizon
+        let existingIndex = -1;
+        let existingHorizon = null;
+        
+        HORIZONS.forEach(hz => {
+            const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId);
+            if (idx !== -1) {
+                existingIndex = idx;
+                existingHorizon = hz;
+            }
+        });
+
+        if (existingIndex !== -1) {
+            // Update in-place if horizon hasn't changed
+            if (existingHorizon === finalH) {
+                const m = state.missions[state.sectorId][finalH][existingIndex];
+                m.name = name;
+                m.dueDate = dateStr || null;
+                m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
+            } else {
+                // If horizon changed, we have to move it (rare), but keep standard push
+                state.missions[state.sectorId][existingHorizon].splice(existingIndex, 1);
+                const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
+                state.missions[state.sectorId][finalH].push({ id: editModeId, name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
+            }
+        }
+    } else {
+        // New Mission initialization
+        const coords = getSafeCoordinates(state.missions[state.sectorId][finalH] || []);
+        state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
+    }
+    
     save(); closeTaskModal(); render();
 }
 
@@ -645,7 +675,17 @@ function toggleSubTask(index) {
     if (m && m.subs[index]) { m.subs[index].c = !m.subs[index].c; if (m.subs[index].c) { triggerHaptic(30); addEnergy(5); } else { addEnergy(-5); } save(); render(); }
 }
 
-function completeMission() { const m = safelyGetActiveMission(); if (m) { m.captured = true; addEnergy(25); triggerHaptic([50, 30, 50]); save(); state.level = 3; render(); } }
+function completeMission() {
+    const m = safelyGetActiveMission();
+    if (m) {
+        m.captured = true; // Just flip the status
+        addEnergy(25);
+        triggerHaptic([50, 30, 50]);
+        save();
+        state.level = 3; // Return to constellation map
+        render();
+    }
+}
 function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
 
 function openSectorModal() { editingSectors = JSON.parse(JSON.stringify(state.sectors)); renderSectorEditList(); document.getElementById('sector-modal-overlay').style.display = 'flex'; }
