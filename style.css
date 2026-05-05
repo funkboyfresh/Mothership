@@ -9,6 +9,19 @@
     --thrust-glow: rgba(255, 42, 42, 0.2);
 }
 body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; height: 100vh; overflow: hidden; transition: all 0.5s ease; }
+/* Ambient Action Stations Vignette */
+@keyframes screen-vignette-pulse {
+    0%, 100% { box-shadow: inset 0 0 80px rgba(255, 42, 42, 0.05); }
+    50% { box-shadow: inset 0 0 150px rgba(255, 42, 42, 0.25); }
+}
+#app::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 250; /* Sits above the views but below the HUD */
+    animation: screen-vignette-pulse 6s infinite ease-in-out;
+}
 #app { display: flex; flex-direction: column; height: 100%; position: relative; }
 
 /* HUD & Capacitor */
@@ -105,16 +118,21 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .star-container { 
     position: absolute; 
     display: flex; 
+    flex-direction: column; 
     align-items: center; 
-    justify-content: center; 
-    width: 52px; 
-    height: 52px; 
     transform: translate(-50%, -50%); 
     cursor: pointer; 
     z-index: 10; 
     transition: left 0.3s, top 0.3s; 
-    padding: 10px; 
-    box-sizing: content-box;
+}
+
+/* Invisible expanded touch target - doesn't affect visual centering */
+.star-container::after {
+    content: '';
+    position: absolute;
+    top: -20px; left: -20px; right: -20px; bottom: -20px;
+    border-radius: 50%;
+    z-index: -1;
 }
 
 @keyframes drift-decay { 
@@ -141,7 +159,7 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .star-node.captured { background: var(--accent); color: var(--bg); }
 .star-label { 
     position: absolute; 
-    top: 75px; 
+    top: 60px; /* Forces label out of the mathematical center */
     font-size: 0.6rem; 
     text-align: center; 
     white-space: nowrap; 
@@ -153,15 +171,73 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .target-lock { width: 100%; text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 .progress-wrapper { width: 90%; max-width: 400px; margin: 0 auto 15px auto; border: 1px solid var(--accent); padding: 4px; background: rgba(0,0,0,0.6); border-radius: 4px; z-index: 20; box-shadow: 0 0 15px var(--accent-glow); }
 .progress-bar-container { width: 100%; height: 12px; background: #222; position: relative; overflow: hidden; display: flex; border-radius: 2px; }
-.progress-fill { height: 100%; background: var(--accent); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 0 15px var(--accent); }
-.progress-text { font-size: 0.65rem; color: var(--accent); letter-spacing: 1px; margin-top: 5px; text-align: right; font-weight: bold; text-shadow: 0 0 5px var(--accent-glow); }
+/* Red Integrity Bar with Visual Drain */
+.progress-fill { 
+    height: 100%; 
+    background: repeating-linear-gradient(
+        -45deg, 
+        var(--thrust), 
+        var(--thrust) 10px, 
+        #8b0000 10px, 
+        #8b0000 20px
+    );
+    background-size: 200% 200%;
+    animation: drain-flow 2s linear infinite; 
+    box-shadow: 0 0 15px var(--thrust); 
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
+}
+
+@keyframes drain-flow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 50px 50px; } /* Flows backward, pulling energy */
+}
+.progress-text { 
+    font-size: 0.65rem; 
+    color: var(--thrust); 
+    letter-spacing: 1px; 
+    margin-top: 5px; 
+    text-align: right; 
+    font-weight: bold; 
+    text-shadow: 0 0 5px var(--thrust-glow); 
+}
 
 @keyframes orbit-spin { 100% { transform: rotate(360deg); } }
 .orbital-system { width: 340px; height: 340px; position: relative; margin: 10px auto; animation: orbit-spin 60s linear infinite; flex-shrink: 0; }
-.orbital-node-box { background: rgba(10, 10, 10, 0.95); border: 1px solid var(--accent); padding: 12px 16px; border-radius: 4px; display: flex; align-items: center; gap: 12px; white-space: nowrap; max-width: 160px; transition: all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+/* Red Orbital Nodes */
+.orbital-node-box { 
+    background: rgba(20, 5, 5, 0.95); /* Deep red-tinted void */
+    border: 1px solid var(--thrust); 
+    padding: 12px 16px; 
+    border-radius: 4px; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    white-space: nowrap; 
+    max-width: 160px; 
+    transition: all 0.3s; 
+    box-shadow: 0 0 10px rgba(255, 42, 42, 0.15); 
+}
+.orbital-node-box.checked { 
+    background: rgba(255, 42, 42, 0.1); 
+    box-shadow: 0 0 15px var(--thrust-glow); 
+}
 .orbital-node-box.checked { background: rgba(255,255,255,0.05); box-shadow: 0 0 15px var(--accent-glow); }
-.orb-check { width: 18px; height: 18px; border: 1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size: 0.6rem; flex-shrink: 0; color: var(--bg); transition: all 0.3s; box-shadow: 0 0 5px var(--accent-glow);}
-.orbital-node-box.checked .orb-check { background: var(--accent); }
+.orb-check { 
+    width: 18px; 
+    height: 18px; 
+    border: 1px solid var(--thrust); 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    font-size: 0.6rem; 
+    flex-shrink: 0; 
+    color: var(--bg); 
+    transition: all 0.3s; 
+    box-shadow: 0 0 5px var(--thrust-glow);
+}
+.orbital-node-box.checked .orb-check { 
+    background: var(--thrust); 
+}
 .orb-text { font-size: 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; text-align: left; line-height: 1.2; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
 
 /* Modals & Inputs */
