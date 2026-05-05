@@ -130,46 +130,47 @@ function doLinesIntersect(p1, q1, p2, q2) {
     return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
 }
 
-function getSafeCoordinates(existingMissions) {
-    // 1. CHECK EVERYTHING: Don't slice. We need to see all nodes to prevent overlap.
-    const allNodes = existingMissions || []; 
+ffunction getSafeCoordinates(existingMissions) {
+    // We base logic on the slot index (0-9)
+    const slotIndex = existingMissions.length % 10;
+    
+    // Define a 10-point 'Golden Path' or grid cells
+    // This ensures Node 1 is Top-Left, Node 5 is Bottom-Right, etc.
+    const columns = 4;
+    const rows = 3;
+    const col = slotIndex % columns;
+    const row = Math.floor(slotIndex / columns);
+
+    // Calculate cell boundaries
+    const cellWidth = 70 / columns; // Using 70% of screen to keep padding
+    const cellHeight = 70 / rows;
+
     let x, y, safe, attempts = 0;
-    const minDistance = 22; 
-    const padding = 20; 
+    const minDistance = 15; 
 
     do {
-        // We slightly expand the spawn range to 15-85 to give more breathing room
-        x = 15 + Math.random() * 70; 
-        y = 15 + Math.random() * 70; 
+        // Find a random spot within the specific quadrant assigned to this mission number
+        const baseX = 15 + (col * cellWidth);
+        const baseY = 15 + (row * cellHeight);
+        
+        x = baseX + Math.random() * cellWidth;
+        y = baseY + Math.random() * cellHeight;
+        
         safe = true;
-        const newNode = { x, y };
 
-        // RULE 1: Overlap Guard (Check against ALL existing nodes in this sector)
-        for (let m of allNodes) {
+        // Still run a quick overlap check against debris and recent nodes
+        for (let m of existingMissions) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x, dy = m.y - y;
+            let dx = m.x - x;
+            let dy = m.y - y;
             if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
                 safe = false; 
                 break; 
             }
         }
-
-        // RULE 2: Intersection Guard (Only check against the actual wire segments)
-        if (safe && allNodes.length > 0) {
-            const lastNode = allNodes[allNodes.length - 1];
-            // Only check segments for the current 'active' wire view
-            const wirePath = allNodes.slice(-10); 
-            for (let i = 0; i < wirePath.length - 1; i++) {
-                if (doLinesIntersect(lastNode, newNode, wirePath[i], wirePath[i+1])) {
-                    safe = false; 
-                    break;
-                }
-            }
-        }
         
         attempts++;
-        // 2. INCREASE PERSISTENCE: Give it 500 tries to find a hole in the grid
-    } while (!safe && attempts < 500);
+    } while (!safe && attempts < 100);
 
     return {x, y};
 }
@@ -372,6 +373,8 @@ function renderLevel3(container, footer) {
     const maxHud = 10, rem = Math.max(0, maxHud - allActive.length);
     const wireTasks = [...allCaptured.slice(-rem), ...allActive];
     const debrisMissions = allCaptured.filter(m => !wireTasks.includes(m)).slice(-20);
+    // Change this line to strictly enforce the 10-item list
+    const wireTasks = [...allCaptured, ...allActive].slice(-10);
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
