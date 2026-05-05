@@ -305,3 +305,66 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     transform-box: fill-box;
     transform-origin: center;
 }
+
+/* Priority Dropdown Styling */
+.priority-dropdown-container {
+    width: 90%;
+    max-width: 400px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 50;
+}
+
+.priority-toggle-btn {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 10px;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.priority-toggle-btn:hover {
+    border-color: var(--accent);
+}
+
+.priority-list {
+    display: none;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid var(--border);
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 4px 4px;
+    padding: 5px;
+}
+
+.priority-list.show {
+    display: block;
+}
+
+.priority-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    font-size: 0.65rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    gap: 10px;
+}
+
+.p-num { opacity: 0.5; width: 15px; }
+.p-status { font-weight: bold; color: var(--sector-border); }
+.p-text { flex: 1; text-align: left; }
+
+/* Highlight for the first/critical task */
+.priority-item.first-critical {
+    background: var(--sector-color);
+    border: 1px solid var(--sector-border);
+    border-radius: 2px;
+}
