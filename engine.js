@@ -228,6 +228,7 @@ function render() {
     if(!container) return;
     container.innerHTML = '';
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
+
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
 
     // FIX: Apply active sector color to the app theme
@@ -256,7 +257,11 @@ function render() {
             const color = overdue ? 'var(--thrust)' : s.color;
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", pathData); path.setAttribute("fill", color); path.setAttribute("fill-opacity", overdue ? 0.2 : 0.05);
-            path.setAttribute("stroke", color); path.setAttribute("stroke-width", "2"); path.setAttribute("class", "voronoi-cell");
+            path.setAttribute("stroke", color); path.setAttribute("stroke-width", "2"); 
+            
+            // Apply pulsating animation if overdue
+            path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
+
             path.onclick = () => { state.sectorId = s.id; state.level = 2; triggerHaptic(15); render(); }; svg.appendChild(path);
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", seeds[i].x * w); text.setAttribute("y", seeds[i].y * h);
