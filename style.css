@@ -24,6 +24,18 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .hud-warning { color: var(--thrust) !important; text-shadow: 0 0 15px var(--thrust) !important; animation: text-flash 1.5s infinite; }
 @keyframes text-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+/* Settings Gear Styling */
+.settings-gear {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--border);
+    transition: color 0.3s, transform 0.3s;
+}
+.settings-gear:hover {
+    color: var(--accent);
+    transform: rotate(90deg);
+}
+
 /* Hyper-Drive Animation */
 #level-up-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--accent); z-index: 999; display: none; align-items: center; justify-content: center; flex-direction: column; animation: hyper-flash 1.5s forwards ease-out; pointer-events: none; opacity: 0; }
 @keyframes hyper-flash { 0% { opacity: 1; transform: scale(1.1); filter: brightness(2); } 100% { opacity: 0; transform: scale(1); filter: brightness(1); } }
@@ -54,6 +66,16 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .voronoi-cell:hover { filter: brightness(1.5); }
 .voronoi-text { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: bold; text-anchor: middle; dominant-baseline: middle; pointer-events: none; letter-spacing: 2px; text-transform: uppercase; }
 
+/* Overdue Sector Pulse */
+@keyframes sector-pulse {
+    0% { fill-opacity: 0.2; filter: brightness(1); }
+    50% { fill-opacity: 0.5; filter: brightness(2); }
+    100% { fill-opacity: 0.2; filter: brightness(1); }
+}
+.overdue-sector {
+    animation: sector-pulse 2s infinite ease-in-out;
+}
+
 /* Orbital Rings */
 .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
 .ring-circle:active { background: rgba(255, 255, 255, 0.1); }
@@ -69,8 +91,10 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 
 @keyframes drift-decay { 0% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } 25% { transform: translate(-50%, -50%) rotate(2deg) translate(4px, 6px); } 50% { transform: translate(-50%, -50%) rotate(-1deg) translate(-5px, -3px); } 75% { transform: translate(-50%, -50%) rotate(3deg) translate(6px, -2px); } 100% { transform: translate(-50%, -50%) rotate(0deg) translate(0px, 0px); } }
 .star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
-.star-node.decaying { border-color: var(--thrust); box-shadow: 0 0 20px var(--thrust); color: var(--thrust); }
-.star-label.decaying { color: var(--thrust); text-shadow: 0 0 5px rgba(255, 42, 42, 0.8); }
+
+/* FIX: Ensure overdue tasks stay RED */
+.star-node.decaying { border-color: var(--thrust) !important; box-shadow: 0 0 20px var(--thrust) !important; color: var(--thrust) !important; }
+.star-label.decaying { color: var(--thrust) !important; text-shadow: 0 0 5px rgba(255, 42, 42, 0.8) !important; }
 
 .star-node { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; box-shadow: 0 0 15px var(--accent-glow); }
 .star-node.captured { background: var(--accent); color: var(--bg); }
@@ -118,7 +142,10 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .modal-box { background: #111; border: 1px solid var(--accent); box-shadow: 0 0 25px var(--accent-glow); border-radius: 8px; width: 90%; max-width: 380px; padding: 20px; color: var(--text); display: flex; flex-direction: column; max-height: 85vh; }
 .modal-header { font-size: 0.9rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 0 5px var(--accent-glow); text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .input-group { margin-bottom: 15px; }
-.input-label { font-size: 0.6rem; color: var(--border); text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
+
+/* FIX: Set label color to WHITE */
+.input-label { font-size: 0.6rem; color: #ffffff; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
+
 select.modal-input { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; appearance: none; -webkit-appearance: none; }
 .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.8rem; }
 .modal-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
@@ -133,14 +160,3 @@ input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); bor
 .add-btn-bar { width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px dashed var(--accent); color: var(--accent); text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: bold; margin-bottom: 15px; }
 .add-btn-bar:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 8px var(--accent-glow); }
 .modal-actions { display: flex; gap: 10px; justify-content: center; }
-
-.settings-gear {
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--border);
-    transition: color 0.3s, transform 0.3s;
-}
-.settings-gear:hover {
-    color: var(--accent);
-    transform: rotate(90deg);
-}
