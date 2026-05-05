@@ -606,13 +606,13 @@ function renderSectorEditList() {
         row.className = 'subtask-row';
         row.style.marginBottom = '12px';
         
-        // Refined Neon Color Graphic: 80% Fill with Symmetrical Margins
+        // Updated: Uniform Square Fill with 4px Margin Offset
         const colorGraphic = `
-            <div style="position: relative; width: 24px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);">
+            <div style="position: relative; width: 36px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);">
                 <input type="color" value="${s.color}" 
                     onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" 
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                <div style="position: absolute; top: 8px; bottom: 4px; left: 4px; right: 4px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div>
+                <div style="position: absolute; top: 4px; bottom: 4px; left: 4px; right: 4px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div>
             </div>
         `;
         
