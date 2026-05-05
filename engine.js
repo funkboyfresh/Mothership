@@ -416,39 +416,32 @@ function renderLevel4(container, footer) {
     if(footer) footer.style.display = 'none';
     const m = safelyGetActiveMission(); if (!m) { zoomOut(); return; }
     const comp = m.subs.filter(s => s.c).length, prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0, allDone = m.subs.length > 0 && comp === m.subs.length;
-    const lock = document.createElement('div'); const isCritical = m.overdue && !m.captured;
-    if (isCritical) document.getElementById('app').classList.add('critical-mode');
-    lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`;
-    lock.innerHTML = `<div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color: ${isCritical ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>`;
-    
-    const activeSector = state.sectors.find(s => s.id === state.sectorId); const accentColor = activeSector ? activeSector.color : 'var(--accent)';
+    const lock = document.createElement('div'), isCritical = m.overdue && !m.captured; if (isCritical) document.getElementById('app').classList.add('critical-mode');
+    lock.className = `target-lock warp-transition ${isCritical ? 'critical' : ''}`; lock.innerHTML = `<div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color: ${isCritical ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>`;
+    const activeSector = state.sectors.find(s => s.id === state.sectorId), accentColor = activeSector ? activeSector.color : 'var(--accent)';
     if (m.subs.length > 0) {
-        const priorityContainer = document.createElement('div'); priorityContainer.className = 'priority-dropdown-container';
-        let critIdx = m.subs.findIndex(s => !s.c); if (critIdx === -1) critIdx = 0; 
-        priorityContainer.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
+        const pCont = document.createElement('div'); pCont.className = 'priority-dropdown-container'; let critIdx = m.subs.findIndex(s => !s.c); if (critIdx === -1) critIdx = 0; 
+        pCont.innerHTML = `<button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
             <div class="priority-list">${m.subs.map((s, i) => `<div class="priority-item ${i === critIdx && !s.c ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" style="${i === critIdx && !s.c ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
-                <span class="p-num">${i + 1}</span><span class="p-text">${s.t}</span></div>`).join('')}</div>`;
-        lock.appendChild(priorityContainer);
+                <span class="p-num">${i + 1}</span><span class="p-text">${s.t}</span></div>`).join('')}</div>`; lock.appendChild(pCont);
     }
     lock.insertAdjacentHTML('beforeend', `<div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${prog}%;"></div></div><div class="progress-text">${prog}% INTEGRITY</div></div>`);
-    const orbSys = document.createElement('div'); orbSys.className = 'orbital-system';
-    orbSys.innerHTML = `<svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
+    const orbSys = document.createElement('div'); orbSys.className = 'orbital-system'; orbSys.innerHTML = `<svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
     m.subs.forEach((s, i) => {
-        const angle = (i / m.subs.length) * Math.PI * 2, x = 170 + 100 * Math.cos(angle), y = 170 + 100 * Math.sin(angle);
-        const subNode = document.createElement('div'); subNode.style.cssText = `position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;`;
+        const angle = (i / m.subs.length) * Math.PI * 2, x = 170 + 100 * Math.cos(angle), y = 170 + 100 * Math.sin(angle), subNode = document.createElement('div'); subNode.style.cssText = `position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;`;
         if (!m.captured) subNode.onclick = () => toggleSubTask(i);
-        const box = document.createElement('div'); box.className = `orbital-node-box ${s.c ? 'checked' : ''}`;
-        box.innerHTML = `<div class="orb-check">${s.c ? '✓' : ''}</div><div class="orb-text">${s.t}</div>`;
-        subNode.appendChild(box); orbSys.appendChild(subNode);
+        const box = document.createElement('div'); box.className = `orbital-node-box ${s.c ? 'checked' : ''}`; box.innerHTML = `<div class="orb-check">${s.c ? '✓' : ''}</div><div class="orb-text">${s.t}</div>`; subNode.appendChild(box); orbSys.appendChild(subNode);
     });
     lock.appendChild(orbSys);
     const btnWrap = document.createElement('div'); btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; margin-bottom: 20px;';
-    btnWrap.innerHTML = `<button class="mod-btn" onclick="moveMission(-1)">▲ PRIORITY</button><button class="mod-btn" onclick="moveMission(1)">▼ PRIORITY</button><button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button><button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>`;
-    lock.appendChild(btnWrap);
-    if (allDone && !m.captured) {
-        const modal = document.createElement('div'); modal.className = 'hex-modal warp-transition';
-        modal.innerHTML = `<h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button>`;
-        lock.appendChild(modal);
+    
+    // UPDATED: Removed Priority move buttons, kept Edit and Destroy
+    btnWrap.innerHTML = `
+        <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button>
+        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>`;
+    
+    lock.appendChild(btnWrap); if (allDone && !m.captured) {
+        const modal = document.createElement('div'); modal.className = 'hex-modal warp-transition'; modal.innerHTML = `<h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button>`; lock.appendChild(modal);
     }
     container.appendChild(lock);
 }
