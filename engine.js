@@ -458,26 +458,53 @@ function renderModalSubtasks() {
     });
 }
 
+function closeTaskModal() { 
+    // Ensure the modal actually closes regardless of state
+    const overlay = document.getElementById('task-modal-overlay');
+    if (overlay) overlay.style.display = 'none'; 
+}
+
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
-    if (!name) { alert("Mission must be named"); return; }
+    
+    // 1. Validation: Name Check
+    if (!name) { 
+        alert("Mission must be named"); 
+        return; 
+    }
+
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-    const currentMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) ? state.missions[state.sectorId][h] : [];
-    if (!editModeId && currentMissions.filter(m => !m.captured).length >= 10) { alert("Current mission must be completed before taking on new missions"); return; }
+    
+    // 2. Fixed Capacity Check: Only check ACTIVE tasks in the SPECIFIC selected horizon
+    const horizonMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) 
+        ? state.missions[state.sectorId][h] 
+        : [];
+    
+    const activeInHorizon = horizonMissions.filter(m => !m.captured).length;
+
+    if (!editModeId && activeInHorizon >= 10) { 
+        alert("Current mission must be completed before taking on new missions in this sector."); 
+        return; 
+    }
+
     const dateStr = document.getElementById('modal-task-date').value;
     const finalH = getHorizonFromDate(dateStr, h);
+    
     if (!state.missions[state.sectorId]) state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
 
     if (editModeId) {
+        // Find and replace logic
         let existingIdx = -1, existingHz = null;
         HORIZONS.forEach(hz => {
             const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId);
             if (idx !== -1) { existingIdx = idx; existingHz = hz; }
         });
+        
         if (existingIdx !== -1) {
             if (existingHz === finalH) {
                 const m = state.missions[state.sectorId][finalH][existingIdx];
-                m.name = name; m.dueDate = dateStr || null;
+                m.name = name; 
+                m.dueDate = dateStr || null;
                 m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false}));
             } else {
                 state.missions[state.sectorId][existingHz].splice(existingIdx, 1);
@@ -486,10 +513,21 @@ function saveTaskModal() {
             }
         }
     } else {
-        const coords = getSafeCoordinates(currentMissions);
-        state.missions[state.sectorId][finalH].push({ id: Date.now(), name, subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), x: coords.x, y: coords.y, dueDate: dateStr || null });
+        // Initialization logic
+        const coords = getSafeCoordinates(horizonMissions);
+        state.missions[state.sectorId][finalH].push({ 
+            id: Date.now(), 
+            name, 
+            subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
+            x: coords.x, 
+            y: coords.y, 
+            dueDate: dateStr || null 
+        });
     }
-    save(); closeTaskModal(); render();
+
+    save(); 
+    closeTaskModal(); // Closes the modal after successful save
+    render();
 }
 
 function zoomOut() { state.level = Math.max(1, state.level - 1); if (state.level === 1) { state.sectorId = null; state.horizon = null; } render(); }
