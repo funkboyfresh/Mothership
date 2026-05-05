@@ -120,14 +120,26 @@ function relaxLloyds(seeds, iterations) {
 
 function getSafeCoordinates(existing) {
     let x, y, safe, attempts = 0;
+    // Minimum distance of 22 ensures nodes don't overlap or crowd each other
+    const minDistance = 22; 
+    
     do {
-        x = 15 + Math.random() * 70; y = 25 + Math.random() * 50; safe = true;
+        // Keeps nodes away from the extreme edges of the screen
+        x = 15 + Math.random() * 70; 
+        y = 20 + Math.random() * 60; 
+        safe = true;
+        
         for (let m of existing) {
             if (!m || isNaN(m.x)) continue;
-            let dx = m.x - x, dy = m.y - y; if (Math.sqrt(dx*dx + dy*dy) < 18) { safe = false; break; }
+            let dx = m.x - x;
+            let dy = m.y - y;
+            if (Math.sqrt(dx*dx + dy*dy) < minDistance) { 
+                safe = false; 
+                break; 
+            }
         }
         attempts++;
-    } while (!safe && attempts < 50);
+    } while (!safe && attempts < 100); // Doubled attempts for better precision
     return {x, y};
 }
 
@@ -355,7 +367,7 @@ function renderLevel2(container, footer, activeSector) {
 }
 
 function renderLevel3(container, footer) {
-    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`; }
     
     const header = document.createElement('div');
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
@@ -366,17 +378,29 @@ function renderLevel3(container, footer) {
     svg.id = "constellation-svg"; 
     container.appendChild(svg);
     
+    // NAVIGATION: Identify the Critical Target (First uncaptured)
     const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
     
     if (activeTarget) {
-        state.shipPos = { x: activeTarget.x, y: activeTarget.y };
+        // Create an orbital group centered on the task node
+        const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        // Center the group at the task location
+        orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
+        
         const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        ship.setAttribute("points", "-8,-8 12,0 -8,8 -4,0"); 
+        ship.setAttribute("points", "-6,-6 10,0 -6,6 -3,0");
         ship.setAttribute("fill", "var(--accent)");
         ship.setAttribute("filter", "drop-shadow(0 0 8px var(--accent-glow))");
-        ship.style.transition = "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)";
-        ship.style.transform = `translate(${state.shipPos.x}%, ${state.shipPos.y}%)`;
-        svg.appendChild(ship);
+        
+        // CSS Animation: Orbiting the center point (the task node)
+        // Offset the ship from the center by 35px to create the circular path
+        ship.style.cssText = `
+            transform-origin: 0 0;
+            animation: ship-patrol 4s linear infinite;
+        `;
+        
+        orbitalGroup.appendChild(ship);
+        svg.appendChild(orbitalGroup);
     }
 
     if (missions.length > 1) {
@@ -401,18 +425,20 @@ function renderLevel3(container, footer) {
         star.style.left = m.x + '%'; 
         star.style.top = m.y + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+        
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
         node.textContent = i + 1;
+        
         const label = document.createElement('div');
         label.className = 'star-label';
         label.textContent = m.name; 
+
         star.appendChild(node);
         star.appendChild(label);
         container.appendChild(star);
     });
 }
-
 function renderLevel4(container, footer) {
     if(footer) footer.style.display = 'none';
     const m = safelyGetActiveMission(); if (!m) { zoomOut(); return; }
