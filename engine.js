@@ -20,7 +20,6 @@ let state = {
     shipPos: { x: 50, y: 50 } 
 };
 
-// Global Interface Variables
 let editModeId = null; 
 let defaultHorizonContext = null; 
 let isHorizonFixed = false; 
@@ -337,14 +336,12 @@ function renderLevel2(container, footer, activeSector) {
         if (d.id === 'IMMINENT') {
             const label = document.createElement('div');
             label.className = 'ring-label';
-            // Keeping this consistent with the 0.7rem standard
             label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0; color:#ffffff; text-shadow: 0 0 8px var(--accent-glow); font-size: 0.7rem; font-weight: bold; letter-spacing: 2px;';
             label.innerText = d.id;
             wrapper.appendChild(label);
         } else {
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("fill", "#ffffff"); 
-            // UPDATED: font-size increased to 0.7rem to match IMMINENT
             text.style.cssText = 'font-size: 0.7rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
             const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
             tp.setAttribute("href", `#path-${d.id.toLowerCase()}`);
@@ -385,84 +382,95 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    const activeMissions = missions.filter(m => !m.captured).slice(0, 10);
-    const debrisMissions = missions.filter(m => m.captured).slice(-20); // Hard cap at 20 debris
+    const allCaptured = missions.filter(m => m.captured);
+    const allActive = missions.filter(m => !m.captured).slice(0, 10);
+    
+    const wireTasks = [...allCaptured.slice(-10), ...allActive];
+    const debrisMissions = allCaptured.slice(0, -10).slice(-20);
 
     // --- REPOSITIONED MISSION PRIORITIES (Up 1 Bar Width) ---
-    if (activeMissions.length > 0) {
+    if (wireTasks.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
         priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-        let criticalIndex = activeMissions.findIndex(m => !m.captured);
+        
+        let firstUncapturedIdx = wireTasks.findIndex(m => !m.captured);
 
         priorityContainer.innerHTML = `
             <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
             <div class="priority-list">
-                ${activeMissions.map((m, i) => `
-                    <div class="priority-item ${i === criticalIndex ? 'mission-critical-active' : ''}" 
-                         style="${i === criticalIndex ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                ${wireTasks.map((m, i) => {
+                    const isCritical = (i === firstUncapturedIdx);
+                    return `
+                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" 
+                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${i + 1}</span>
-                        <span class="p-status">${i === criticalIndex ? '[ MISSION CRITICAL ]' : ''}</span>
+                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
                         <span class="p-text">${m.name}</span>
-                    </div>`).join('')}
+                    </div>`;
+                }).join('')}
             </div>`;
         container.appendChild(priorityContainer);
     }
 
-    // --- VECTOR LINES (Active Wire Only) ---
-    if (activeMissions.length > 1) {
-        for (let i = 0; i < activeMissions.length - 1; i++) {
+    // --- VECTOR LINES (Wire boosted by 50%) ---
+    if (wireTasks.length > 1) {
+        for (let i = 0; i < wireTasks.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", activeMissions[i].x + "%"); line.setAttribute("y1", activeMissions[i].y + "%");
-            line.setAttribute("x2", activeMissions[i+1].x + "%"); line.setAttribute("y2", activeMissions[i+1].y + "%");
-            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.2"); svg.appendChild(line);
+            line.setAttribute("x1", wireTasks[i].x + "%"); line.setAttribute("y1", wireTasks[i].y + "%");
+            line.setAttribute("x2", wireTasks[i+1].x + "%"); line.setAttribute("y2", wireTasks[i+1].y + "%");
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1.5"); 
+            line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.45");
+            svg.appendChild(line);
         }
     }
     
     // --- NODE RENDERING (Active + Floating Debris) ---
-    [...debrisMissions, ...activeMissions].forEach((m, i) => {
+    [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div'); 
-        const isDebris = m.captured;
+        const isDebris = debrisMissions.includes(m);
+        const isCapturedOnWire = m.captured && !isDebris;
         star.className = `star-container ${isDebris ? 'debris-node' : ''} warp-transition`;
         
-        // Randomize debris factors if not set
-        if (isDebris && !m.driftX) {
-            m.driftX = (Math.random() - 0.5) * 6;
-            m.driftY = (Math.random() - 0.5) * 6;
-            m.scale = 0.2 + (Math.random() * 0.3); // 50% to 80% reduction
+        if (isDebris && !m.scale) {
+            m.driftX = (Math.random() - 0.5) * 8;
+            m.driftY = (Math.random() - 0.5) * 8;
+            m.scale = 0.1 + (Math.random() * 0.2); 
         }
 
-        star.style.left = (m.x + (isDebris ? m.driftX : 0)) + '%'; 
-        star.style.top = (m.y + (isDebris ? m.driftY : 0)) + '%';
+        star.style.left = (m.x + (m.driftX || 0)) + '%'; 
+        star.style.top = (m.y + (m.driftY || 0)) + '%';
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
         const node = document.createElement('div');
-        node.className = `star-node ${isDebris ? 'captured' : ''}`;
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
         
         if (isDebris) {
             node.style.transform = `scale(${m.scale})`;
-            node.style.opacity = '0.15';
+            node.style.opacity = '0.30';
             node.style.boxShadow = 'none';
+        } else if (isCapturedOnWire) {
+            node.style.opacity = '0.45';
+            node.style.boxShadow = `0 0 5px ${accentColor}66`;
         } else {
-            const isCritical = m.id === activeMissions[0]?.id;
+            const isCritical = m.id === allActive[0]?.id;
             const opacityValue = isCritical ? 1.0 : 0.8;
-            const glowSize = isCritical ? 20 : 15;
             const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
-            node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
+            node.style.boxShadow = `0 0 20px ${accentColor}${hexOpacity}`;
             node.style.borderColor = `${accentColor}${hexOpacity}`;
             node.style.filter = `brightness(${isCritical ? 1.15 : 1.0})`;
-            node.textContent = activeMissions.indexOf(m) + 1;
         }
 
         const label = document.createElement('div');
         label.className = 'star-label';
         label.style.display = isDebris ? 'none' : 'block';
+        label.style.opacity = isCapturedOnWire ? '0.45' : '1';
         label.textContent = m.name; 
 
         star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
 
-    // --- REPOSITIONED HEADER (Bottom-Heavy Alignment) ---
+    // --- REPOSITIONED HEADER (Bottom 55px) ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 55px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
@@ -486,35 +494,24 @@ function renderLevel4(container, footer) {
         <h2 style="color: ${isCritical ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>
     `;
 
- // --- DYNAMIC MISSION PRIORITIES ---
     if (m.subs.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        
         const activeSector = state.sectors.find(s => s.id === state.sectorId);
         const accentColor = activeSector ? activeSector.color : 'var(--accent)';
-
-        // Find the next available objective
         let criticalIndex = m.subs.findIndex(s => !s.c);
         if (criticalIndex === -1) criticalIndex = 0; 
 
         priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES <span>v</span>
-            </button>
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
             <div class="priority-list">
-                ${m.subs.map((s, i) => {
-                    const isCritical = (i === criticalIndex && !s.c);
-                    return `
-                    <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" 
-                         style="${isCritical ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
+                ${m.subs.map((s, i) => `
+                    <div class="priority-item ${i === criticalIndex && !s.c ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" 
+                         style="${i === criticalIndex && !s.c ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
                         <span class="p-num">${i + 1}</span>
-                        <span class="p-status">${isCritical ? '[ MISSION CRITICAL ]' : ''}</span>
                         <span class="p-text">${s.t}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-        `;
+                    </div>`).join('')}
+            </div>`;
         lock.appendChild(priorityContainer);
     }
     
@@ -610,9 +607,8 @@ function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
     if (!name) return;
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
-    const currentMissions = state.missions[state.sectorId]?.[h] || [];
+    const currentMissions = (state.missions[state.sectorId] && state.missions[state.sectorId][h]) ? state.missions[state.sectorId][h] : [];
 
-    // --- MISSION CAPACITY FIREWALL (10 Active Max) ---
     if (!editModeId && currentMissions.filter(m => !m.captured).length >= 10) {
         alert("Current mission must be completed before taking on new missions");
         return;
@@ -657,7 +653,7 @@ function completeMission() {
     const m = safelyGetActiveMission();
     if (m) {
         m.captured = true;
-        m.completionTimestamp = Date.now(); // NEW: Records the system time
+        m.completionTimestamp = Date.now(); 
         addEnergy(25);
         triggerHaptic([50, 30, 50]);
         save();
@@ -665,6 +661,7 @@ function completeMission() {
         render();
     }
 }
+
 function deleteMission(id) { if(confirm("Destroy?")) { HORIZONS.forEach(h => { if(state.missions[state.sectorId]?.[h]) state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); }); save(); state.level = 3; render(); } }
 
 function openSectorModal() { editingSectors = JSON.parse(JSON.stringify(state.sectors)); renderSectorEditList(); document.getElementById('sector-modal-overlay').style.display = 'flex'; }
@@ -672,22 +669,17 @@ function closeSectorModal() { document.getElementById('sector-modal-overlay').st
 function renderSectorEditList() {
     const list = document.getElementById('sector-edit-list'), addBtn = document.getElementById('sector-add-btn');
     if(!list) return; list.innerHTML = '';
-    
     editingSectors.forEach((s, i) => {
         const row = document.createElement('div'); 
         row.className = 'subtask-row';
         row.style.marginBottom = '12px';
-        
-        // Rectangular Graphic: Symmetrical 4px Margins on all sides
         const colorGraphic = `
             <div style="position: relative; width: 24px; height: 36px; flex-shrink: 0; cursor: pointer; border: 1px solid ${s.color}; border-radius: 2px; box-shadow: 0 0 10px ${s.color}66, inset 0 0 5px ${s.color}33; background: rgba(0,0,0,0.5);">
                 <input type="color" value="${s.color}" 
                     onchange="editingSectors[${i}].color = this.value; renderSectorEditList();" 
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
                 <div style="position: absolute; top: 4px; bottom: 4px; left: 4px; right: 4px; background: ${s.color}; box-shadow: 0 0 8px ${s.color}; border-radius: 1px;"></div>
-            </div>
-        `;
-        
+            </div>`;
         row.innerHTML = `
             ${colorGraphic}
             <input type="text" class="modal-input" value="${s.name}" 
@@ -695,11 +687,9 @@ function renderSectorEditList() {
                 style="flex: 1; height: 36px;">
             <button class="subtask-remove-minimal" 
                 onclick="editingSectors.splice(${i}, 1); renderSectorEditList();" 
-                style="height: 36px; width: 36px; margin: 0;">−</button>
-        `;
+                style="height: 36px; width: 36px; margin: 0;">−</button>`;
         list.appendChild(row);
     });
-    
     if(addBtn) addBtn.style.display = editingSectors.length >= 9 ? 'none' : 'block';
 }
 
@@ -707,6 +697,43 @@ function addNewSector() { if (editingSectors.length < 9) { editingSectors.push({
 function saveSectorModal() { editingSectors.forEach(s => { if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; }); state.sectors = JSON.parse(JSON.stringify(editingSectors)); save(); closeSectorModal(); render(); }
 function openSettingsModal() { document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled; document.getElementById('settings-modal-overlay').style.display = 'flex'; }
 function closeSettingsModal() { state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked; save(); document.getElementById('settings-modal-overlay').style.display = 'none'; }
+
+function togglePilotLog() {
+    let logModal = document.getElementById('pilot-log-modal');
+    if (!logModal) {
+        logModal = document.createElement('div');
+        logModal.id = 'pilot-log-modal';
+        logModal.className = 'modal-overlay';
+        logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; };
+        document.body.appendChild(logModal);
+    }
+    let allLogs = [];
+    state.sectors.forEach(s => {
+        HORIZONS.forEach(h => {
+            (state.missions[s.id]?.[h] || []).forEach(m => {
+                if (m.captured && m.completionTimestamp) allLogs.push(m);
+            });
+        });
+    });
+    allLogs.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
+    const displayLogs = allLogs.slice(0, 50);
+    logModal.innerHTML = `
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="modal-header">PILOT FLIGHT LOG [LAST 50]</div>
+            <div class="subtasks-container" style="max-height: 60vh;">
+                ${displayLogs.map(m => {
+                    const d = new Date(m.completionTimestamp);
+                    return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
+                        <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
+                        on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
+                        at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>`;
+                }).join('') || '<div style="padding:20px; text-align:center; opacity:0.5;">NO DATA RECORDED</div>'}
+            </div>
+            <button class="mod-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('pilot-log-modal').style.display='none'">DISMISS</button>
+        </div>`;
+    logModal.style.display = 'flex';
+}
 
 runDatabaseMigration(); generateStarfield(); render();
 window.addEventListener('resize', () => { if(state.level === 1) render(); });
