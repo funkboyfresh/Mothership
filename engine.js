@@ -372,13 +372,13 @@ function renderLevel2(container, footer, activeSector) {
 function renderLevel3(container, footer) {
     if(footer) { 
         footer.style.display = 'flex'; 
-        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; 
+        footer.innerHTML = `
+            <button class="zoom-btn" style="flex:1; font-size: 0.8rem;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>
+            <button class="zoom-btn" style="width: 60px; margin-left: 10px;" onclick="togglePilotLog()">^ LOG</button>
+        `; 
     }
     
-    const header = document.createElement('div');
-    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
-    container.appendChild(header);
-
+    // Header moved to bottom (rendered later in this function)
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "constellation-svg"; 
@@ -387,11 +387,12 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- MISSION PRIORITIES DROPDOWN ---
+    // --- MISSION PRIORITIES (Repositioned 2 widths up) ---
     if (missions.length > 0) {
         const priorityContainer = document.createElement('div');
         priorityContainer.className = 'priority-dropdown-container';
-        priorityContainer.style.cssText = 'position: absolute; top: 60px; z-index: 100;'; 
+        // Adjusted top to sit directly under the Zoom Out button
+        priorityContainer.style.cssText = 'position: absolute; top: 45px; z-index: 100; left: 20px;'; 
 
         let criticalIndex = missions.findIndex(m => !m.captured);
         if (criticalIndex === -1) criticalIndex = 0; 
@@ -401,7 +402,7 @@ function renderLevel3(container, footer) {
                 MISSION PRIORITIES <span>v</span>
             </button>
             <div class="priority-list">
-                ${missions.map((m, i) => {
+                ${missions.slice(-10).map((m, i) => { // Capped at 10
                     const isCritical = (i === criticalIndex && !m.captured);
                     return `
                     <div class="priority-item ${isCritical ? 'mission-critical-active' : ''} ${m.captured ? 'task-captured' : ''}" 
@@ -416,33 +417,19 @@ function renderLevel3(container, footer) {
         container.appendChild(priorityContainer);
     }
 
-    // --- SHIP NAVIGATION ---
-    const activeTarget = missions.find(m => !m.captured) || missions[missions.length - 1];
-    if (activeTarget) {
-        const orbitalGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        orbitalGroup.style.transform = `translate(${activeTarget.x}%, ${activeTarget.y}%)`;
-        const ship = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        ship.setAttribute("points", "-8,-5 12,0 -8,5 -4,0"); 
-        ship.setAttribute("fill", "var(--accent)");
-        ship.setAttribute("filter", `drop-shadow(0 0 12px ${accentColor})`);
-        ship.style.cssText = `transform-origin: 0 0; animation: ship-patrol 5s linear infinite;`;
-        orbitalGroup.appendChild(ship);
-        svg.appendChild(orbitalGroup);
-    }
-
-    // --- VECTOR LINES ---
-    if (missions.length > 1) {
-        for (let i = 0; i < missions.length - 1; i++) {
+    // --- VECTOR LINES (Oldest Disconnect Logic) ---
+    // Only draw lines for the last 10 missions
+    const activeChain = missions.slice(-10);
+    if (activeChain.length > 1) {
+        for (let i = 0; i < activeChain.length - 1; i++) {
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
-            line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
+            line.setAttribute("x1", activeChain[i].x + "%"); line.setAttribute("y1", activeChain[i].y + "%");
+            line.setAttribute("x2", activeChain[i+1].x + "%"); line.setAttribute("y2", activeChain[i+1].y + "%");
             line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.2"); svg.appendChild(line);
         }
     }
     
-    // --- MISSION NODES (Balanced Levels) ---
-    const firstActiveIndex = missions.findIndex(m => !m.captured);
-
+    // --- MISSION NODES (Brightness Shedding) ---
     missions.forEach((m, i) => {
         const star = document.createElement('div'); 
         const isOverdue = m.overdue && !m.captured;
@@ -451,47 +438,80 @@ function renderLevel3(container, footer) {
         star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
         
         let opacityValue;
-        let glowSize;
-        let brightness;
+        const isLegacy = (missions.length > 10 && i < missions.length - 10);
 
-        if (m.captured) {
-            // Archive: Locked at 30%
-            opacityValue = 0.3;
-            glowSize = 5;
-            brightness = 0.6;
-        } else if (i === firstActiveIndex) {
-            // Mission Critical: Reduced by 15% (1.15 filter vs 1.3 before)
-            opacityValue = 1.0;
-            glowSize = 20;
-            brightness = 1.15;
+        if (isLegacy) {
+            opacityValue = 0.15; // Shedded Node
+        } else if (m.captured) {
+            opacityValue = 0.3; // Recently captured
+        } else if (m.id === activeChain.find(x => !x.captured)?.id) {
+            opacityValue = 1.0; // Critical
         } else {
-            // Follow-ups: Uniform level, boosted by 20% (0.8 opacity vs 0.6 before)
-            opacityValue = 0.8;
-            glowSize = 15;
-            brightness = 1.0;
+            opacityValue = 0.8; // Follow-up
         }
 
         const node = document.createElement('div');
         node.className = `star-node ${m.captured ? 'captured' : ''}`;
         const hexOpacity = Math.floor(opacityValue * 255).toString(16).padStart(2, '0');
-        node.style.boxShadow = `0 0 ${glowSize}px ${accentColor}${hexOpacity}`;
+        node.style.boxShadow = `0 0 ${isLegacy ? 0 : 15}px ${accentColor}${hexOpacity}`;
         node.style.borderColor = `${accentColor}${hexOpacity}`;
-        node.style.filter = `brightness(${brightness}) saturate(1.1)`;
-
-        if (i === firstActiveIndex) node.style.borderWidth = '3px';
-
+        node.style.opacity = opacityValue;
         node.textContent = i + 1;
         
         const label = document.createElement('div');
         label.className = 'star-label';
         label.style.opacity = opacityValue;
-        label.style.fontWeight = i === firstActiveIndex ? '700' : '300';
         label.textContent = m.name; 
 
-        star.appendChild(node);
-        star.appendChild(label);
-        container.appendChild(star);
+        star.appendChild(node); star.appendChild(label); container.appendChild(star);
     });
+
+    // --- BOTTOM HEADER ALIGNMENT ---
+    const header = document.createElement('div');
+    header.style.cssText = 'position: absolute; bottom: 85px; text-align: center; width: 100%; pointer-events: none;';
+    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
+    container.appendChild(header);
+}
+
+// --- PILOT LOG SYSTEM ---
+function togglePilotLog() {
+    let logModal = document.getElementById('pilot-log-modal');
+    if (!logModal) {
+        logModal = document.createElement('div');
+        logModal.id = 'pilot-log-modal';
+        logModal.className = 'modal-overlay';
+        logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; };
+        document.body.appendChild(logModal);
+    }
+    
+    const completedMissions = [];
+    state.sectors.forEach(s => {
+        HORIZONS.forEach(h => {
+            (state.missions[s.id]?.[h] || []).forEach(m => {
+                if (m.captured && m.completionTimestamp) completedMissions.push(m);
+            });
+        });
+    });
+
+    completedMissions.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
+
+    logModal.innerHTML = `
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="modal-header">PILOT FLIGHT LOG</div>
+            <div class="subtasks-container" style="max-height: 60vh;">
+                ${completedMissions.length ? completedMissions.map(m => {
+                    const d = new Date(m.completionTimestamp);
+                    return `<div class="log-entry" style="font-size: 0.65rem; padding: 8px; border-bottom: 1px solid var(--border); line-height: 1.4;">
+                        <span style="color:var(--accent)">'Pilot'</span> completed <span style="color:#fff">'${m.name}'</span> 
+                        on <span style="opacity:0.7">${d.toLocaleDateString()}</span> 
+                        at <span style="opacity:0.7">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>`;
+                }).join('') : '<div style="text-align:center; opacity:0.5; padding: 20px;">NO LOGS RECORDED</div>'}
+            </div>
+            <button class="mod-btn" onclick="document.getElementById('pilot-log-modal').style.display='none'">DISMISS</button>
+        </div>
+    `;
+    logModal.style.display = 'flex';
 }
 
 function renderLevel4(container, footer) {
@@ -686,11 +706,12 @@ function toggleSubTask(index) {
 function completeMission() {
     const m = safelyGetActiveMission();
     if (m) {
-        m.captured = true; // Just flip the status
+        m.captured = true;
+        m.completionTimestamp = Date.now(); // NEW: Records the system time
         addEnergy(25);
         triggerHaptic([50, 30, 50]);
         save();
-        state.level = 3; // Return to constellation map
+        state.level = 3;
         render();
     }
 }
