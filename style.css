@@ -368,3 +368,8 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     border: 1px solid var(--sector-border);
     border-radius: 2px;
 }
+
+@keyframes ship-patrol {
+    from { transform: rotate(0deg) translateY(-40px) rotate(0deg); }
+    to { transform: rotate(360deg) translateY(-40px) rotate(-360deg); }
+}
