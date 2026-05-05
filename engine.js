@@ -337,12 +337,15 @@ function renderLevel2(container, footer, activeSector) {
         if (d.id === 'IMMINENT') {
             const label = document.createElement('div');
             label.className = 'ring-label';
-            label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0; color:#ffffff; text-shadow: 0 0 8px var(--accent-glow);';
+            // Keeping this consistent with the 0.7rem standard
+            label.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); margin:0; color:#ffffff; text-shadow: 0 0 8px var(--accent-glow); font-size: 0.7rem; font-weight: bold; letter-spacing: 2px;';
             label.innerText = d.id;
             wrapper.appendChild(label);
         } else {
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("fill", "#ffffff"); 
+            // UPDATED: font-size increased to 0.7rem to match IMMINENT
+            text.style.cssText = 'font-size: 0.7rem; letter-spacing: 2px; font-weight: bold; text-transform: uppercase;';
             const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
             tp.setAttribute("href", `#path-${d.id.toLowerCase()}`);
             tp.setAttribute("startOffset", "50%");
