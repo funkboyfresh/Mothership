@@ -444,3 +444,42 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     transform: scale(1.2);
     text-shadow: 0 0 15px var(--thrust);
 }
+
+/* Mission Critical Active State */
+.priority-item.mission-critical-active {
+    background: var(--sector-color);
+    border: 1px solid var(--sector-border);
+    border-radius: 8px; /* Filleted outline */
+    box-shadow: 0 0 15px var(--sector-color);
+    margin: 2px 0;
+    padding: 10px 8px;
+}
+
+/* Strike-through for completed tasks without re-ordering */
+.priority-item.task-captured .p-text {
+    text-decoration: line-through;
+    opacity: 0.4;
+    color: var(--captured);
+}
+
+.priority-item.task-captured .p-num {
+    opacity: 0.2;
+}
+
+/* Dropdown Button Tweak */
+.priority-toggle-btn span {
+    font-size: 0.6rem;
+    margin-left: 10px;
+    transition: transform 0.3s;
+}
+
+.priority-list.show + .priority-toggle-btn span {
+    transform: rotate(180deg);
+}
+
+.p-status {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+    margin-right: 5px;
+}
