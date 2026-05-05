@@ -196,99 +196,187 @@ function render() {
     const zoomBtn = document.getElementById('zoom-out');
     const bread = document.getElementById('breadcrumb');
     const footer = document.getElementById('control-footer');
-    if(!container) return; container.innerHTML = '';
+    if(!container) return; 
+    container.innerHTML = '';
+    
     if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
 
-    // FIX: Dynamic theme coloring
-    if (activeSector) {
-        document.documentElement.style.setProperty('--accent', activeSector.color);
-    } else {
-        document.documentElement.style.setProperty('--accent', '#00e5ff'); 
-    }
-
+    document.documentElement.style.setProperty('--accent', activeSector ? activeSector.color : '#00e5ff');
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
-    if (state.level === 1) {
-        if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`; }
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "voronoi-map"; container.appendChild(svg);
-        const w = container.clientWidth || window.innerWidth, h = container.clientHeight || window.innerHeight;
-        let seeds = relaxLloyds(state.sectors.map(s => s.seed), 10);
-        const voronoi = d3.Delaunay.from(seeds.map(s => [s.x * w, s.y * h])).voronoi([0, 0, w, h]);
-        state.sectors.forEach((s, i) => {
-            const pathData = voronoi.renderCell(i); if(!pathData) return;
-            const overdue = state.missions[s.id] && HORIZONS.some(hz => state.missions[s.id][hz]?.some(m => m.overdue && !m.captured));
-            const color = overdue ? 'var(--thrust)' : s.color;
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", pathData); path.setAttribute("fill", color); path.setAttribute("fill-opacity", overdue ? 0.2 : 0.05);
-            path.setAttribute("stroke", color); path.setAttribute("stroke-width", "2"); 
-            path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
-            path.onclick = () => { state.sectorId = s.id; state.level = 2; render(); }; svg.appendChild(path);
-            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("x", seeds[i].x * w); text.setAttribute("y", seeds[i].y * h);
-            text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text");
-            text.style.textShadow = `0 0 10px ${color}`; text.textContent = s.name; svg.appendChild(text);
-        });
-    } 
-    else if (state.level === 2) {
-        if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`; }
-        container.innerHTML = `<div class="view-level-title">LEVEL 2 // ${activeSector.name}</div><h1 class="view-main-title">Planetary Map</h1>`;
-        const center = document.createElement('div'); center.className = 'warp-transition';
-        center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
-        [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ].forEach(d => {
-            const overdue = state.missions[state.sectorId]?.[d.id]?.some(m => m.overdue && !m.captured);
-            const wrapper = document.createElement('div'); wrapper.className = `ring-circle ${overdue ? 'overdue' : ''}`;
-            wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px';
-            wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
-            const label = document.createElement('div'); label.className = 'ring-label'; label.innerText = d.id; wrapper.appendChild(label);
-            const starField = document.createElement('div'); starField.style.cssText = `position:absolute; width:100%; height:100%; animation: orbit-spin ${d.speed}s linear infinite; pointer-events:none;`;
-            const missions = state.missions[state.sectorId]?.[d.id] || [];
-            missions.forEach((m, i) => {
-                const angle = (i / missions.length) * Math.PI * 2, r = d.size/2;
-                const dot = document.createElement('div'); dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--accent)'}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px);`;
-                starField.appendChild(dot);
-            });
-            wrapper.appendChild(starField); center.appendChild(wrapper);
-        });
-        container.appendChild(center);
+    switch(state.level) {
+        case 1: renderLevel1(container, footer); break;
+        case 2: renderLevel2(container, footer, activeSector); break;
+        case 3: renderLevel3(container, footer); break;
+        case 4: renderLevel4(container, footer); break;
     }
-    else if (state.level === 3) {
-        if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
-        container.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
-        const missions = state.missions[state.sectorId]?.[state.horizon] || [];
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
-        if (missions.length > 1) {
-            for (let i = 0; i < missions.length - 1; i++) {
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
-                line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
-                line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
-            }
-        }
+}
+
+function renderLevel1(container, footer) {
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT MAP ]</button>`; }
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "voronoi-map"; container.appendChild(svg);
+    const w = container.clientWidth || window.innerWidth, h = container.clientHeight || window.innerHeight;
+    let seeds = relaxLloyds(state.sectors.map(s => s.seed), 10);
+    const voronoi = d3.Delaunay.from(seeds.map(s => [s.x * w, s.y * h])).voronoi([0, 0, w, h]);
+    
+    state.sectors.forEach((s, i) => {
+        const pathData = voronoi.renderCell(i); if(!pathData) return;
+        const overdue = state.missions[s.id] && HORIZONS.some(hz => state.missions[s.id][hz]?.some(m => m.overdue && !m.captured));
+        const color = overdue ? 'var(--thrust)' : s.color;
+        
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathData); path.setAttribute("fill", color); path.setAttribute("fill-opacity", overdue ? 0.2 : 0.05);
+        path.setAttribute("stroke", color); path.setAttribute("stroke-width", "2"); 
+        path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
+        path.onclick = () => { state.sectorId = s.id; state.level = 2; render(); }; svg.appendChild(path);
+        
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", seeds[i].x * w); text.setAttribute("y", seeds[i].y * h);
+        text.setAttribute("fill", color); text.setAttribute("class", "voronoi-text");
+        text.style.textShadow = `0 0 10px ${color}`; 
+        text.textContent = s.name; // Sanitized via textContent
+        svg.appendChild(text);
+    });
+}
+
+function renderLevel2(container, footer, activeSector) {
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`; }
+    
+    const header = document.createElement('div');
+    header.innerHTML = `<div class="view-level-title">LEVEL 2 // <span id="sector-title-safe"></span></div><h1 class="view-main-title">Planetary Map</h1>`;
+    container.appendChild(header);
+    document.getElementById('sector-title-safe').textContent = activeSector.name; // Sanitized
+
+    const center = document.createElement('div'); center.className = 'warp-transition';
+    center.style.cssText = 'position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%); border-radius:50%;';
+    
+    [ { id: 'TRAJECTORY', size: 280, speed: 60 }, { id: 'HORIZON', size: 190, speed: 30 }, { id: 'IMMINENT', size: 100, speed: 15 } ].forEach(d => {
+        const overdue = state.missions[state.sectorId]?.[d.id]?.some(m => m.overdue && !m.captured);
+        const wrapper = document.createElement('div'); wrapper.className = `ring-circle ${overdue ? 'overdue' : ''}`;
+        wrapper.style.width = d.size + 'px'; wrapper.style.height = d.size + 'px';
+        wrapper.onclick = (e) => { e.stopPropagation(); state.horizon = d.id; state.level = 3; render(); };
+        
+        const label = document.createElement('div'); label.className = 'ring-label'; label.innerText = d.id; wrapper.appendChild(label);
+        const starField = document.createElement('div'); starField.style.cssText = `position:absolute; width:100%; height:100%; animation: orbit-spin ${d.speed}s linear infinite; pointer-events:none;`;
+        
+        const missions = state.missions[state.sectorId]?.[d.id] || [];
         missions.forEach((m, i) => {
-            const star = document.createElement('div'); 
-            const isOverdue = m.overdue && !m.captured;
-            star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
-            star.style.left = m.x + '%'; star.style.top = m.y + '%';
-            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
-            star.innerHTML = `<div class="star-node ${m.captured ? 'captured' : ''}">${i+1}</div><div class="star-label">${m.name}</div>`;
-            container.appendChild(star);
+            const angle = (i / missions.length) * Math.PI * 2, r = d.size/2;
+            const dot = document.createElement('div'); 
+            dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--accent)'}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px);`;
+            starField.appendChild(dot);
         });
+        wrapper.appendChild(starField); center.appendChild(wrapper);
+    });
+    container.appendChild(center);
+}
+
+function renderLevel3(container, footer) {
+    if(footer) { footer.style.display = 'flex'; footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('${state.horizon}', true)">+ INITIALIZE TARGET (${state.horizon})</button>`; }
+    
+    const header = document.createElement('div');
+    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title">Constellation Map</h1>`;
+    container.appendChild(header);
+
+    const missions = state.missions[state.sectorId]?.[state.horizon] || [];
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "constellation-svg"; container.appendChild(svg);
+    
+    if (missions.length > 1) {
+        for (let i = 0; i < missions.length - 1; i++) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", missions[i].x + "%"); line.setAttribute("y1", missions[i].y + "%");
+            line.setAttribute("x2", missions[i+1].x + "%"); line.setAttribute("y2", missions[i+1].y + "%");
+            line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", "1"); line.setAttribute("stroke-dasharray", "5,5"); line.setAttribute("opacity", "0.4"); svg.appendChild(line);
+        }
     }
-    else if (state.level === 4) {
-        if(footer) footer.style.display = 'none';
-        const m = safelyGetActiveMission(); if (!m) { zoomOut(); return; }
-        const completed = m.subs.filter(s => s.c).length, progress = m.subs.length ? Math.round((completed / m.subs.length) * 100) : 0, allDone = m.subs.length > 0 && completed === m.subs.length;
-        let orbHtml = `<div class="target-lock warp-transition"><div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color:${m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2><div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div><div class="orbital-system"><svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
-        m.subs.forEach((s, i) => {
-            const angle = (i / m.subs.length) * Math.PI * 2, x = 170 + 100 * Math.cos(angle), y = 170 + 100 * Math.sin(angle);
-            orbHtml += `<div style="position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;" onclick="${m.captured ? '' : `toggleSubTask(${i})`}"><div class="orbital-node-box ${s.c ? 'checked' : ''}"><div class="orb-check">${s.c ? '✓' : ''}</div><div class="orb-text">${s.t}</div></div></div>`;
-        });
-        orbHtml += `</div><div style="display:flex; gap:10px; margin-top: auto;"><button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button><button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button></div></div>`;
-        if (allDone && !m.captured) orbHtml += `<div class="hex-modal warp-transition"><h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button></div>`;
-        container.innerHTML = orbHtml;
+    
+    missions.forEach((m, i) => {
+        const star = document.createElement('div'); 
+        const isOverdue = m.overdue && !m.captured;
+        star.className = `star-container ${isOverdue ? 'decaying' : ''} warp-transition`;
+        star.style.left = m.x + '%'; star.style.top = m.y + '%';
+        star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); };
+        
+        const node = document.createElement('div');
+        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        node.textContent = i + 1;
+        
+        const label = document.createElement('div');
+        label.className = 'star-label';
+        label.textContent = m.name; // Sanitized via textContent
+
+        star.appendChild(node);
+        star.appendChild(label);
+        container.appendChild(star);
+    });
+}
+
+function renderLevel4(container, footer) {
+    if(footer) footer.style.display = 'none';
+    const m = safelyGetActiveMission(); if (!m) { zoomOut(); return; }
+    const completed = m.subs.filter(s => s.c).length;
+    const progress = m.subs.length ? Math.round((completed / m.subs.length) * 100) : 0;
+    const allDone = m.subs.length > 0 && completed === m.subs.length;
+    
+    const lock = document.createElement('div');
+    lock.className = 'target-lock warp-transition';
+    
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'view-level-title';
+    titleWrap.textContent = `LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}`;
+    lock.appendChild(titleWrap);
+    
+    const title = document.createElement('h2');
+    title.style.color = m.overdue && !m.captured ? 'var(--thrust)' : 'var(--text)';
+    title.textContent = m.name; // Sanitized via textContent
+    lock.appendChild(title);
+    
+    lock.insertAdjacentHTML('beforeend', `<div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${progress}%;"></div></div><div class="progress-text">${progress}% INTEGRITY</div></div>`);
+    
+    const orbSys = document.createElement('div');
+    orbSys.className = 'orbital-system';
+    orbSys.innerHTML = `<svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
+    
+    m.subs.forEach((s, i) => {
+        const angle = (i / m.subs.length) * Math.PI * 2, x = 170 + 100 * Math.cos(angle), y = 170 + 100 * Math.sin(angle);
+        const subNode = document.createElement('div');
+        subNode.style.cssText = `position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;`;
+        if (!m.captured) subNode.onclick = () => toggleSubTask(i);
+        
+        const box = document.createElement('div');
+        box.className = `orbital-node-box ${s.c ? 'checked' : ''}`;
+        
+        const check = document.createElement('div');
+        check.className = 'orb-check';
+        check.textContent = s.c ? '✓' : '';
+        
+        const text = document.createElement('div');
+        text.className = 'orb-text';
+        text.textContent = s.t; // Sanitized via textContent
+        
+        box.appendChild(check);
+        box.appendChild(text);
+        subNode.appendChild(box);
+        orbSys.appendChild(subNode);
+    });
+    
+    lock.appendChild(orbSys);
+    
+    const btnWrap = document.createElement('div');
+    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto;';
+    btnWrap.innerHTML = `<button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button><button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>`;
+    lock.appendChild(btnWrap);
+    
+    if (allDone && !m.captured) {
+        const modal = document.createElement('div');
+        modal.className = 'hex-modal warp-transition';
+        modal.innerHTML = `<h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button>`;
+        lock.appendChild(modal);
     }
+    
+    container.appendChild(lock);
 }
 
 function openTaskModal(h, f) { 
