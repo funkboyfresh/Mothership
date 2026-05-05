@@ -283,3 +283,9 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .success-btn { width: 100%; padding: 15px; background: var(--accent); color: var(--bg); border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 4px; }
 .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; cursor: pointer; }
 .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
+
+/* Ship Animation */
+#constellation-svg polygon {
+    transform-box: fill-box;
+    transform-origin: center;
+}
