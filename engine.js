@@ -125,21 +125,49 @@ function relaxLloyds(seeds, iterations) {
     return points;
 }
 
+// Helper to check if two line segments (p1,q1) and (p2,q2) intersect
+function doLinesIntersect(p1, q1, p2, q2) {
+    const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
+}
+
 function getSafeCoordinates(existing) {
     let x, y, safe, attempts = 0;
-    const minDistance = 22; 
+    const minDistance = 25; // Increased slightly for better visibility
+    const padding = 15; // HUD safety margin
+
     do {
-        x = 15 + Math.random() * 70; 
-        y = 20 + Math.random() * 60; 
+        x = padding + Math.random() * (100 - padding * 2); 
+        y = padding + Math.random() * (100 - padding * 2); 
         safe = true;
+
+        // --- RULE 1: Node Overlap Check ---
         for (let m of existing) {
             if (!m || isNaN(m.x)) continue;
             let dx = m.x - x;
             let dy = m.y - y;
             if (Math.sqrt(dx*dx + dy*dy) < minDistance) { safe = false; break; }
         }
+
+        // --- RULE 2: Wire Crossing Prevention ---
+        if (safe && existing.length >= 2) {
+            const newNode = { x, y };
+            const prevNode = existing[existing.length - 1];
+            
+            // Check intersection with all existing segments on the wire
+            for (let i = 0; i < existing.length - 1; i++) {
+                const segStart = existing[i];
+                const segEnd = existing[i+1];
+                if (doLinesIntersect(prevNode, newNode, segStart, segEnd)) {
+                    safe = false;
+                    break;
+                }
+            }
+        }
+        
         attempts++;
-    } while (!safe && attempts < 100);
+    } while (!safe && attempts < 200); // Increased attempts for complex paths
+
     return {x, y};
 }
 
