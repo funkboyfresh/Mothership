@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mission Control V12.1</title>
+    <title>Mission Control V12.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Link to the Style Bay -->
     <link rel="stylesheet" href="style.css">
+    <!-- Physics Engines -->
     <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
     <script src="https://unpkg.com/d3-delaunay@6.0.2/dist/d3-delaunay.min.js"></script>
 </head>
 <body>
     <div id="app">
+        <!-- Hyper-Drive Overlay -->
         <div id="level-up-overlay">
             <h1 style="font-size: 3rem; color: var(--bg); text-align: center; letter-spacing: 5px; margin:0;">HYPER-DRIVE<br>ENGAGED</h1>
             <p style="color: var(--bg); font-weight: bold; letter-spacing: 2px;">PILOT LEVEL UP</p>
         </div>
 
+        <!-- Persistent Void Layers -->
         <div class="grid-bg"></div>
         <div class="dense-starfield" id="global-starfield"></div>
 
+        <!-- Gamified HUD -->
         <div id="hud">
             <div class="hud-top-row">
                 <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
@@ -40,9 +45,11 @@
         </div>
         
         <div id="view-container" class="view"></div>
+        
         <div id="control-footer" class="control-footer" style="display:none"></div>
     </div>
 
+    <!-- Target Modal -->
     <div id="task-modal-overlay" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
@@ -72,6 +79,7 @@
         </div>
     </div>
 
+    <!-- Sector Edit Modal -->
     <div id="sector-modal-overlay" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">TERRITORIAL GEOMETRY MAP</div>
@@ -84,6 +92,7 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
     <div id="settings-modal-overlay" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">SYSTEM CONFIGURATION</div>
@@ -98,6 +107,7 @@
         </div>
     </div>
 
+    <!-- Link to the Engine Bay -->
     <script src="engine.js"></script>
 </body>
 </html>
