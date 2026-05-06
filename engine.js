@@ -31,6 +31,7 @@ if (!state.sectors || state.sectors.length === 0) {
 }
 
 // --- CORE UTILITIES ---
+
 function triggerHaptic(pattern) {
     if (state.hapticsEnabled && "vibrate" in navigator) { 
         navigator.vibrate(pattern); 
@@ -90,6 +91,22 @@ function getCapturedCount(sectorId = null) {
         });
     });
     return count;
+}
+
+// --- COLOR PROCESSING ---
+function shiftHue(hex, degree) {
+    if (!hex || hex.length !== 7) return hex; // Failsafe for valid hex
+    let r = parseInt(hex.substring(1,3), 16) / 255, g = parseInt(hex.substring(3,5), 16) / 255, b = parseInt(hex.substring(5,7), 16) / 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; }
+        h /= 6;
+    }
+    h = Math.round(h * 360);
+    return `hsl(${(h + degree) % 360}, ${Math.round(s*100)}%, ${Math.round(l*100)}%)`;
 }
 
 // --- NAVIGATION & SPATIAL GEOMETRY ---
@@ -454,10 +471,11 @@ function renderLevel1(container, footer) {
             particle.setAttribute("cy", py);
             particle.setAttribute("r", "2.25");
             
+            // --- UPDATED PROCEDURAL COLOR LOGIC (DEBRIS) ---
             let pColor = s.color;
             if (m.overdue) pColor = 'var(--thrust)';
-            else if (m.warningLevel === 24) pColor = '#ff9900';
-            else if (m.warningLevel === 48) pColor = '#ffd700';
+            else if (m.warningLevel === 24) pColor = shiftHue(s.color, 180);
+            else if (m.warningLevel === 48) pColor = shiftHue(s.color, 90);
             
             particle.setAttribute("fill", pColor);
             particle.setAttribute("opacity", "0.6");
@@ -505,10 +523,11 @@ function renderLevel1(container, footer) {
                     dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
                     dot.setAttribute("r", "1.5");
                     
+                    // --- UPDATED PROCEDURAL COLOR LOGIC (ORBITAL DOTS) ---
                     let dotColor = color; 
                     if (m.overdue) dotColor = 'var(--thrust)';
-                    else if (m.warningLevel === 24) dotColor = '#ff9900';
-                    else if (m.warningLevel === 48) dotColor = '#ffd700';
+                    else if (m.warningLevel === 24) dotColor = shiftHue(s.color, 180);
+                    else if (m.warningLevel === 48) dotColor = shiftHue(s.color, 90);
 
                     dot.setAttribute("fill", dotColor); 
                     group.appendChild(dot);
@@ -634,10 +653,11 @@ function renderLevel2(container, footer, activeSector) {
             const r = d.size/2;
             const dot = document.createElement('div'); 
             
+            // --- UPDATED PROCEDURAL COLOR LOGIC (PLANETARY MAP DOTS) ---
             let dotColor = activeSector.color; 
             if (m.overdue) dotColor = 'var(--thrust)';
-            else if (m.warningLevel === 24) dotColor = '#ff9900';
-            else if (m.warningLevel === 48) dotColor = '#ffd700';
+            else if (m.warningLevel === 24) dotColor = shiftHue(activeSector.color, 180);
+            else if (m.warningLevel === 48) dotColor = shiftHue(activeSector.color, 90);
 
             dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${dotColor}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${dotColor};`;
             starField.appendChild(dot);
@@ -781,22 +801,30 @@ function renderLevel3(container, footer) {
             node.textContent = missions.indexOf(m) + 1;
         } else {
             const isCrit = m.id === wireActive[0]?.id;
-            const op = isCrit ? 1.0 : 0.8;
-            const hex = Math.floor(op * 255).toString(16).padStart(2, '0');
-            
-            let bColor = accentColor;
-            let gColor = accentColor + hex;
-            
+            let warnColor = accentColor;
+            let bgFill = 'var(--bg)';
+            let textColor = '#ffffff';
+
             if (isDecay) { 
-                bColor = 'var(--thrust)'; 
-                gColor = 'rgba(255, 42, 42, 0.6)'; 
+                warnColor = 'var(--thrust)'; 
+                bgFill = 'rgba(255, 42, 42, 0.2)'; // Faint red fill
             } else if (m.warningLevel === 24) { 
-                bColor = '#ff9900'; 
-                gColor = 'rgba(255, 153, 0, 0.6)'; 
+                warnColor = shiftHue(accentColor, 180); // 180deg procedural complement
+                bgFill = '#ffffff'; // 24H: Solid White-Hot Core
+                textColor = '#000000'; // Dark text for contrast against white
             } else if (m.warningLevel === 48) { 
-                bColor = '#ffd700'; 
-                gColor = 'rgba(255, 215, 0, 0.6)'; 
+                warnColor = shiftHue(accentColor, 90); // 90deg procedural shift
+                bgFill = 'rgba(255, 255, 255, 0.3)'; // 48H: Warming up
             }
+
+            // Apply procedural variables and styles
+            node.style.setProperty('--dynamic-warn', warnColor);
+            node.style.borderColor = warnColor; 
+            node.style.backgroundColor = bgFill;
+            node.style.color = textColor;
+            if (isCrit) node.style.borderWidth = '3px'; 
+            node.textContent = missions.indexOf(m) + 1;
+        }
             
             node.style.boxShadow = `0 0 ${isCrit ? 20 : 15}px ${gColor}`; 
             node.style.borderColor = bColor; 
