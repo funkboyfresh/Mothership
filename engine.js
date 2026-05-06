@@ -914,6 +914,16 @@ function moveMission(direction) {
 }
 
 function openTaskModal(h, f) { 
+    // --- NEW: Block access at the door if at mission limit ---
+    const hzMissions = (state.missions[state.sectorId]?.[h]) ? state.missions[state.sectorId][h] : [];
+    const activeCount = hzMissions.filter(m => !m.captured).length;
+    
+    if (activeCount >= 6) {
+        showSoftWarning("TARGET LIMIT REACHED (6/6).\nCOMPLETE ACTIVE MISSIONS TO OPEN NEW TRAJECTORIES.");
+        return; 
+    }
+    // ---------------------------------------------------------
+
     editModeId = null; 
     defaultHorizonContext = h; 
     isHorizonFixed = f; 
@@ -964,8 +974,9 @@ function saveTaskModal() {
     const hzMissions = (state.missions[state.sectorId]?.[h]) ? state.missions[state.sectorId][h] : [];
     const activeCount = hzMissions.filter(m => !m.captured).length;
     
+    // --- UPDATED: Replaced rigid alert with soft warning ---
     if (!editModeId && activeCount >= 6) { 
-        alert("Current mission must be completed before taking on new missions in this sector."); 
+        showSoftWarning("TARGET LIMIT REACHED (6/6).\nCOMPLETE ACTIVE MISSIONS TO OPEN NEW TRAJECTORIES."); 
         return; 
     }
     
@@ -1257,4 +1268,34 @@ setInterval(() => {
 // Handle responsive resizing
 window.addEventListener('resize', () => { 
     if(state.level === 1) render(); 
+});
+// --- SOFT WARNING SYSTEM ---
+let warningTimeout;
+function showSoftWarning(message) {
+    let toast = document.getElementById('soft-warning-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'soft-warning-toast';
+        toast.className = 'soft-warning';
+        document.body.appendChild(toast);
+    }
+    toast.innerText = message;
+
+    // Small delay ensures the opening click doesn't immediately dismiss it
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    clearTimeout(warningTimeout);
+    warningTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+// Dismiss the warning if the pilot clicks anywhere on the screen
+window.addEventListener('click', (e) => {
+    const toast = document.getElementById('soft-warning-toast');
+    if (toast && toast.classList.contains('show')) {
+        toast.classList.remove('show');
+    }
 });
