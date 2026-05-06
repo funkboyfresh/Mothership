@@ -87,7 +87,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 /* Overdue Alert Animations */
 @keyframes sector-pulse { 0% { fill-opacity: 0.2; filter: brightness(1); } 50% { fill-opacity: 0.5; filter: brightness(2); } 100% { fill-opacity: 0.2; filter: brightness(1); } }
 .overdue-sector { animation: sector-pulse 2s infinite ease-in-out; }
-@keyframes star-decay-pulse { 0% { box-shadow: 0 0 15px var(--thrust); filter: brightness(1); } 50% { box-shadow: 0 0 35px var(--thrust); filter: brightness(2); } 100% { box-shadow: 0 0 15px var(--thrust); filter: brightness(1); } }
 
 /* Orbital Rings */
 .ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
@@ -102,11 +101,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 /* DEBRIS FIELD MECHANICS: 10-30% scale range and floating drift */
 @keyframes debris-float { 0% { transform: translate(0, 0); } 100% { transform: translate(12px, 12px); } }
 .debris-node { animation: debris-float 10s infinite alternate ease-in-out; pointer-events: none; }
-
-@keyframes drift-decay { 0% { transform: rotate(0deg) translate(0px, 0px); } 25% { transform: rotate(2deg) translate(2px, 3px); } 50% { transform: rotate(-1deg) translate(-2px, -2px); } 75% { transform: rotate(3deg) translate(3px, -1px); } 100% { transform: rotate(0deg) translate(0px, 0px); } }
-.star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
-.star-container.decaying .star-node { border-color: var(--thrust) !important; color: var(--thrust) !important; animation: star-decay-pulse 1.5s infinite ease-in-out; }
-.star-container.decaying .star-label { color: var(--thrust) !important; text-shadow: 0 0 10px var(--thrust) !important; }
 
 .star-node { position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #ffffff; transition: all 0.3s; pointer-events: none; left: -26px; top: -26px; }
 .star-node.captured { background: var(--accent); color: var(--bg); }
@@ -147,13 +141,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .modal-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.8rem; }
 .subtasks-container { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
 
-/* Ship Animation & Tangential Orbit */
-#constellation-svg polygon { transform-box: fill-box; transform-origin: center; }
-@keyframes ship-patrol {
-    from { transform: rotate(0deg) translateY(-40px) rotate(90deg); }
-    to { transform: rotate(360deg) translateY(-40px) rotate(90deg); }
-}
-
 /* Priority Dropdown Styling */
 .priority-dropdown-container { width: 90%; max-width: 400px; margin-bottom: 15px; position: relative; z-index: 50; }
 .priority-toggle-btn { width: 100%; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border); color: #fff; padding: 10px; font-size: 0.7rem; letter-spacing: 2px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
@@ -179,8 +166,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 
 /* Drag and Drop Visuals */
 .subtask-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
-.subtask-row.dragging { opacity: 0.4; background: var(--accent-glow); }
-.drag-handle { cursor: grab; color: var(--accent); font-size: 1.2rem; font-weight: bold; text-shadow: 0 0 8px var(--accent-glow); user-select: none; padding: 0 5px; }
 .subtask-remove-minimal { background: none; border: none; color: var(--thrust); font-size: 1.4rem; cursor: pointer; padding: 0 10px; line-height: 1; text-shadow: 0 0 10px var(--thrust-glow); transition: transform 0.2s, text-shadow 0.2s; }
 .subtask-remove-minimal:hover { transform: scale(1.2); text-shadow: 0 0 15px var(--thrust); }
 
@@ -189,27 +174,58 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; cursor: pointer; }
 .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
 
-/* Stage-Specific Pulses */
-/* --- PROCEDURAL DECAY PULSE --- */
-@keyframes pulse-dynamic {
-    0%, 100% { box-shadow: 0 0 10px var(--dynamic-warn); filter: brightness(1); }
-    50% { box-shadow: 0 0 25px var(--dynamic-warn); filter: brightness(1.3); }
+
+/* --- KINETIC DECAY BEHAVIORS --- */
+/* Overdue (Past Due) - 100% Intensity & Chaotic Drift */
+@keyframes star-decay-pulse { 
+    0%, 100% { box-shadow: 0 0 15px var(--thrust); filter: brightness(1); } 
+    50% { box-shadow: 0 0 35px var(--thrust); filter: brightness(2); } 
+}
+@keyframes drift-decay { 
+    0% { transform: rotate(0deg) translate(0px, 0px); } 
+    25% { transform: rotate(2deg) translate(2px, 3px); } 
+    50% { transform: rotate(-1deg) translate(-2px, -2px); } 
+    75% { transform: rotate(3deg) translate(3px, -1px); } 
+    100% { transform: rotate(0deg) translate(0px, 0px); } 
 }
 
-.star-container.warning-24 .star-node,
-.star-container.warning-48 .star-node {
-    animation: pulse-dynamic 2s infinite ease-in-out;
+/* 24 Hours - 50% Intensity/Speed (3s) + Boiling Vibration */
+@keyframes pulse-dynamic-24 {
+    0%, 100% { box-shadow: 0 0 8px var(--dynamic-warn); filter: brightness(1); }
+    50% { box-shadow: 0 0 18px var(--dynamic-warn); filter: brightness(1.15); }
+}
+@keyframes vibrate-in-place {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(1px, 1px); }
+    50% { transform: translate(-1px, 0); }
+    75% { transform: translate(0, -1px); }
 }
 
-/* Apply pulses to the nodes within the warning containers */
+/* 48 Hours - 25% Intensity/Speed (6s) + Static (No Vibration) */
+@keyframes pulse-dynamic-48 {
+    0%, 100% { box-shadow: 0 0 4px var(--dynamic-warn); filter: brightness(1); }
+    50% { box-shadow: 0 0 10px var(--dynamic-warn); filter: brightness(1.05); }
+}
+
+/* Application of Behaviors (Forces Outer-Glow Only and Black Fills) */
+.star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
+.star-container.decaying .star-node { 
+    border-color: var(--thrust) !important; 
+    color: var(--thrust) !important; 
+    animation: star-decay-pulse 1.5s infinite ease-in-out; 
+    background-color: var(--bg) !important; 
+}
+.star-container.decaying .star-label { color: var(--thrust) !important; text-shadow: 0 0 10px var(--thrust) !important; }
+
+.star-container.warning-24 { animation: vibrate-in-place 0.3s infinite; }
 .star-container.warning-24 .star-node {
-    animation: pulse-orange 2s infinite ease-in-out;
-    border-color: #ff9900 !important;
+    animation: pulse-dynamic-24 3s infinite ease-in-out;
+    background-color: var(--bg) !important; 
 }
 
 .star-container.warning-48 .star-node {
-    animation: pulse-yellow 2s infinite ease-in-out;
-    border-color: #ffd700 !important;
+    animation: pulse-dynamic-48 6s infinite ease-in-out;
+    background-color: var(--bg) !important; 
 }
 
 /* --- TACTICAL UPGRADES --- */
