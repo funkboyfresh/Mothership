@@ -373,7 +373,6 @@ function renderLevel1(container, footer) {
         const cx = seeds[i].x * w;
         const cy = seeds[i].y * h;
         
-        // --- NEW: FLOATING ARCHIVAL TASKS (CONTAINED WITHIN SECTOR) ---
         const defs = svg.querySelector('defs') || document.createElementNS("http://www.w3.org/2000/svg", "defs");
         if (!svg.querySelector('defs')) svg.insertBefore(defs, svg.firstChild);
         
@@ -403,7 +402,7 @@ function renderLevel1(container, footer) {
             const py = cy + (Math.random() - 0.5) * (h * 0.7);
             particle.setAttribute("cx", px);
             particle.setAttribute("cy", py);
-            particle.setAttribute("r", "1.5");
+            particle.setAttribute("r", "2.25"); // UPDATED: 50% larger than 1.5
             
             let pColor = s.color;
             if (m.overdue) pColor = 'var(--thrust)';
@@ -430,7 +429,6 @@ function renderLevel1(container, footer) {
             floatGroup.appendChild(particle);
         });
 
-        // --- RINGS AND ACTIVE TARGETS ---
         const rings = [ { id: 'IMMINENT', r: 12, s: 10 }, { id: 'HORIZON', r: 20, s: 20 }, { id: 'TRAJECTORY', r: 28, s: 40 } ];
         
         rings.forEach(ring => {
