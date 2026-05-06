@@ -774,8 +774,8 @@ function renderLevel3(container, footer) {
         if (isDebris) { 
             let warningFill = accentColor; 
             if (isDecay) warningFill = 'var(--thrust)'; 
-            else if (m.warningLevel === 24) warningFill = '#ff9900'; 
-            else if (m.warningLevel === 48) warningFill = '#ffd700';
+            else if (m.warningLevel === 24) warningFill = shiftHue(accentColor, 180);
+            else if (m.warningLevel === 48) warningFill = shiftHue(accentColor, 90);
 
             node.style.transform = `scale(${m.scale})`; 
             node.style.opacity = '0.35'; 
@@ -787,8 +787,8 @@ function renderLevel3(container, footer) {
         } else if (isCapOnWire) {
             let warningFill = accentColor; 
             if (isDecay) warningFill = 'var(--thrust)'; 
-            else if (m.warningLevel === 24) warningFill = '#ff9900'; 
-            else if (m.warningLevel === 48) warningFill = '#ffd700';
+            else if (m.warningLevel === 24) warningFill = shiftHue(accentColor, 180);
+            else if (m.warningLevel === 48) warningFill = shiftHue(accentColor, 90);
             
             node.style.opacity = '1.0'; 
             node.style.backgroundColor = warningFill; 
@@ -807,28 +807,20 @@ function renderLevel3(container, footer) {
 
             if (isDecay) { 
                 warnColor = 'var(--thrust)'; 
-                bgFill = 'rgba(255, 42, 42, 0.2)'; // Faint red fill
+                bgFill = 'rgba(255, 42, 42, 0.2)'; 
             } else if (m.warningLevel === 24) { 
-                warnColor = shiftHue(accentColor, 180); // 180deg procedural complement
-                bgFill = '#ffffff'; // 24H: Solid White-Hot Core
-                textColor = '#000000'; // Dark text for contrast against white
+                warnColor = shiftHue(accentColor, 180); 
+                bgFill = '#ffffff'; 
+                textColor = '#000000'; 
             } else if (m.warningLevel === 48) { 
-                warnColor = shiftHue(accentColor, 90); // 90deg procedural shift
-                bgFill = 'rgba(255, 255, 255, 0.3)'; // 48H: Warming up
+                warnColor = shiftHue(accentColor, 90); 
+                bgFill = 'rgba(255, 255, 255, 0.3)'; 
             }
 
-            // Apply procedural variables and styles
             node.style.setProperty('--dynamic-warn', warnColor);
             node.style.borderColor = warnColor; 
             node.style.backgroundColor = bgFill;
             node.style.color = textColor;
-            if (isCrit) node.style.borderWidth = '3px'; 
-            node.textContent = missions.indexOf(m) + 1;
-        }
-            
-            node.style.boxShadow = `0 0 ${isCrit ? 20 : 15}px ${gColor}`; 
-            node.style.borderColor = bColor; 
-            node.style.filter = `brightness(${isCrit ? 1.15 : 1.0})`; 
             if (isCrit) node.style.borderWidth = '3px'; 
             node.textContent = missions.indexOf(m) + 1;
         }
