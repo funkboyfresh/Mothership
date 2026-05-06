@@ -67,12 +67,18 @@
                 </select>
             </div>
 
-            <div class="input-group">
-                <span class="input-label">Temporal Deadline (Optional)</span>
-                <input type="date" id="modal-task-date" class="modal-input">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                    <span class="input-label">Temporal Date</span>
+                    <input type="date" id="modal-task-date" class="modal-input">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                    <span class="input-label">Temporal Time</span>
+                    <input type="time" id="modal-task-time" class="modal-input">
+                </div>
             </div>
 
-            <span class="input-label">Sub-Routines (Drag to Reorder)</span>
+            <span class="input-label">Sub-Routines</span>
             <div class="subtasks-container" id="modal-subtasks-list"></div>
             
             <div class="add-btn-bar" id="modal-add-btn" onclick="addModalSubtask()">+ ADD ROUTINE</div>
@@ -109,7 +115,7 @@
             Engage physical vibration motor on supported mobile devices during critical events.
         </p>
 
-        <button class="success-btn" onclick="factoryReset()" style="background: var(--thrust); color: #fff; margin-bottom: 15px; font-size: 0.7rem; height: auto; padding: 10px;">FACTORY RESET</button>
+        <button class="success-btn" id="factory-reset-btn" onclick="factoryReset()" style="margin-bottom: 15px;">FACTORY RESET</button>
         
         <div class="modal-actions" style="margin-top: 0;">
             <button class="success-btn" style="width: 100%; padding: 12px; font-size: 0.8rem; border-radius: 2px;" onclick="closeSettingsModal()">SAVE CONFIG</button>
