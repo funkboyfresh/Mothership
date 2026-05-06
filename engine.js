@@ -714,7 +714,7 @@ function renderLevel3(container, footer) {
             line.setAttribute("stroke", "var(--accent)"); 
             line.setAttribute("stroke-width", "1.5"); 
             line.setAttribute("stroke-dasharray", "5,5"); 
-            line.setAttribute("opacity", "0.45");
+            line.setAttribute("opacity", "0.8");
             svg.appendChild(line);
         }
     }
