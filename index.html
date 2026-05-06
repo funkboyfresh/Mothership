@@ -3,111 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CONSTELLATION // PILOT INTERFACE</title>
+    <title>Mission Control V12.3</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
+    <script src="https://unpkg.com/d3-delaunay@6.0.2/dist/d3-delaunay.min.js"></script>
 </head>
 <body>
     <div id="app">
-        <div id="global-starfield" class="starfield"></div>
-        
-        <div id="hud-top">
-            <div class="hud-left">
-                <div id="breadcrumb">GALAXY</div>
-                <button id="zoom-out" onclick="zoomOut()">[ ZOOM OUT ]</button>
-            </div>
-            <div class="hud-right">
-                <div id="hud-level">PILOT LEVEL 1</div>
-                <div id="hud-energy-readout">CAPACITOR 0%</div>
-                <div class="hud-capacitor-shell">
-                    <div id="hud-capacitor-bar"></div>
-                </div>
-            </div>
-        </div>
-
-        <main id="view-container">
-            </main>
-
-        <footer id="control-footer">
-            </footer>
-
-        <div class="settings-trigger" onclick="openSettingsModal()">⚙</div>
-
-        <div id="task-modal-overlay" class="modal-overlay">
-            <div class="modal-box">
-                <div class="modal-header">INITIALIZE TARGET</div>
-                
-                <div class="modal-group">
-                    <label>MISSION NAME</label>
-                    <input type="text" id="modal-task-name" class="modal-input" placeholder="ENTER MISSION DESIGNATION...">
-                </div>
-
-                <div class="modal-group" id="modal-horizon-group">
-                    <label>HORIZON SELECTION</label>
-                    <select id="modal-horizon-select" class="modal-input">
-                        <option value="IMMINENT">IMMINENT</option>
-                        <option value="HORIZON">HORIZON</option>
-                        <option value="TRAJECTORY">TRAJECTORY</option>
-                    </select>
-                </div>
-
-                <div style="display: flex; gap: 15px;">
-                    <div class="modal-group" style="flex: 1;">
-                        <label>TEMPORAL DATE</label>
-                        <input type="date" id="modal-task-date" class="modal-input">
-                    </div>
-                    <div class="modal-group" style="flex: 1;">
-                        <label>TEMPORAL TIME</label>
-                        <input type="time" id="modal-task-time" class="modal-input">
-                    </div>
-                </div>
-
-                <div class="modal-group">
-                    <label>SUB-ROUTINES</label>
-                    <div id="modal-subtasks-list">
-                        </div>
-                    <button id="modal-add-subtask-btn" class="mod-btn" onclick="addModalSubtask()">+ ADD ROUTINE</button>
-                </div>
-
-                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-                    <button class="success-btn" onclick="saveTaskModal()">LOCK TARGET</button>
-                    <button class="mod-btn" style="border-color: rgba(255,255,255,0.2);" onclick="closeTaskModal()">CANCEL</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="sector-modal-overlay" class="modal-overlay">
-            <div class="modal-box">
-                <div class="modal-header">GALAXY SECTORS</div>
-                <div id="sector-edit-list" class="subtasks-container">
-                    </div>
-                <button id="sector-add-btn" class="mod-btn" style="width: 100%; margin-top: 10px;" onclick="addNewSector()">+ ADD NEW SECTOR</button>
-                <button class="success-btn" style="width: 100%; margin-top: 20px;" onclick="saveSectorModal()">SAVE CONFIGURATION</button>
-                <button class="mod-btn" style="width: 100%; border-color: rgba(255,255,255,0.2);" onclick="closeSectorModal()">CANCEL</button>
-            </div>
-        </div>
-
-        <div id="settings-modal-overlay" class="modal-overlay">
-            <div class="modal-box" style="max-width: 300px;">
-                <div class="modal-header">SYSTEM SETTINGS</div>
-                <div class="modal-group" style="display: flex; justify-content: space-between; align-items: center;">
-                    <label>HAPTIC FEEDBACK</label>
-                    <input type="checkbox" id="settings-haptics-toggle">
-                </div>
-                <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <button class="mod-btn factory-reset-btn" style="width: 100%; color: var(--thrust);" onclick="factoryReset()">FACTORY RESET</button>
-                </div>
-                <button class="success-btn" style="width: 100%; margin-top: 10px;" onclick="closeSettingsModal()">DISMISS</button>
-            </div>
-        </div>
-
         <div id="level-up-overlay">
-            <div class="hyper-drive-text">HYPERDRIVE ACTIVE</div>
-            <div class="hyper-drive-sub">PILOT LEVEL INCREASED</div>
+            <h1 style="font-size: 3rem; color: var(--bg); text-align: center; letter-spacing: 5px; margin:0;">HYPER-DRIVE<br>ENGAGED</h1>
+            <p style="color: var(--bg); font-weight: bold; letter-spacing: 2px;">PILOT LEVEL UP</p>
+        </div>
+
+        <div class="grid-bg"></div>
+        <div class="dense-starfield" id="global-starfield"></div>
+
+        <div id="hud">
+            <div class="hud-top-row">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="settings-gear" onclick="openSettingsModal()">⚙</div>
+                    <span class="hud-level-text" id="hud-level">PILOT LEVEL 1</span>
+                </div>
+                <span class="hud-energy-text" id="hud-energy-readout">CAPACITOR 0%</span>
+            </div>
+            <div class="capacitor-container">
+                <div class="capacitor-fill" id="hud-capacitor-bar" style="width: 0%;"></div>
+                <div class="capacitor-segments"></div>
+            </div>
+        </div>
+
+        <div id="nav-bar">
+            <div id="breadcrumb" class="breadcrumb">GALAXY</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div id="zoom-out" class="zoom-btn" style="visibility:hidden" onclick="zoomOut()">[ ZOOM OUT ]</div>
+            </div>
+        </div>
+        
+        <div id="view-container" class="view" style="touch-action: none;"></div>
+        
+        <div id="control-footer" class="control-footer" style="display:none"></div>
+    </div>
+
+    <div id="task-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header" id="modal-header-text">TARGET INITIALIZATION</div>
+            
+            <div class="input-group">
+                <span class="input-label">Target Designation</span>
+                <input type="text" id="modal-task-name" class="modal-input" placeholder="Enter target name..." autocomplete="off">
+            </div>
+
+            <div class="input-group" id="modal-horizon-group">
+                <span class="input-label">Mission Parameters (Orbit)</span>
+                <select id="modal-horizon-select" class="modal-input">
+                    <option value="IMMINENT">IMMINENT (0 - 7 Days)</option>
+                    <option value="HORIZON">HORIZON (8 - 14 Days)</option>
+                    <option value="TRAJECTORY">TRAJECTORY (> 14 Days / Undefined)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Temporal Deadline (Optional)</span>
+                <input type="date" id="modal-task-date" class="modal-input">
+            </div>
+
+            <span class="input-label">Sub-Routines (Drag to Reorder)</span>
+            <div class="subtasks-container" id="modal-subtasks-list"></div>
+            
+            <div class="add-btn-bar" id="modal-add-btn" onclick="addModalSubtask()">+ ADD ROUTINE</div>
+
+            <div class="modal-actions">
+                <button class="mod-btn" style="flex: 0 0 25%;" onclick="closeTaskModal()">CANCEL</button>
+                <button class="success-btn" id="modal-save-btn" style="flex: 1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveTaskModal()">LOCK TARGET</button>
+            </div>
         </div>
     </div>
+
+    <div id="sector-modal-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">TERRITORIAL GEOMETRY MAP</div>
+            <div class="subtasks-container" id="sector-edit-list"></div>
+            <div class="add-btn-bar" id="sector-add-btn" onclick="addNewSector()">+ ADD SECTOR</div>
+            <div class="modal-actions">
+                <button class="mod-btn" style="flex: 0 0 25%;" onclick="closeSectorModal()">CANCEL</button>
+                <button class="success-btn" style="flex: 1; padding: 10px; font-size:0.8rem; border-radius: 2px;" onclick="saveSectorModal()">INITIALIZE MAP</button>
+            </div>
+        </div>
+    </div>
+
+   <div id="settings-modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">SYSTEM CONFIGURATION</div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+            <span class="input-label" style="margin: 0; line-height: 20px;">HAPTIC FEEDBACK</span>
+            <input type="checkbox" id="settings-haptics-toggle" style="width: 20px; height: 20px; accent-color: var(--accent); margin: 0; padding: 0;">
+        </div>
+        
+        <p style="font-size: 0.55rem; color: #fff; opacity: 0.7; line-height: 1.4; margin-top: 0; margin-bottom: 20px;">
+            Engage physical vibration motor on supported mobile devices during critical events.
+        </p>
+
+        <button class="success-btn" onclick="factoryReset()" style="background: var(--thrust); color: #fff; margin-bottom: 15px; font-size: 0.7rem; height: auto; padding: 10px;">FACTORY RESET</button>
+        
+        <div class="modal-actions" style="margin-top: 0;">
+            <button class="success-btn" style="width: 100%; padding: 12px; font-size: 0.8rem; border-radius: 2px;" onclick="closeSettingsModal()">SAVE CONFIG</button>
+        </div>
+    </div>
+</div>
 
     <script src="engine.js"></script>
 </body>
