@@ -210,3 +210,36 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     animation: pulse-yellow 2s infinite ease-in-out;
     border-color: #ffd700 !important;
 }
+
+/* Placeholder soft-text for sub-routines */
+.modal-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    font-size: 0.7rem;
+}
+
+/* Add Routine button: Aligned to sub-task width + minus sign */
+#modal-add-subtask-btn {
+    height: 36px; /* Match modal-input height */
+    margin-top: 10px;
+    width: calc(100% - 2px); /* Spans full row width */
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+}
+
+/* Locked-in button heights (+50%) */
+.modal-box .success-btn, 
+.modal-box .mod-btn {
+    height: 60px; /* Base 40px + 50% increase */
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+/* Reduced Factory Reset */
+.factory-reset-btn {
+    height: 30px !important;
+    font-size: 0.6rem !important;
+    opacity: 0.5;
+    border-color: rgba(255, 42, 42, 0.3) !important;
+}
+
