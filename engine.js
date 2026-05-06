@@ -159,7 +159,7 @@ function getSafeCoordinates(existingMissions) {
             for (let m of existingMissions) {
                 if (!m || isNaN(m.x) || m.id === lastNode.id) continue;
                 let d = getDistanceToSegment(m, lastNode, newNode);
-                if (d < minDistToWire) minDistToWire = d;
+                if (d < minDistToWire) d = getDistanceToSegment(m, lastNode, newNode);
                 if (d < wirePadding) { safe = false; break; }
             }
             if (!safe) continue;
@@ -211,6 +211,8 @@ function getHorizonFromDate(dateStr, fallbackHorizon) {
 
 function processTimeMechanics() {
     const now = new Date();
+    let stateChanged = false;
+
     state.sectors.forEach(s => {
         HORIZONS.forEach(h => {
             if(!state.missions[s.id] || !state.missions[s.id][h]) return;
@@ -218,13 +220,18 @@ function processTimeMechanics() {
                 let m = state.missions[s.id][h][i];
                 if (m && m.dueDate && !m.captured) {
                     
-                    // NEW: Time input calculation
                     const deadlineStr = m.dueTime ? `${m.dueDate}T${m.dueTime}` : `${m.dueDate}T23:59:59`;
                     const deadline = new Date(deadlineStr);
                     const diffHrs = (deadline - now) / (1000 * 60 * 60);
                     const diffDays = Math.ceil(diffHrs / 24);
 
-                    if (diffHrs < 0 && !m.overdue) addEnergy(-10);
+                    const oldOverdue = m.overdue;
+                    const oldWarning = m.warningLevel;
+
+                    if (diffHrs < 0 && !m.overdue) {
+                        addEnergy(-10);
+                        m.overdue = true;
+                    }
                     
                     m.overdue = diffHrs < 0; 
                     m.warningLevel = 0;
@@ -234,15 +241,26 @@ function processTimeMechanics() {
                         else if (diffHrs <= 48) m.warningLevel = 48;
                     }
 
+                    // Detection for re-rendering
+                    if (oldOverdue !== m.overdue || oldWarning !== m.warningLevel) {
+                        stateChanged = true;
+                    }
+
                     let targetH = diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
                     if (targetH !== h) { 
                         state.missions[s.id][targetH].push(m); 
-                        state.missions[s.id][h].splice(i, 1); 
+                        state.missions[s.id][h].splice(i, 1);
+                        stateChanged = true;
                     }
                 }
             }
         });
     });
+
+    if (stateChanged) {
+        save();
+        render(); // Live update of the UI when thresholds cross
+    }
 }
 
 function checkDecayStatus() {
@@ -289,7 +307,6 @@ function generateStarfield() {
 function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
-    processTimeMechanics(); 
     checkDecayStatus();
     
     const container = document.getElementById('view-container');
@@ -376,7 +393,6 @@ function renderLevel1(container, footer) {
         const cx = seeds[i].x * w;
         const cy = seeds[i].y * h;
 
-        // --- NEW: FLOATING ARCHIVAL TASKS (CONTAINED WITHIN SECTOR) ---
         const defs = svg.querySelector('defs') || document.createElementNS("http://www.w3.org/2000/svg", "defs");
         if (!svg.querySelector('defs')) svg.insertBefore(defs, svg.firstChild);
         
@@ -406,7 +422,7 @@ function renderLevel1(container, footer) {
             const py = cy + (Math.random() - 0.5) * (h * 0.7);
             particle.setAttribute("cx", px);
             particle.setAttribute("cy", py);
-            particle.setAttribute("r", "2.25"); // INCREASED 50%
+            particle.setAttribute("r", "2.25");
             
             let pColor = s.color;
             if (m.overdue) pColor = 'var(--thrust)';
@@ -459,7 +475,6 @@ function renderLevel1(container, footer) {
                     dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
                     dot.setAttribute("r", "1.5");
                     
-                    // FIXED: Decay colors for orbital rings
                     let dotColor = color; 
                     if (m.overdue) dotColor = 'var(--thrust)';
                     else if (m.warningLevel === 24) dotColor = '#ff9900';
@@ -480,7 +495,6 @@ function renderLevel1(container, footer) {
         text.textContent = s.name; 
         svg.appendChild(text);
 
-        // UI: Individual Sector Captured Counter
         const sectorCaptured = getCapturedCount(s.id);
         const subText = document.createElementNS("http://www.w3.org/2000/svg", "text");
         subText.setAttribute("x", cx); 
@@ -503,7 +517,6 @@ function renderLevel2(container, footer, activeSector) {
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`; 
     }
     
-    // UI: Planetary Map Sector Tracker
     const sectorCaptured = getCapturedCount(state.sectorId);
     const sectorTracker = document.createElement('div');
     sectorTracker.style.cssText = 'position: absolute; top: 20px; right: 20px; text-align: right; color: var(--text); font-size: 0.7rem; letter-spacing: 1px; z-index: 10; pointer-events: none;';
@@ -591,7 +604,6 @@ function renderLevel2(container, footer, activeSector) {
             const r = d.size/2;
             const dot = document.createElement('div'); 
             
-            // FIXED: Decay colors for planetary dots
             let dotColor = activeSector.color; 
             if (m.overdue) dotColor = 'var(--thrust)';
             else if (m.warningLevel === 24) dotColor = '#ff9900';
@@ -857,20 +869,6 @@ function renderLevel4(container, footer) {
 }
 
 // --- MISSION MODAL & INTERACTION ---
-function moveMission(direction) {
-    const m = safelyGetActiveMission(); 
-    if (!m) return;
-    const missions = state.missions[state.sectorId][state.horizon];
-    const index = missions.findIndex(x => x.id === m.id);
-    const newIdx = index + direction;
-    if (newIdx >= 0 && newIdx < missions.length) { 
-        missions.splice(index, 1); 
-        missions.splice(newIdx, 0, m); 
-        save(); 
-        render(); 
-    }
-}
-
 function openTaskModal(h, f) { 
     editModeId = null; 
     defaultHorizonContext = h; 
@@ -878,7 +876,6 @@ function openTaskModal(h, f) {
     document.getElementById('modal-task-name').value = ''; 
     document.getElementById('modal-task-date').value = '';
     
-    // NEW: Clear time on open
     const timeIn = document.getElementById('modal-task-time'); 
     if(timeIn) timeIn.value = '';
 
@@ -896,7 +893,6 @@ function renderModalSubtasks() {
     tempSubtasks.forEach((sub, i) => {
         const row = document.createElement('div'); 
         row.className = 'subtask-row';
-        // NEW: Injected placeholder text
         row.innerHTML = `
             <input type="text" class="modal-input" value="${sub}" placeholder="optional - enter sub routine" oninput="tempSubtasks[${i}] = this.value" style="background:transparent; border-color:rgba(255,255,255,0.1);">
             <button class="subtask-remove-minimal" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">−</button>`; 
@@ -948,7 +944,7 @@ function saveTaskModal() {
                 const m = state.missions[state.sectorId][finalH][eIdx]; 
                 m.name = name; 
                 m.dueDate = dateStr || null; 
-                m.dueTime = timeStr; // Added time logic
+                m.dueTime = timeStr; 
                 m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})); 
             } else { 
                 state.missions[state.sectorId][eHz].splice(eIdx, 1); 
@@ -1115,7 +1111,6 @@ function openEditModal(id) {
     document.getElementById('modal-task-name').value = target.name; 
     document.getElementById('modal-task-date').value = target.dueDate || '';
     
-    // NEW: Load existing time
     const timeIn = document.getElementById('modal-task-time'); 
     if(timeIn) timeIn.value = target.dueTime || '';
     
@@ -1209,6 +1204,12 @@ function runDatabaseMigration() {
 runDatabaseMigration(); 
 generateStarfield(); 
 render();
+
+// NEW: Global Temporal Pulse (Every 60 Seconds)
+setInterval(() => {
+    console.log("Temporal check engaged...");
+    processTimeMechanics();
+}, 60000);
 
 // Handle responsive resizing
 window.addEventListener('resize', () => { 
