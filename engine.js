@@ -112,7 +112,7 @@ function shiftHue(hex, degree) {
 // --- NAVIGATION & SPATIAL GEOMETRY ---
 function doLinesIntersect(p1, q1, p2, q2) {
     const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
-    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
+    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, p2) !== ccw(p1, q1, q2);
 }
 
 function getDistanceToSegment(p, a, b) {
@@ -802,25 +802,21 @@ function renderLevel3(container, footer) {
         } else {
             const isCrit = m.id === wireActive[0]?.id;
             let warnColor = accentColor;
-            let bgFill = 'var(--bg)';
-            let textColor = '#ffffff';
-
+            
+            // Procedural Logic
             if (isDecay) { 
                 warnColor = 'var(--thrust)'; 
-                bgFill = 'rgba(255, 42, 42, 0.2)'; 
             } else if (m.warningLevel === 24) { 
-                warnColor = shiftHue(accentColor, 180); 
-                bgFill = '#ffffff'; 
-                textColor = '#000000'; 
+                warnColor = shiftHue(accentColor, 180); // 180 degree contrast
             } else if (m.warningLevel === 48) { 
-                warnColor = shiftHue(accentColor, 90); 
-                bgFill = 'rgba(255, 255, 255, 0.3)'; 
+                warnColor = shiftHue(accentColor, 90); // 90 degree contrast
             }
 
+            // Strictly applies the outer procedural color, keeping the core black
             node.style.setProperty('--dynamic-warn', warnColor);
             node.style.borderColor = warnColor; 
-            node.style.backgroundColor = bgFill;
-            node.style.color = textColor;
+            node.style.backgroundColor = 'var(--bg)'; // Forces black core
+            node.style.color = '#ffffff'; // Keeps text white
             if (isCrit) node.style.borderWidth = '3px'; 
             node.textContent = missions.indexOf(m) + 1;
         }
