@@ -245,3 +245,31 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     border: 1px solid var(--thrust) !important;
     background: transparent !important;
 }
+
+/* --- SOFT WARNING TOAST --- */
+.soft-warning {
+    position: fixed;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(20, 5, 5, 0.95);
+    border: 1px solid var(--thrust);
+    box-shadow: 0 0 20px rgba(255, 42, 42, 0.3);
+    color: var(--thrust);
+    padding: 15px 25px;
+    border-radius: 4px;
+    z-index: 9999;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none; /* Allows the click to pass through to the background */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    white-space: pre-wrap; 
+}
+
+.soft-warning.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
