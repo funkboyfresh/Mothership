@@ -217,7 +217,10 @@ function processTimeMechanics() {
             for (let i = state.missions[s.id][h].length - 1; i >= 0; i--) {
                 let m = state.missions[s.id][h][i];
                 if (m && m.dueDate && !m.captured) {
-                    const deadline = new Date(m.dueDate + 'T23:59:59');
+                    
+                    // NEW: Time input calculation
+                    const deadlineStr = m.dueTime ? `${m.dueDate}T${m.dueTime}` : `${m.dueDate}T23:59:59`;
+                    const deadline = new Date(deadlineStr);
                     const diffHrs = (deadline - now) / (1000 * 60 * 60);
                     const diffDays = Math.ceil(diffHrs / 24);
 
@@ -372,7 +375,7 @@ function renderLevel1(container, footer) {
         
         const cx = seeds[i].x * w;
         const cy = seeds[i].y * h;
-        
+
         // --- NEW: FLOATING ARCHIVAL TASKS (CONTAINED WITHIN SECTOR) ---
         const defs = svg.querySelector('defs') || document.createElementNS("http://www.w3.org/2000/svg", "defs");
         if (!svg.querySelector('defs')) svg.insertBefore(defs, svg.firstChild);
@@ -403,7 +406,7 @@ function renderLevel1(container, footer) {
             const py = cy + (Math.random() - 0.5) * (h * 0.7);
             particle.setAttribute("cx", px);
             particle.setAttribute("cy", py);
-            particle.setAttribute("r", "1.5");
+            particle.setAttribute("r", "2.25"); // INCREASED 50%
             
             let pColor = s.color;
             if (m.overdue) pColor = 'var(--thrust)';
@@ -429,8 +432,7 @@ function renderLevel1(container, footer) {
             particle.appendChild(animY);
             floatGroup.appendChild(particle);
         });
-
-        // --- RINGS AND ACTIVE TARGETS ---
+        
         const rings = [ { id: 'IMMINENT', r: 12, s: 10 }, { id: 'HORIZON', r: 20, s: 20 }, { id: 'TRAJECTORY', r: 28, s: 40 } ];
         
         rings.forEach(ring => {
@@ -457,6 +459,7 @@ function renderLevel1(container, footer) {
                     dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
                     dot.setAttribute("r", "1.5");
                     
+                    // FIXED: Decay colors for orbital rings
                     let dotColor = color; 
                     if (m.overdue) dotColor = 'var(--thrust)';
                     else if (m.warningLevel === 24) dotColor = '#ff9900';
@@ -474,11 +477,10 @@ function renderLevel1(container, footer) {
         text.setAttribute("y", cy + 45); 
         text.setAttribute("fill", color); 
         text.setAttribute("class", "voronoi-text");
-        text.style.pointerEvents = "none";
-        text.style.textShadow = `0 0 10px ${color}`; 
         text.textContent = s.name; 
         svg.appendChild(text);
 
+        // UI: Individual Sector Captured Counter
         const sectorCaptured = getCapturedCount(s.id);
         const subText = document.createElementNS("http://www.w3.org/2000/svg", "text");
         subText.setAttribute("x", cx); 
@@ -501,6 +503,7 @@ function renderLevel2(container, footer, activeSector) {
         footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openTaskModal('TRAJECTORY', false)">+ INITIALIZE TARGET</button>`; 
     }
     
+    // UI: Planetary Map Sector Tracker
     const sectorCaptured = getCapturedCount(state.sectorId);
     const sectorTracker = document.createElement('div');
     sectorTracker.style.cssText = 'position: absolute; top: 20px; right: 20px; text-align: right; color: var(--text); font-size: 0.7rem; letter-spacing: 1px; z-index: 10; pointer-events: none;';
@@ -588,6 +591,7 @@ function renderLevel2(container, footer, activeSector) {
             const r = d.size/2;
             const dot = document.createElement('div'); 
             
+            // FIXED: Decay colors for planetary dots
             let dotColor = activeSector.color; 
             if (m.overdue) dotColor = 'var(--thrust)';
             else if (m.warningLevel === 24) dotColor = '#ff9900';
@@ -873,6 +877,11 @@ function openTaskModal(h, f) {
     isHorizonFixed = f; 
     document.getElementById('modal-task-name').value = ''; 
     document.getElementById('modal-task-date').value = '';
+    
+    // NEW: Clear time on open
+    const timeIn = document.getElementById('modal-task-time'); 
+    if(timeIn) timeIn.value = '';
+
     document.getElementById('modal-horizon-select').value = h; 
     document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; 
     tempSubtasks = ['', '', '']; 
@@ -887,8 +896,9 @@ function renderModalSubtasks() {
     tempSubtasks.forEach((sub, i) => {
         const row = document.createElement('div'); 
         row.className = 'subtask-row';
+        // NEW: Injected placeholder text
         row.innerHTML = `
-            <input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value" style="background:transparent; border-color:rgba(255,255,255,0.1);">
+            <input type="text" class="modal-input" value="${sub}" placeholder="optional - enter sub routine" oninput="tempSubtasks[${i}] = this.value" style="background:transparent; border-color:rgba(255,255,255,0.1);">
             <button class="subtask-remove-minimal" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">−</button>`; 
         list.appendChild(row);
     });
@@ -920,6 +930,7 @@ function saveTaskModal() {
     }
     
     const dateStr = document.getElementById('modal-task-date').value;
+    const timeStr = document.getElementById('modal-task-time')?.value || null;
     const finalH = getHorizonFromDate(dateStr, h);
     
     if (!state.missions[state.sectorId]) {
@@ -937,6 +948,7 @@ function saveTaskModal() {
                 const m = state.missions[state.sectorId][finalH][eIdx]; 
                 m.name = name; 
                 m.dueDate = dateStr || null; 
+                m.dueTime = timeStr; // Added time logic
                 m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})); 
             } else { 
                 state.missions[state.sectorId][eHz].splice(eIdx, 1); 
@@ -944,7 +956,7 @@ function saveTaskModal() {
                 state.missions[state.sectorId][finalH].push({ 
                     id: editModeId, name, 
                     subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-                    x: coords.x, y: coords.y, dueDate: dateStr || null 
+                    x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr 
                 }); 
             }
         }
@@ -953,7 +965,7 @@ function saveTaskModal() {
         state.missions[state.sectorId][finalH].push({ 
             id: Date.now(), name, 
             subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-            x: coords.x, y: coords.y, dueDate: dateStr || null 
+            x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr 
         }); 
     }
     
@@ -1102,6 +1114,10 @@ function openEditModal(id) {
     
     document.getElementById('modal-task-name').value = target.name; 
     document.getElementById('modal-task-date').value = target.dueDate || '';
+    
+    // NEW: Load existing time
+    const timeIn = document.getElementById('modal-task-time'); 
+    if(timeIn) timeIn.value = target.dueTime || '';
     
     tempSubtasks = target.subs.map(s => s.t); 
     if(tempSubtasks.length === 0) tempSubtasks = ['']; 
