@@ -190,14 +190,15 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
 
 /* Stage-Specific Pulses */
-@keyframes pulse-orange {
-    0%, 100% { box-shadow: 0 0 10px rgba(255, 153, 0, 0.4); filter: brightness(1); }
-    50% { box-shadow: 0 0 25px rgba(255, 153, 0, 0.8); filter: brightness(1.3); }
+/* --- PROCEDURAL DECAY PULSE --- */
+@keyframes pulse-dynamic {
+    0%, 100% { box-shadow: 0 0 10px var(--dynamic-warn); filter: brightness(1); }
+    50% { box-shadow: 0 0 25px var(--dynamic-warn); filter: brightness(1.3); }
 }
 
-@keyframes pulse-yellow {
-    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); filter: brightness(1); }
-    50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.7); filter: brightness(1.2); }
+.star-container.warning-24 .star-node,
+.star-container.warning-48 .star-node {
+    animation: pulse-dynamic 2s infinite ease-in-out;
 }
 
 /* Apply pulses to the nodes within the warning containers */
