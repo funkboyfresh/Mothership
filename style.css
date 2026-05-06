@@ -210,3 +210,38 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     animation: pulse-yellow 2s infinite ease-in-out;
     border-color: #ffd700 !important;
 }
+
+/* --- TACTICAL UPGRADES --- */
+/* 1. Soft placeholder for subroutines */
+.modal-input::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+    font-style: italic !important;
+}
+
+/* 2. Lock/Cancel buttons + 50% Height */
+#task-modal-overlay .modal-actions button {
+    height: 60px !important;
+    font-size: 0.85rem !important;
+}
+
+/* 3. Add Routine Alignment (matches input height and spans width) */
+#modal-add-btn {
+    height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 5px !important;
+    padding: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 4. Reduced Factory Reset Button */
+#factory-reset-btn {
+    height: 30px !important;
+    padding: 0 10px !important;
+    font-size: 0.6rem !important;
+    opacity: 0.5 !important;
+    border: 1px solid var(--thrust) !important;
+    background: transparent !important;
+}
