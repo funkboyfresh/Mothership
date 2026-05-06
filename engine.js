@@ -201,66 +201,71 @@ function getSafeCoordinates(existingMissions) {
     return bestCandidate || { x: 45 + (Math.random()*10), y: 45 + (Math.random()*10) };
 }
 
-// --- TIME MECHANICS ---
+// --- TIME MECHANICS (SAFELY REBUILT) ---
 function getHorizonFromDate(dateStr, fallbackHorizon) {
     if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
     const today = new Date(); today.setHours(0,0,0,0);
-    const diffDays = Math.ceil((new Date(dateStr + 'T00:00:00') - today) / 86400000);
+    
+    // FIXED: WebKit Safe Date Parsing
+    let d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) {
+        d = new Date(dateStr.replace(/-/g, '/') + ' 00:00:00');
+    }
+    
+    const diffDays = Math.ceil((d - today) / 86400000);
     return diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
 }
 
 function processTimeMechanics() {
     const now = new Date();
-    let stateChanged = false;
 
     state.sectors.forEach(s => {
         HORIZONS.forEach(h => {
             if(!state.missions[s.id] || !state.missions[s.id][h]) return;
             for (let i = state.missions[s.id][h].length - 1; i >= 0; i--) {
                 let m = state.missions[s.id][h][i];
-                if (m && m.dueDate && !m.captured) {
-                    
-                    const deadlineStr = m.dueTime ? `${m.dueDate}T${m.dueTime}` : `${m.dueDate}T23:59:59`;
-                    const deadline = new Date(deadlineStr);
-                    const diffHrs = (deadline - now) / (1000 * 60 * 60);
-                    const diffDays = Math.ceil(diffHrs / 24);
+                
+                if (m && !m.captured) {
+                    if (m.dueDate) {
+                        // FIXED: Enforce accurate seconds for WebKit/Safari parsing
+                        let t = m.dueTime || "23:59:59";
+                        if (t.split(':').length === 2) t += ":00"; 
+                        
+                        let deadline = new Date(`${m.dueDate}T${t}`);
+                        if (isNaN(deadline.getTime())) {
+                            deadline = new Date(`${m.dueDate.replace(/-/g, '/')} ${t}`);
+                        }
 
-                    const oldOverdue = m.overdue;
-                    const oldWarning = m.warningLevel;
+                        const diffHrs = (deadline - now) / (1000 * 60 * 60);
+                        const diffDays = Math.ceil(diffHrs / 24);
 
-                    if (diffHrs < 0 && !m.overdue) {
-                        addEnergy(-10);
-                        m.overdue = true;
-                    }
-                    
-                    m.overdue = diffHrs < 0; 
-                    m.warningLevel = 0;
+                        if (diffHrs < 0 && !m.overdue) {
+                            addEnergy(-10); // Deduct penalty only once when crossing threshold
+                        }
+                        
+                        m.overdue = diffHrs < 0; 
+                        m.warningLevel = 0;
 
-                    if (!m.overdue) {
-                        if (diffHrs <= 24) m.warningLevel = 24;
-                        else if (diffHrs <= 48) m.warningLevel = 48;
-                    }
+                        if (!m.overdue) {
+                            if (diffHrs <= 24) m.warningLevel = 24;
+                            else if (diffHrs <= 48) m.warningLevel = 48;
+                        }
 
-                    // Detection for re-rendering
-                    if (oldOverdue !== m.overdue || oldWarning !== m.warningLevel) {
-                        stateChanged = true;
-                    }
-
-                    let targetH = diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
-                    if (targetH !== h) { 
-                        state.missions[s.id][targetH].push(m); 
-                        state.missions[s.id][h].splice(i, 1);
-                        stateChanged = true;
+                        // Shift Horizons if necessary
+                        let targetH = diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
+                        if (targetH !== h) { 
+                            state.missions[s.id][targetH].push(m); 
+                            state.missions[s.id][h].splice(i, 1); 
+                        }
+                    } else {
+                        // FIXED: Clear warnings if user deletes a previously assigned date
+                        m.overdue = false;
+                        m.warningLevel = 0;
                     }
                 }
             }
         });
     });
-
-    if (stateChanged) {
-        save();
-        render(); // Live update of the UI when thresholds cross
-    }
 }
 
 function checkDecayStatus() {
@@ -307,6 +312,9 @@ function generateStarfield() {
 function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
+    
+    // Engine cleanly evaluates time logic before drawing the screen
+    processTimeMechanics(); 
     checkDecayStatus();
     
     const container = document.getElementById('view-container');
@@ -869,6 +877,20 @@ function renderLevel4(container, footer) {
 }
 
 // --- MISSION MODAL & INTERACTION ---
+function moveMission(direction) {
+    const m = safelyGetActiveMission(); 
+    if (!m) return;
+    const missions = state.missions[state.sectorId][state.horizon];
+    const index = missions.findIndex(x => x.id === m.id);
+    const newIdx = index + direction;
+    if (newIdx >= 0 && newIdx < missions.length) { 
+        missions.splice(index, 1); 
+        missions.splice(newIdx, 0, m); 
+        save(); 
+        render(); 
+    }
+}
+
 function openTaskModal(h, f) { 
     editModeId = null; 
     defaultHorizonContext = h; 
@@ -1205,10 +1227,9 @@ runDatabaseMigration();
 generateStarfield(); 
 render();
 
-// NEW: Global Temporal Pulse (Every 60 Seconds)
+// FIXED: Global Temporal Pulse (Every 60 Seconds)
 setInterval(() => {
-    console.log("Temporal check engaged...");
-    processTimeMechanics();
+    render(); 
 }, 60000);
 
 // Handle responsive resizing
