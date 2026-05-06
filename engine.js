@@ -106,8 +106,10 @@ function getDistanceToSegment(p, a, b) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    const activeWire = (existingMissions || []).slice(-8);
-    const count = (existingMissions || []).length;
+    // 1. BUG FIX: Filter out captured missions so they don't clog the grid
+    const activeMissions = (existingMissions || []).filter(m => !m.captured);
+    const activeWire = activeMissions.slice(-8);
+    const count = activeMissions.length;
     const margin = 15;
     const usableSpace = 70;
     
@@ -123,7 +125,7 @@ function getSafeCoordinates(existingMissions) {
 
     let bestCandidate = null;
     let bestScore = -Infinity;
-    const n0 = existingMissions[0];
+    const n0 = activeMissions[0]; // Gravity centers on active wire, not dead stars
 
     for (let attempts = 0; attempts < 2500; attempts++) {
         let nodePadding = attempts > 1500 ? 10 : 18;
@@ -134,8 +136,28 @@ function getSafeCoordinates(existingMissions) {
         const newNode = { x, y };
         let safe = true;
 
+        // 2. FEATURE: Angular Variance Check (5 Degree Minimum)
+        if (activeWire.length >= 2) {
+            const lastNode = activeWire[activeWire.length - 1];
+            const prevNode = activeWire[activeWire.length - 2];
+            
+            // Calculate vectors using arctangent
+            const anglePrev = Math.atan2(lastNode.y - prevNode.y, lastNode.x - prevNode.x);
+            const angleNew = Math.atan2(newNode.y - lastNode.y, newNode.x - lastNode.x);
+            
+            let diff = Math.abs(angleNew - anglePrev) * (180 / Math.PI);
+            if (diff > 180) diff = 360 - diff;
+            
+            // Reject if less than 5 degrees variance, or if it perfectly backtracks (175+)
+            if (diff < 5 || diff > 175) { 
+                safe = false; 
+                continue; 
+            }
+        }
+
         let minDistToNode = Infinity;
-        for (let m of existingMissions) {
+        // Only check collision against active missions
+        for (let m of activeMissions) {
             if (!m || isNaN(m.x)) continue;
             let d = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
             if (d < minDistToNode) minDistToNode = d;
@@ -156,10 +178,10 @@ function getSafeCoordinates(existingMissions) {
             }
             if (!safe) continue;
 
-            for (let m of existingMissions) {
+            for (let m of activeMissions) {
                 if (!m || isNaN(m.x) || m.id === lastNode.id) continue;
                 let d = getDistanceToSegment(m, lastNode, newNode);
-                if (d < minDistToWire) d = getDistanceToSegment(m, lastNode, newNode);
+                if (d < minDistToWire) minDistToWire = d;
                 if (d < wirePadding) { safe = false; break; }
             }
             if (!safe) continue;
