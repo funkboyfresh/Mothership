@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CONSTELLATION // PILOT INTERFACE</title>
-    <link rel="stylesheet" href="styles.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 </head>
 <body>
@@ -51,25 +53,27 @@
                     </select>
                 </div>
 
-                <div class="modal-group">
-                    <label>TEMPORAL DATE</label>
-                    <input type="date" id="modal-task-date" class="modal-input">
-                </div>
-
-                <div class="modal-group">
-                    <label>TEMPORAL TIME (OPTIONAL)</label>
-                    <input type="time" id="modal-task-time" class="modal-input">
+                <div style="display: flex; gap: 15px;">
+                    <div class="modal-group" style="flex: 1;">
+                        <label>TEMPORAL DATE</label>
+                        <input type="date" id="modal-task-date" class="modal-input">
+                    </div>
+                    <div class="modal-group" style="flex: 1;">
+                        <label>TEMPORAL TIME</label>
+                        <input type="time" id="modal-task-time" class="modal-input">
+                    </div>
                 </div>
 
                 <div class="modal-group">
                     <label>SUB-ROUTINES</label>
-                    <div id="modal-subtasks-list"></div>
-                    <button class="mod-btn" style="width: 100%; margin-top: 10px;" onclick="addModalSubtask()">+ ADD ROUTINE</button>
+                    <div id="modal-subtasks-list">
+                        </div>
+                    <button id="modal-add-subtask-btn" class="mod-btn" onclick="addModalSubtask()">+ ADD ROUTINE</button>
                 </div>
 
                 <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
                     <button class="success-btn" onclick="saveTaskModal()">LOCK TARGET</button>
-                    <button class="mod-btn" onclick="closeTaskModal()">CANCEL</button>
+                    <button class="mod-btn" style="border-color: rgba(255,255,255,0.2);" onclick="closeTaskModal()">CANCEL</button>
                 </div>
             </div>
         </div>
@@ -77,7 +81,8 @@
         <div id="sector-modal-overlay" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-header">GALAXY SECTORS</div>
-                <div id="sector-edit-list" class="subtasks-container"></div>
+                <div id="sector-edit-list" class="subtasks-container">
+                    </div>
                 <button id="sector-add-btn" class="mod-btn" style="width: 100%; margin-top: 10px;" onclick="addNewSector()">+ ADD NEW SECTOR</button>
                 <button class="success-btn" style="width: 100%; margin-top: 20px;" onclick="saveSectorModal()">SAVE CONFIGURATION</button>
                 <button class="mod-btn" style="width: 100%; border-color: rgba(255,255,255,0.2);" onclick="closeSectorModal()">CANCEL</button>
@@ -91,7 +96,7 @@
                     <label>HAPTIC FEEDBACK</label>
                     <input type="checkbox" id="settings-haptics-toggle">
                 </div>
-                <div style="margin-top: 30px;">
+                <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                     <button class="mod-btn factory-reset-btn" style="width: 100%; color: var(--thrust);" onclick="factoryReset()">FACTORY RESET</button>
                 </div>
                 <button class="success-btn" style="width: 100%; margin-top: 10px;" onclick="closeSettingsModal()">DISMISS</button>
