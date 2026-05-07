@@ -799,16 +799,6 @@ function renderMagnetComponent(level) {
     return `<path d="M40 85 Q50 100 60 85" fill="none" stroke="var(--captured)" stroke-width="${level}" opacity="0.5" stroke-linecap="round"/>`;
 }
 
-function renderHullComponent(level) {
-    const width = 20 + (level * 2); 
-    return `<path d="M50 10 L${50+width} 90 L50 75 L${50-width} 90 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
-}
-
-function renderThrusterComponent(level) {
-    if (level < 2) return '';
-    return `<path d="M40 90 L50 100 L60 90" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare"/>`;
-}
-
 // [ FIXED ] Added name and proper render() call!
 function renderHangar(container) {
     container.innerHTML = `
