@@ -1,7 +1,4 @@
-/**
- * RENDERER.JS
- * Handles all visual output and bridge aesthetics.
- */
+/** * RENDERER.JS* Handles all visual output and bridge aesthetics.*/
 
 // --- HUD & GLOBAL EFFECTS ---
 
@@ -68,7 +65,7 @@ function relaxLloyds(seeds, iterations) {
 
 // --- MAIN RENDER LOOP ---
 
-function render() {
+function  {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
     
@@ -97,6 +94,7 @@ function render() {
         case 2: renderLevel2(container, footer, activeSector); break;
         case 3: renderLevel3(container, footer); break;
         case 4: renderLevel4(container, footer); break;
+        case 5: renderHangar(container); break; // [ ADDED ]
     }
 }
 
@@ -104,10 +102,13 @@ function render() {
 
 function renderLevel1(container, footer) {
     if(footer) { 
-        footer.style.display = 'flex'; 
-        footer.innerHTML = `<button class="zoom-btn" style="font-size: 0.8rem; padding: 10px 20px;" onclick="openSectorModal()">[ EDIT SECTORS ]</button>`; 
-    }
-
+    footer.style.display = 'flex'; 
+    footer.innerHTML = `
+        <button class="zoom-btn" onclick="openSectorModal()">[ SECTORS ]</button>
+        <button class="zoom-btn" style="margin-left:10px; border-color: var(--captured); color: var(--captured);" onclick="state.level = 5; ;">[ HANGAR ]</button>
+    `; 
+}
+    
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
     container.appendChild(svg);
@@ -133,7 +134,7 @@ function renderLevel1(container, footer) {
         path.setAttribute("stroke-width", "2"); 
         path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
         
-        path.onclick = () => { state.sectorId = s.id; state.level = 2; render(); }; 
+        path.onclick = () => { state.sectorId = s.id; state.level = 2; ; }; 
         svg.appendChild(path);
         
         const cx = seeds[i].x * w;
@@ -375,7 +376,7 @@ function renderLevel2(container, footer, activeSector) {
             e.stopPropagation(); 
             state.horizon = d.id; 
             state.level = 3; 
-            render(); 
+            ; 
         };
         
         if (d.id === 'IMMINENT') {
@@ -518,7 +519,7 @@ function renderLevel3(container, footer) {
         }
 
         if (!m.captured) { 
-            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); }; 
+            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; ; }; 
             star.style.cursor = 'pointer'; 
         } else { 
             star.style.pointerEvents = 'none'; 
@@ -742,4 +743,45 @@ function renderHullComponent(level) {
 function renderThrusterComponent(level) {
     if (level < 2) return '';
     return `<path d="M40 90 L50 100 L60 90" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare"/>`;
+}
+
+//The Hanger - Ship Upgrades//
+function renderHangar(container) {
+    container.innerHTML = `
+        <div class="target-lock warp-transition">
+            <div class="view-level-title">DRY DOCK // SHIPYARD</div>
+            <h1 class="view-main-title">Hangar Bay</h1>
+            
+            <div class="ship-view-stage" style="height: 150px; margin-bottom: 20px;">
+                <div id="hangar-ship-preview"></div>
+            </div>
+
+            <div class="terminal-console" style="max-height: 300px; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:10px;">
+                    <span>MODULAR_FRIGATE_ASSEMBLY</span>
+                    <span>SCRAP: ${state.scrap}</span>
+                </div>
+                ${Object.keys(state.shipParts).map(part => {
+                    const level = state.shipParts[part];
+                    const cost = level * 15;
+                    return `
+                        <div class="system-node" onclick="upgradeShipPart('${part}')">
+                            <div class="node-status-light" style="background: var(--accent)"></div>
+                            <div style="flex:1; text-align:left;">
+                                <div style="font-size:0.7rem; font-weight:bold;">${part.toUpperCase()}</div>
+                                <div style="font-size:0.5rem; opacity:0.6;">LEVEL ${level} // UPGRADE: ${cost} SCRAP</div>
+                            </div>
+                            <span style="font-size:0.8rem;">+</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <button class="mod-btn" style="margin-top: 20px;" onclick="state.level = 1; render();">RETURN TO BRIDGE</button>
+        </div>
+    `;
+    
+    // Draw the ship in the preview window
+    const preview = document.getElementById('hangar-ship-preview');
+    if (preview) drawModularShip(preview, state.shipParts);
 }
