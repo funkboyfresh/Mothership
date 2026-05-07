@@ -237,7 +237,6 @@ function saveTaskModal() {
     const timeStr = document.getElementById('modal-task-time')?.value || null;
     const finalH = getHorizonFromDate(dateStr, h);
     
-    // [ PATCHED ] Re-inserted the Capacity Governor check
     const hzMissions = (state.missions[state.sectorId]?.[finalH]) || [];
     const activeCount = hzMissions.filter(m => !m.captured).length;
     
