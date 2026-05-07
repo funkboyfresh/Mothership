@@ -155,6 +155,25 @@ function checkDecayStatus() {
     }
 }
 
+function generateDefaultMission(sectorName, horizon) {
+    let tName = `${horizon} PROTOCOL: ${sectorName.toUpperCase()}`;
+    let sub1 = "Establish primary objective", sub2 = "Allocate sector resources", sub3 = "Commence routine tracking";
+    
+    let sec = sectorName.toUpperCase();
+    if (sec.includes('CAREER')) { tName = `${horizon} CAREER MILESTONE`; sub1 = "Audit professional ledger"; sub2 = "Define growth metrics"; sub3 = "Execute networking protocol"; }
+    else if (sec.includes('FINANC')) { tName = `${horizon} FISCAL BASELINE`; sub1 = "Audit capital reserves"; sub2 = "Review recurring liabilities"; sub3 = "Project quarterly growth"; }
+    else if (sec.includes('PERSONAL')) { tName = `${horizon} VITALITY METRICS`; sub1 = "Assess physical readiness"; sub2 = "Schedule downtime cycle"; sub3 = "Review personal goals"; }
+
+    return { 
+        id: Date.now() + Math.floor(Math.random() * 1000), 
+        name: tName, 
+        subs: [ {t: sub1, c: false}, {t: sub2, c: false}, {t: sub3, c: false} ], 
+        x: undefined, y: undefined, dueDate: null, dueTime: null, 
+        captured: false, overdue: false, warningLevel: 0,
+        encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length) 
+    };
+}
+
 // --- MISSION LOGIC ---
 
 function toggleSubTask(idx) { 
@@ -207,11 +226,55 @@ function getEncounterViewMode(encounterId) {
     return externalCats.includes(categoryIndex) ? 'external' : 'internal';
 }
 
+function openTaskModal(h, f) { 
+    const hzMissions = (state.missions[state.sectorId]?.[h]) || [];
+    if (hzMissions.filter(m => !m.captured).length >= 6) { showSoftWarning("TARGET LIMIT REACHED (6/6)"); return; }
+    editModeId = null; defaultHorizonContext = h; isHorizonFixed = f;
+    document.getElementById('modal-task-name').value = ''; 
+    document.getElementById('modal-horizon-select').value = h; 
+    document.getElementById('modal-horizon-group').style.display = f ? 'none' : 'block'; 
+    tempSubtasks = ['', '', '']; renderModalSubtasks(); 
+    document.getElementById('task-modal-overlay').style.display = 'flex'; 
+}
+
+function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none'; }
+
+function renderModalSubtasks() {
+    const list = document.getElementById('modal-subtasks-list'); 
+    if(!list) return; list.innerHTML = '';
+    tempSubtasks.forEach((sub, i) => {
+        list.insertAdjacentHTML('beforeend', `<div class="subtask-row"><input type="text" class="modal-input" value="${sub}" oninput="tempSubtasks[${i}] = this.value"><button class="subtask-remove-minimal" onclick="tempSubtasks.splice(${i}, 1); renderModalSubtasks();">−</button></div>`);
+    });
+}
+
+function addModalSubtask() { if (tempSubtasks.length < 10) { tempSubtasks.push(''); renderModalSubtasks(); } }
+
+function togglePilotLog() {
+    let logModal = document.getElementById('pilot-log-modal');
+    if (!logModal) {
+        logModal = document.createElement('div'); logModal.id = 'pilot-log-modal'; logModal.className = 'modal-overlay';
+        logModal.onclick = (e) => { if(e.target === logModal) logModal.style.display = 'none'; }; 
+        document.body.appendChild(logModal);
+    }
+    let allLogs = [];
+    state.sectors.forEach(s => HORIZONS.forEach(h => (state.missions[s.id]?.[h] || []).forEach(m => { if (m.captured) allLogs.push(m); })));
+    allLogs.sort((a, b) => b.completionTimestamp - a.completionTimestamp);
+    logModal.innerHTML = `<div class="modal-box"><div class="modal-header">PILOT FLIGHT LOG</div><div class="subtasks-container">${allLogs.map(m => `<div class="log-entry">${m.name} [SECURED]</div>`).join('')}</div><button class="mod-btn" onclick="this.closest('.modal-overlay').style.display='none'">DISMISS</button></div>`;
+    logModal.style.display = 'flex';
+}
+// Add the missing saveTaskModal from our previous turn here too!
+
 // --- DATABASE MIGRATION & INIT ---
 
 function runDatabaseMigration() {
     state.sectors.forEach(s => {
-        if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
+        if (!state.missions[s.id]) {
+            state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
+            // Seed the empty horizons with default missions
+            HORIZONS.forEach(h => {
+                state.missions[s.id][h].push(generateDefaultMission(s.name, h));
+            });
+        }
         HORIZONS.forEach(h => {
             if (!state.missions[s.id][h]) state.missions[s.id][h] = [];
             state.missions[s.id][h].forEach(m => {
