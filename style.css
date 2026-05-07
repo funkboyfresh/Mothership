@@ -98,10 +98,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .star-container { position: absolute; width: 0; height: 0; display: block; z-index: 10; transition: left 0.3s, top 0.3s; overflow: visible; }
 .star-container::after { content: ''; position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px; border-radius: 50%; z-index: -1; }
 
-/* DEBRIS FIELD MECHANICS: 10-30% scale range and floating drift */
-@keyframes debris-float { 0% { transform: translate(0, 0); } 100% { transform: translate(12px, 12px); } }
-.debris-node { animation: debris-float 10s infinite alternate ease-in-out; pointer-events: none; }
-
 .star-node { position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #ffffff; transition: all 0.3s; pointer-events: none; left: -26px; top: -26px; }
 .star-label { position: absolute; top: 35px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; text-align: center; white-space: nowrap; font-weight: 300; color: #ffffff; text-shadow: 0 0 5px rgba(0,0,0,0.8); transition: opacity 0.3s; }
 
@@ -146,7 +142,8 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .priority-toggle-btn:hover { border-color: var(--accent); }
 .priority-list { display: none; background: rgba(10, 10, 10, 0.95); border: 1px solid var(--border); border-top: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 4px 4px; padding: 5px; }
 .priority-list.show { display: block; }
-.priority-item { display: flex; align-items: center; padding: 8px; font-size: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px; transition: background 0.3s; }
+.priority-item { display: flex; align-items: center; padding: 8px; font-size: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px; transition: background 0.3s; cursor: pointer; }
+.priority-item:hover { background: rgba(255,255,255,0.05); }
 .p-num { opacity: 0.5; width: 15px; }
 .p-status { font-weight: bold; color: var(--sector-border); font-size: 0.55rem; letter-spacing: 1px; }
 .p-text { flex: 1; text-align: left; }
@@ -173,7 +170,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .mod-btn { font-size: 0.6rem; color: var(--accent); background: rgba(0,0,0,0.5); border: 1px solid var(--accent); padding: 8px 14px; border-radius: 2px; cursor: pointer; }
 .control-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; background: rgba(0,0,0,0.6); width: 100%; box-sizing: border-box; z-index: 100; position: relative; }
 
-
 /* --- KINETIC DECAY BEHAVIORS --- */
 /* Overdue (Past Due) - 100% Intensity & Chaotic Drift */
 @keyframes star-decay-pulse { 
@@ -188,22 +184,34 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     100% { transform: rotate(0deg) translate(0px, 0px); } 
 }
 
-/* < 24 Hours (Orange) - 25% Pulse Speed, Fast Small Vibrate */
+/* < 24 Hours (Orange) - 50% Size, 50% Vibrate Distance, +50% Speed */
 @keyframes pulse-orange {
-    0%, 100% { box-shadow: 0 0 8px #ff9900; filter: brightness(1); }
-    50% { box-shadow: 0 0 20px #ff9900; filter: brightness(1.15); }
+    0%, 100% { box-shadow: 0 0 6px #ff9900; filter: brightness(1); }
+    50% { box-shadow: 0 0 18px #ff9900; filter: brightness(1.15); }
 }
 @keyframes vibrate-fast {
     0%, 100% { transform: translate(0, 0); }
-    25% { transform: translate(0.5px, 0.5px); }
-    50% { transform: translate(-0.5px, 0); }
-    75% { transform: translate(0, -0.5px); }
+    25% { transform: translate(0.6px, 0.6px); }
+    50% { transform: translate(-0.6px, 0); }
+    75% { transform: translate(0, -0.6px); }
 }
 
 /* 24-48 Hours (Yellow) - 50% Pulse Speed of Orange, No Vibrate */
 @keyframes pulse-yellow {
-    0%, 100% { box-shadow: 0 0 4px #ffd700; filter: brightness(1); }
-    50% { box-shadow: 0 0 12px #ffd700; filter: brightness(1.05); }
+    0%, 100% { box-shadow: 0 0 6px #ffd700; filter: brightness(1); }
+    50% { box-shadow: 0 0 18px #ffd700; filter: brightness(1.05); }
+}
+
+/* Priority Menu Red Flasher */
+@keyframes priority-flash-red {
+    0%, 100% { background: rgba(255, 42, 42, 0.1); box-shadow: inset 0 0 10px rgba(255,42,42,0.2); }
+    50% { background: rgba(255, 42, 42, 0.4); box-shadow: inset 0 0 20px rgba(255,42,42,0.6); }
+}
+
+/* Generic Floating Debris */
+@keyframes debris-drift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(var(--dx), var(--dy)); }
 }
 
 /* Applications */
@@ -213,74 +221,26 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 }
 .star-container.decaying .star-label { color: var(--thrust) !important; text-shadow: 0 0 10px var(--thrust) !important; }
 
-.star-container.warning-24 { animation: vibrate-fast 0.2s infinite; }
+.star-container.warning-24 { animation: vibrate-fast 0.13s infinite; }
 .star-container.warning-24 .star-node {
     animation: pulse-orange 6s infinite ease-in-out;
 }
 
 .star-container.warning-48 .star-node {
-    animation: pulse-yellow 12s infinite ease-in-out;
+    animation: pulse-yellow 9s infinite ease-in-out;
+}
+
+.debris-node { 
+    pointer-events: none; 
+    animation: debris-drift 20s infinite alternate ease-in-out; 
 }
 
 /* --- TACTICAL UPGRADES --- */
-/* 1. Soft placeholder for subroutines */
-.modal-input::placeholder {
-    color: rgba(255, 255, 255, 0.3) !important;
-    font-style: italic !important;
-}
-
-/* 2. Lock/Cancel buttons + 50% Height */
-#task-modal-overlay .modal-actions button {
-    height: 60px !important;
-    font-size: 0.85rem !important;
-}
-
-/* 3. Add Routine Alignment (matches input height and spans width) */
-#modal-add-btn {
-    height: 42px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-top: 5px !important;
-    padding: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* 4. Reduced Factory Reset Button */
-#factory-reset-btn {
-    height: 30px !important;
-    padding: 0 10px !important;
-    font-size: 0.6rem !important;
-    opacity: 0.5 !important;
-    border: 1px solid var(--thrust) !important;
-    background: transparent !important;
-}
+.modal-input::placeholder { color: rgba(255, 255, 255, 0.3) !important; font-style: italic !important; }
+#task-modal-overlay .modal-actions button { height: 60px !important; font-size: 0.85rem !important; }
+#modal-add-btn { height: 42px !important; display: flex !important; align-items: center !important; justify-content: center !important; margin-top: 5px !important; padding: 0 !important; width: 100% !important; box-sizing: border-box !important; }
+#factory-reset-btn { height: 30px !important; padding: 0 10px !important; font-size: 0.6rem !important; opacity: 0.5 !important; border: 1px solid var(--thrust) !important; background: transparent !important; }
 
 /* --- SOFT WARNING TOAST --- */
-.soft-warning {
-    position: fixed;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: rgba(20, 5, 5, 0.95);
-    border: 1px solid var(--thrust);
-    box-shadow: 0 0 20px rgba(255, 42, 42, 0.3);
-    color: var(--thrust);
-    padding: 15px 25px;
-    border-radius: 4px;
-    z-index: 9999;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-align: center;
-    opacity: 0;
-    pointer-events: none; 
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    white-space: pre-wrap; 
-}
-
-.soft-warning.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
+.soft-warning { position: fixed; top: 40px; left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(20, 5, 5, 0.95); border: 1px solid var(--thrust); box-shadow: 0 0 20px rgba(255, 42, 42, 0.3); color: var(--thrust); padding: 15px 25px; border-radius: 4px; z-index: 9999; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; white-space: pre-wrap; }
+.soft-warning.show { opacity: 1; transform: translateX(-50%) translateY(0); }
