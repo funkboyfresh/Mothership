@@ -636,79 +636,98 @@ function renderLevel4(container, footer) {
     if(footer) footer.style.display = 'none';
     const m = safelyGetActiveMission(); 
     if (!m) { zoomOut(); return; }
+
+    const isDecay = m.overdue && !m.captured;
+    if (isDecay) document.getElementById('app').classList.add('critical-mode');
+
+    // 1. Determine View Mode (Internal HUD vs External Space)
+    const viewMode = getEncounterViewMode(m.encounterId);
+    const encounterName = ENCOUNTER_TYPES[m.encounterId] || "Unknown Phenomenon";
+
+    // 2. Build the Command Deck
+    const bridge = document.createElement('div');
+    bridge.className = `target-lock warp-transition ${isDecay ? 'critical' : ''}`;
     
+    bridge.innerHTML = `
+        <div class="view-level-title">LEVEL 4 // BRIDGE COMMAND</div>
+        <h2 style="color: ${isDecay ? 'var(--thrust)' : 'var(--text)'}; margin-bottom: 5px;">${m.name}</h2>
+        <div style="font-size: 0.6rem; letter-spacing: 2px; opacity: 0.6; margin-bottom: 20px;">
+            [ ENCOUNTER: ${encounterName.toUpperCase()} ]
+        </div>
+    `;
+
+    // 3. Create the Visual Stage
+    const stage = document.createElement('div');
+    stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
+    
+    // Add the "Hero Unit" (Your Ship or the Console)
+    const heroUnit = document.createElement('div');
+    heroUnit.className = 'ship-hero-unit engine-glow';
+    
+    // Simple SVG representation for now (We will upgrade these later)
+    if (viewMode === 'external') {
+        heroUnit.innerHTML = `<svg width="80" height="80" viewBox="0 0 100 100">
+            <path d="M50 10 L90 90 L50 75 L10 90 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        </svg>`;
+    } else {
+        heroUnit.innerHTML = `<svg width="120" height="80" viewBox="0 0 150 100">
+            <rect x="10" y="10" width="130" height="80" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4"/>
+            <path d="M30 40 L120 40 M30 60 L120 60" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
+        </svg>`;
+    }
+    
+    stage.appendChild(heroUnit);
+    bridge.appendChild(stage);
+
+    // 4. Progress Metrics
     const comp = m.subs.filter(s => s.c).length;
     const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
-    const allDone = m.subs.length > 0 && comp === m.subs.length;
     
-    const lock = document.createElement('div');
-    const isDecay = m.overdue && !m.captured; 
-    
-    if (isDecay) document.getElementById('app').classList.add('critical-mode');
-    
-    lock.className = `target-lock warp-transition ${isDecay ? 'critical' : ''}`; 
-    lock.innerHTML = `<div class="view-level-title">LEVEL 4 // ${m.captured ? 'ARCHIVE' : 'ACTIVE'}</div><h2 style="color: ${isDecay ? 'var(--thrust)' : 'var(--text)'}">${m.name}</h2>`;
-    
-    const activeSector = state.sectors.find(s => s.id === state.sectorId);
-    const accentColor = activeSector ? activeSector.color : 'var(--accent)';
-    
-    if (m.subs.length > 0) {
-        const pCont = document.createElement('div'); 
-        pCont.className = 'priority-dropdown-container'; 
-        let critIdx = m.subs.findIndex(s => !s.c); 
-        if (critIdx === -1) critIdx = 0; 
-        
-        pCont.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">MISSION PRIORITIES <span>v</span></button>
-            <div class="priority-list">
-                ${m.subs.map((s, i) => `
-                    <div class="priority-item ${i === critIdx && !s.c ? 'mission-critical-active' : ''} ${s.c ? 'task-captured' : ''}" 
-                         style="${i === critIdx && !s.c ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : ''}">
-                        <span class="p-num">${i + 1}</span>
-                        <span class="p-text">${s.t}</span>
-                    </div>`).join('')}
-            </div>`; 
-        lock.appendChild(pCont);
-    }
-    
-    lock.insertAdjacentHTML('beforeend', `<div class="progress-wrapper"><div class="progress-bar-container"><div class="progress-fill" style="width: ${prog}%;"></div></div><div class="progress-text">${prog}% INTEGRITY</div></div>`);
-    
-    const orbSys = document.createElement('div'); 
-    orbSys.className = 'orbital-system'; 
-    orbSys.innerHTML = `<svg viewBox="0 0 340 340" style="position:absolute; width:100%; height:100%;"><circle cx="170" cy="170" r="14" fill="${allDone ? 'var(--captured)' : 'var(--bg)'}" stroke="var(--accent)" stroke-width="2"/></svg>`;
-    
+    bridge.insertAdjacentHTML('beforeend', `
+        <div class="progress-wrapper" style="margin-top: 25px;">
+            <div class="progress-bar-container">
+                <div class="progress-fill" style="width: ${prog}%;"></div>
+            </div>
+            <div class="progress-text">${prog}% OPERATIONAL</div>
+        </div>
+    `);
+
+    // 5. The System Nodes (Subtasks as Buttons)
+    const nodeContainer = document.createElement('div');
+    nodeContainer.style.cssText = 'width: 90%; max-width: 400px; margin-top: 10px;';
+
     m.subs.forEach((s, i) => {
-        const angle = (i / m.subs.length) * Math.PI * 2;
-        const x = 170 + 100 * Math.cos(angle);
-        const y = 170 + 100 * Math.sin(angle);
-        const subNode = document.createElement('div'); 
-        subNode.style.cssText = `position:absolute; left:${x}px; top:${y}px; transform:translate(-50%, -50%); cursor:pointer;`;
+        const node = document.createElement('div');
+        node.className = `system-node ${s.c ? 'resolved' : ''}`;
+        node.innerHTML = `<span>${s.c ? '●' : '○'}</span> <span style="flex:1">${s.t}</span>`;
         
-        if (!m.captured) subNode.onclick = () => toggleSubTask(i);
-        
-        const box = document.createElement('div'); 
-        box.className = `orbital-node-box ${s.c ? 'checked' : ''}`; 
-        box.innerHTML = `<div class="orb-check">${s.c ? '✓' : ''}</div><div class="orb-text">${s.t}</div>`; 
-        
-        subNode.appendChild(box); 
-        orbSys.appendChild(subNode);
+        if (!m.captured) {
+            node.onclick = () => {
+                triggerHaptic(20);
+                toggleSubTask(i);
+            };
+        }
+        nodeContainer.appendChild(node);
     });
     
-    lock.appendChild(orbSys);
-    
+    bridge.appendChild(nodeContainer);
+
+    // 6. Navigation Controls
     const btnWrap = document.createElement('div'); 
-    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; margin-bottom: 20px;';
+    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
     btnWrap.innerHTML = `
-        <button class="mod-btn" onclick="openEditModal(${m.id})">EDIT</button>
-        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">DESTROY</button>`;
-    lock.appendChild(btnWrap); 
-    
-    if (allDone && !m.captured) {
+        <button class="mod-btn" onclick="openEditModal(${m.id})">RECONFIGURE</button>
+        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">ABORT</button>
+    `;
+    bridge.appendChild(btnWrap); 
+
+    if (prog === 100 && !m.captured) {
         const modal = document.createElement('div'); 
         modal.className = 'hex-modal warp-transition'; 
-        modal.innerHTML = `<h2 style="color: var(--captured)">TARGET SECURED</h2><button class="success-btn" onclick="completeMission()">LOG MISSION & WARP</button>`; 
-        lock.appendChild(modal);
+        modal.innerHTML = `<h2 style="color: var(--captured)">OBJECTIVE SECURED</h2>
+                          <button class="success-btn" onclick="completeMission()">LOG DATA & DISENGAGE</button>`; 
+        bridge.appendChild(modal);
     }
-    
-    container.appendChild(lock);
+
+    container.appendChild(bridge);
 }
