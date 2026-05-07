@@ -186,8 +186,8 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 
 /* < 24 Hours (Orange) - 50% Size, 50% Vibrate Distance, +50% Speed */
 @keyframes pulse-orange {
-    0%, 100% { box-shadow: 0 0 6px #ff9900; filter: brightness(1); }
-    50% { box-shadow: 0 0 18px #ff9900; filter: brightness(1.15); }
+    0%, 100% { box-shadow: 0 0 9px #ff9900; filter: brightness(1); }
+    50% { box-shadow: 0 0 27px #ff9900; filter: brightness(1.15); }
 }
 @keyframes vibrate-fast {
     0%, 100% { transform: translate(0, 0); }
@@ -198,8 +198,8 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 
 /* 24-48 Hours (Yellow) - 50% Pulse Speed of Orange, No Vibrate */
 @keyframes pulse-yellow {
-    0%, 100% { box-shadow: 0 0 6px #ffd700; filter: brightness(1); }
-    50% { box-shadow: 0 0 18px #ffd700; filter: brightness(1.05); }
+    0%, 100% { box-shadow: 0 0 9px #ffd700; filter: brightness(1); }
+    50% { box-shadow: 0 0 27px #ffd700; filter: brightness(1.05); }
 }
 
 /* Priority Menu Red Flasher */
