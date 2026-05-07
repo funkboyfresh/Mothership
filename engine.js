@@ -1,9 +1,18 @@
 const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
 const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
 const ENCOUNTER_TYPES = [
+    // Category Alpha: Environmental
     'Corrosive Nebula', 'Gravitational Anomaly', 'Solar Flare', 'Asteroid Field', 'Ion Storm',
+    'Dark Matter Reef', 'Quantum Micro-Fracture', 'Hyper-Velocity Dust Storm', 'Sub-Space Sinkhole', 'Supernova Shockwave',
+    // Category Beta: Hostile
     'Pirate Ambush', 'First Contact Protocol', 'Bio-Mimetic Swarm', 'Cyber-Infiltration', 'Tractor Beam Snare',
-    'Resource Extraction', 'Derelict Salvage', 'Quantum Slipstream', 'Deep Space Relay', 'Distress Beacon'
+    'Mercenary Blockade', 'Parasitic AI Infection', 'Cloaked Stalker', 'Automated Defense Platform', 'Mutineer Boarding Party',
+    // Category Gamma: Operations
+    'Resource Extraction', 'Derelict Salvage', 'Quantum Slipstream', 'Deep Space Relay', 'Distress Beacon',
+    'Stellar Cartography', 'Orbital Facility Construction', 'Exotic Flora Retrieval', 'Artifact Excavation', 'Comet Water Harvesting',
+    // Category Delta: Social
+    'Nomad Merchant Caravan', 'Civilian Evacuation', 'Diplomatic Escort', 'Stranded Smuggler', 'Refugee Flotilla',
+    'Sector Patrol Inspection', 'Medical Supply Run', 'Rogue AI Diplomat', 'VIP Extraction', 'Interstellar Regatta'
 ];
 
 const defaultSectors = [
@@ -1185,8 +1194,8 @@ function saveTaskModal() {
                     id: editModeId, name, 
                     subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
                     x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
-                    encounterId: Math.floor(Math.random() * 15) // [ PATCHED ] Encounter seed injected
-                }); 
+                    // [ PATCHED ] Dynamic generation based on total array size
+                    encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length)                }); 
             }
         }
     } else { 
