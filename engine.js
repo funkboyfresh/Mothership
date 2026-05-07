@@ -884,13 +884,11 @@ function renderLevel3(container, footer) {
         }
     }
     
-  [...debrisMissions, ...wireTasks].forEach((m) => {
+ [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div');
         const isDebris = debrisMissions.includes(m);
         
-        // [ PATCHED ] Cleared the reference error halting the render loop
         const isCapOnWire = preCaptured.includes(m); 
-        
         const isDecay = m.overdue;
         
         let warnClass = ''; 
@@ -900,7 +898,6 @@ function renderLevel3(container, footer) {
             else if (m.warningLevel === 48) warnClass = 'warning-48';
         }
 
-        // Apply debris class for drifting, or standard static transition
         star.className = `star-container ${isDebris ? 'debris-node' : 'warp-transition'} ${warnClass}`;
         
         if (isDebris && !m.scale) { 
@@ -918,33 +915,12 @@ function renderLevel3(container, footer) {
             star.style.setProperty('--float-dur', `${15 + Math.random() * 15}s`);
         }
 
-        let borderColor = accentColor;
-        let bgFill = 'var(--bg)';
-        let textColor = '#ffffff';
-        let borderWidth = '2px';
-
-        if (m.captured) {
-            textColor = 'var(--bg)';
-            
-            if (m.overdue) bgFill = '#ff2a2a'; 
-            else if (m.warningLevel === 24) bgFill = '#ff9900'; 
-            else if (m.warningLevel === 48) bgFill = '#ffd700';
-            else bgFill = accentColor;
-
-            // [ PATCHED ] Ring color synchronized with the decay state fill
-            borderColor = bgFill; 
-
-            if (isDebris) {
-                borderWidth = '1px';
-                node.style.transform = `scale(${m.scale})`;
-                // [ PATCHED ] Brightness reduced by 35% (opacity lowered from 0.35 to 0.22)
-                node.style.opacity = '0.22'; 
-                textColor = 'transparent';
-            } else {
-                borderWidth = '2px';
-                node.style.opacity = '1.0';
-            }
-        } else {
+        if (!m.captured) { 
+            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); }; 
+            star.style.cursor = 'pointer'; 
+        } else { 
+            star.style.pointerEvents = 'none'; 
+        }
 
         const node = document.createElement('div'); 
         node.className = `star-node`; 
@@ -955,7 +931,6 @@ function renderLevel3(container, footer) {
         let borderWidth = '2px';
 
         if (m.captured) {
-            borderColor = accentColor;
             textColor = 'var(--bg)';
             
             if (m.overdue) bgFill = '#ff2a2a'; 
@@ -963,10 +938,12 @@ function renderLevel3(container, footer) {
             else if (m.warningLevel === 48) bgFill = '#ffd700';
             else bgFill = accentColor;
 
+            borderColor = bgFill; 
+
             if (isDebris) {
                 borderWidth = '1px';
                 node.style.transform = `scale(${m.scale})`;
-                node.style.opacity = '0.35';
+                node.style.opacity = '0.22'; 
                 textColor = 'transparent';
             } else {
                 borderWidth = '2px';
@@ -1008,7 +985,6 @@ function renderLevel3(container, footer) {
         star.appendChild(node); 
         star.appendChild(label); 
         
-        // This append ensures all generated DOM nodes actually hit the viewport
         container.appendChild(star);
     });
 }
