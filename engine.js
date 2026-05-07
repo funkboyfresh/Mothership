@@ -217,54 +217,48 @@ function zoomOut() {
     render(); 
 }
 
+//
 function saveTaskModal() {
     const name = document.getElementById('modal-task-name').value.trim(); 
-    if (!name) { 
-        showSoftWarning("MISSION MUST BE NAMED"); 
-        return; 
-    }
+    if (!name) { showSoftWarning("MISSION MUST BE NAMED"); return; }
     
     const h = isHorizonFixed ? defaultHorizonContext : document.getElementById('modal-horizon-select').value;
     const dateStr = document.getElementById('modal-task-date').value;
     const timeStr = document.getElementById('modal-task-time')?.value || null;
     const finalH = getHorizonFromDate(dateStr, h);
     
+    // [ PATCHED ] Re-inserted the Capacity Governor check
+    const hzMissions = (state.missions[state.sectorId]?.[finalH]) || [];
+    const activeCount = hzMissions.filter(m => !m.captured).length;
+    
+    if (!editModeId && activeCount >= 6) { 
+        showSoftWarning("TARGET LIMIT REACHED (6/6).\nCOMPLETE ACTIVE MISSIONS TO OPEN NEW TRAJECTORIES."); 
+        return; 
+    }
+
     if (!state.missions[state.sectorId]) {
         state.missions[state.sectorId] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
     }
 
     if (editModeId) {
-        // Handle existing mission edits
-        let targetHz = null;
         HORIZONS.forEach(hz => {
             const idx = state.missions[state.sectorId][hz].findIndex(m => m.id === editModeId);
             if (idx !== -1) {
                 const m = state.missions[state.sectorId][hz][idx];
-                m.name = name;
-                m.dueDate = dateStr || null;
-                m.dueTime = timeStr;
+                m.name = name; m.dueDate = dateStr || null; m.dueTime = timeStr;
                 m.subs = tempSubtasks.filter(t => t.trim()).map(t => ({t, c: false}));
-                
                 if (hz !== finalH) {
                     state.missions[state.sectorId][finalH].push(state.missions[state.sectorId][hz].splice(idx, 1)[0]);
                 }
             }
         });
     } else {
-        // Create new mission node
-        const hzMissions = state.missions[state.sectorId][finalH];
         const coords = getSafeCoordinates(hzMissions);
         state.missions[state.sectorId][finalH].push({
-            id: Date.now(),
-            name: name,
+            id: Date.now(), name, 
             subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c: false})),
-            x: coords.x,
-            y: coords.y,
-            dueDate: dateStr || null,
-            dueTime: timeStr,
-            captured: false,
-            overdue: false,
-            warningLevel: 0,
+            x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
+            captured: false, overdue: false, warningLevel: 0,
             encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length)
         });
     }
@@ -332,23 +326,36 @@ function togglePilotLog() {
 
 // --- DATABASE MIGRATION & INIT ---
 
+//
 function runDatabaseMigration() {
+    let migrated = false;
     state.sectors.forEach(s => {
         if (!state.missions[s.id]) {
             state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
-            // Seed the empty horizons with default missions
             HORIZONS.forEach(h => {
                 state.missions[s.id][h].push(generateDefaultMission(s.name, h));
             });
+            migrated = true;
         }
         HORIZONS.forEach(h => {
-            if (!state.missions[s.id][h]) state.missions[s.id][h] = [];
-            state.missions[s.id][h].forEach(m => {
-                if (m.encounterId === undefined) m.encounterId = Math.floor(Math.random() * ENCOUNTER_TYPES.length);
+            if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
+            
+            // [ PATCHED ] Assign coordinates to nodes that are missing them (Premade Nodes)
+            state.missions[s.id][h].forEach((m, index, arr) => {
+                if (m.x === undefined || isNaN(m.x)) {
+                    let coords = getSafeCoordinates(arr.slice(0, index));
+                    m.x = coords.x; 
+                    m.y = coords.y; 
+                    migrated = true;
+                }
+                if (m.encounterId === undefined) {
+                    m.encounterId = Math.floor(Math.random() * ENCOUNTER_TYPES.length);
+                    migrated = true;
+                }
             });
         });
     });
-    save();
+    if (migrated) save();
 }
 
 // --- SYSTEM INITIALIZATION ---
