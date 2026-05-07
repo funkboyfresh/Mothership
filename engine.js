@@ -1241,15 +1241,17 @@ function saveTaskModal() {
                     id: editModeId, name, 
                     subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
                     x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
-                    // [ PATCHED ] Dynamic generation based on total array size
-                    encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length)        }
+                    encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length) 
+                }); 
+            }
+        }
     } else { 
         const coords = getSafeCoordinates(hzMissions); 
         state.missions[state.sectorId][finalH].push({ 
             id: Date.now(), name, 
             subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
             x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
-            encounterId: Math.floor(Math.random() * 15) // [ PATCHED ] Encounter seed injected
+            encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length)
         }); 
     }
     
