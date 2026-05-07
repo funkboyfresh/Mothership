@@ -238,6 +238,7 @@ function completeMission() {
 }
 
 // [ PATCHED ] Forces IDs into Strings for bulletproof deletion
+// [ PATCHED ] Forces IDs into Strings for bulletproof deletion
 function deleteMission(id) { 
     if(confirm("Destroy?")) { 
         HORIZONS.forEach(h => { 
