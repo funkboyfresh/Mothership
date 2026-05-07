@@ -212,11 +212,11 @@ function toggleSubTask(idx) {
         if (m.subs[idx].c) { 
             triggerHaptic(30); 
             addEnergy(5); 
-            // Award Scrap
-            state.scrap += 1; 
+            // Magnet Multiplier: Level 1 = 1 scrap, Level 5 = 5 scrap
+            state.scrap += (state.shipParts.magnet || 1); 
         } else { 
             addEnergy(-5); 
-            state.scrap = Math.max(0, state.scrap - 1);
+            state.scrap = Math.max(0, state.scrap - (state.shipParts.magnet || 1));
         } 
         save(); 
         render(); 
