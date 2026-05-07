@@ -18,7 +18,8 @@ let state = {
     sectors: JSON.parse(localStorage.getItem('sectors')) || [...defaultSectors],
     missions: JSON.parse(localStorage.getItem('missions')) || {},
     shipPos: { x: 50, y: 50 },
-    scrap: parseInt(localStorage.getItem('scrap')) || 0,
+    // [ UPGRADED ] Grants 500 Scrap on a fresh boot
+    scrap: localStorage.getItem('scrap') !== null ? parseInt(localStorage.getItem('scrap')) : 500,
     // [ UPGRADED ] The Perfect 10 Module Manifest
     shipParts: JSON.parse(localStorage.getItem('shipParts')) || {
         magnet: 1, reactor: 1, habitat: 1, hull: 1, shields: 1,
