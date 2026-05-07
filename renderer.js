@@ -639,24 +639,57 @@ function renderLevel4(container, footer) {
         </div>
     `;
 
+   // --- [ START OF UPGRADED STAGE ] ---
     const stage = document.createElement('div');
     stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
     
+    // Add Tactical Data Streams (Scrolling background data)
+    const streamL = document.createElement('div');
+    streamL.className = 'data-stream-left';
+    streamL.innerHTML = `<div class="stream-content">${(Math.random().toString(16) + '<br>').repeat(50)}</div>`;
+    
+    const streamR = document.createElement('div');
+    streamR.className = 'data-stream-right';
+    streamR.innerHTML = `<div class="stream-content">${('SCAN_FIX: ' + Math.random().toFixed(4) + '<br>').repeat(50)}</div>`;
+    
+    stage.appendChild(streamL);
+    stage.appendChild(streamR);
+
+    // The Hero Unit (Ship or Internal HUD)
     const heroUnit = document.createElement('div');
     heroUnit.className = 'ship-hero-unit engine-glow';
     
     if (viewMode === 'external') {
         drawModularShip(heroUnit, state.shipParts); 
     } else {
+        // [ UPGRADED ] Advanced Internal Cockpit View
         heroUnit.innerHTML = `
-            <svg width="150" height="100" viewBox="0 0 150 100">
-                <rect x="10" y="10" width="130" height="80" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4"/>
-                <path d="M30 40 L120 40 M30 60 L120 60" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
+            <svg width="180" height="120" viewBox="0 0 150 100">
+                <rect x="5" y="5" width="140" height="90" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.3" stroke-dasharray="2,2"/>
+                <circle cx="75" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>
+                <line x1="75" y1="15" x2="75" y2="85" stroke="var(--accent)" stroke-width="0.5" opacity="0.2"/>
+                <line x1="40" y1="50" x2="110" y2="50" stroke="var(--accent)" stroke-width="0.5" opacity="0.2"/>
+                <path d="M75 50 L75 15" stroke="var(--accent)" stroke-width="2">
+                    <animateTransform attributeName="transform" type="rotate" from="0 75 50" to="360 75 50" dur="4s" repeatCount="indefinite" />
+                </path>
+                <path class="cockpit-gauge" d="M10 80 L10 20" stroke="var(--thrust)" stroke-width="4" style="--gauge-val: ${100 - state.energy}"/>
+                <path class="cockpit-gauge" d="M140 80 L140 20" stroke="var(--captured)" stroke-width="4" style="--gauge-val: ${prog}"/>
             </svg>`;
     }
     
     stage.appendChild(heroUnit);
     bridge.appendChild(stage);
+
+    // Component HUD
+    const partStatus = document.createElement('div');
+    partStatus.style.cssText = 'display:flex; gap:8px; margin-bottom:10px; opacity:0.8;';
+    partStatus.innerHTML = Object.keys(state.shipParts).map(p => 
+        `<div style="font-size:0.45rem; border:1px solid var(--accent); padding:2px 4px;">${p[0].toUpperCase()}:${state.shipParts[p]}</div>`
+    ).join('');
+    bridge.appendChild(partStatus);
+    
+    // --- [ END OF UPGRADED STAGE ] ---
+    
 
     const comp = m.subs.filter(s => s.c).length;
     const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
@@ -670,6 +703,14 @@ function renderLevel4(container, footer) {
         </div>
     `);
 
+// Component Status Bar
+    const partStatus = document.createElement('div');
+    partStatus.style.cssText = 'display:flex; gap:8px; margin-bottom:10px; opacity:0.8;';
+    partStatus.innerHTML = Object.keys(state.shipParts).map(p => 
+        `<div style="font-size:0.45rem; border:1px solid var(--accent); padding:2px 4px;">${p[0].toUpperCase()}:${state.shipParts[p]}</div>`
+    ).join('');
+    bridge.appendChild(partStatus);
+    
     const terminal = document.createElement('div');
     terminal.className = 'terminal-console';
     
