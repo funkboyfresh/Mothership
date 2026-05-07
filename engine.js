@@ -626,6 +626,7 @@ function renderLevel2(container, footer, activeSector) {
         gravityWell.appendChild(p);
     }
     
+    // --- UPDATED LEVEL 2 DEBRIS FIELD (FLOATING + COLOR SYNC) ---
     const debrisField = document.createElement('div');
     debrisField.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index: 15;';
     
@@ -646,16 +647,26 @@ function renderLevel2(container, footer, activeSector) {
         const py = 140 + r * Math.sin(angle);
         
         let pColor = activeSector.color;
-        if (m.overdue) pColor = '#ff2a2a';
-        else if (m.warningLevel === 24) pColor = '#ff9900';
-        else if (m.warningLevel === 48) pColor = '#ffd700';
+        let bColor = activeSector.color;
+        if (m.overdue) { pColor = '#ff2a2a'; }
+        else if (m.warningLevel === 24) { pColor = '#ff9900'; }
+        else if (m.warningLevel === 48) { pColor = '#ffd700'; }
         
-        particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; opacity:0.6; left:${px}px; top:${py}px;`;
+        particle.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${pColor}; border:1px solid ${bColor}; opacity:0.6; left:${px}px; top:${py}px;`;
         particle.className = 'debris-node'; 
+        
+        const rx = (Math.random() - 0.5) * 60;
+        const ry = (Math.random() - 0.5) * 60;
+        const dur = 20 + Math.random() * 30;
+        particle.style.setProperty('--dx', `${rx}px`);
+        particle.style.setProperty('--dy', `${ry}px`);
+        particle.style.animation = `debris-drift ${dur}s infinite alternate ease-in-out`;
+        
         debrisField.appendChild(particle);
     });
     gravityWell.appendChild(debrisField);
     center.appendChild(gravityWell);
+    // ------------------------------------
 
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
@@ -743,27 +754,50 @@ function renderLevel3(container, footer) {
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
     const now = Date.now();
-    const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
     
-    const activePool = missions.filter(m => !m.captured);
-    const capturedPool = missions.filter(m => m.captured && (now - (m.completionTimestamp || 0) < oneWeekMs));
+    // --- STATIC WIRE ALGORITHM ---
+    const allActive = missions.filter(m => !m.captured);
+    const wireActive = allActive.slice(0, 6);
     
-    const wireActive = activePool.slice(0, 6);
-    const wireCaptured = capturedPool.slice(-2);
-    const wireTasks = [...wireCaptured, ...wireActive];
+    const firstActiveIdx = wireActive.length > 0 ? missions.indexOf(wireActive[0]) : missions.length;
+    const lastActiveIdx = wireActive.length > 0 ? missions.indexOf(wireActive[wireActive.length - 1]) : -1;
     
-    const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m)).slice(-20);
+    let wireTasks = [];
+    let preCaptured = [];
+    
+    for (let i = firstActiveIdx - 1; i >= 0; i--) {
+        let m = missions[i];
+        if (m.captured && (now - (m.completionTimestamp || 0) < threeDaysMs)) {
+            preCaptured.unshift(m);
+            if (preCaptured.length >= 2) break;
+        }
+    }
+    wireTasks.push(...preCaptured);
+    
+    for (let i = firstActiveIdx; i <= lastActiveIdx; i++) {
+        let m = missions[i];
+        if (!m.captured) {
+            wireTasks.push(m);
+        } else if (m.captured && (now - (m.completionTimestamp || 0) < threeDaysMs)) {
+            wireTasks.push(m);
+        }
+    }
+    
+    const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m) && (now - (m.completionTimestamp || 0) < threeDaysMs)).slice(-20);
+    // --------------------------------
 
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
     container.appendChild(header);
 
+    // --- REFINED PRIORITY MENU ---
+    const priorityContainer = document.createElement('div');
+    priorityContainer.className = 'priority-dropdown-container';
+    priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
+    
     if (wireActive.length > 0) {
-        const priorityContainer = document.createElement('div');
-        priorityContainer.className = 'priority-dropdown-container';
-        priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-        
         priorityContainer.innerHTML = `
             <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
                 MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
@@ -771,16 +805,44 @@ function renderLevel3(container, footer) {
             <div class="priority-list">
                 ${wireActive.map((m, i) => {
                     const isDecaying = m.overdue && !m.captured;
-                    return `<div class="priority-item ${i === 0 ? 'mission-critical-active' : ''}" 
-                         style="${i === 0 ? `--sector-color: ${isDecaying ? 'rgba(255, 42, 42, 0.2)' : accentColor + '22'}; --sector-border: ${isDecaying ? 'var(--thrust)' : accentColor};` : ''}">
+                    const isCrit = i === 0;
+                    
+                    let itemStyle = '';
+                    let statusText = '';
+                    
+                    if (isDecaying) {
+                        itemStyle = `--sector-color: rgba(255, 42, 42, 0.3); --sector-border: #ff2a2a; animation: priority-flash-red 1.5s infinite;`;
+                        statusText = '[ CRITICAL DECAY ]';
+                    } else if (m.warningLevel === 24) {
+                        itemStyle = `--sector-color: rgba(255, 153, 0, 0.3); --sector-border: #ff9900;`;
+                        statusText = isCrit ? '[ MISSION CRITICAL ]' : '[ WARNING: 24H ]';
+                    } else if (m.warningLevel === 48) {
+                        itemStyle = `--sector-color: rgba(255, 215, 0, 0.3); --sector-border: #ffd700;`;
+                        statusText = isCrit ? '[ MISSION CRITICAL ]' : '[ HORIZON ALERT ]';
+                    } else if (isCrit) {
+                        itemStyle = `--sector-color: ${accentColor}22; --sector-border: ${accentColor};`;
+                        statusText = '[ MISSION CRITICAL ]';
+                    }
+                    
+                    return `<div class="priority-item ${isCrit || isDecaying || m.warningLevel ? 'mission-critical-active' : ''}" 
+                         style="${itemStyle} cursor: pointer;" onclick="state.activeMissionId = ${m.id}; state.level = 4; render();">
                         <span class="p-num">${missions.indexOf(m) + 1}</span>
-                        <span class="p-status" style="color: ${isDecaying ? 'var(--thrust)' : ''}">${i === 0 ? (isDecaying ? '[ CRITICAL DECAY ]' : '[ MISSION CRITICAL ]') : ''}</span>
+                        <span class="p-status" style="color: ${isDecaying ? 'var(--thrust)' : (m.warningLevel===24 ? '#ff9900' : (m.warningLevel===48 ? '#ffd700' : ''))}">${statusText}</span>
                         <span class="p-text">${m.name}</span>
                     </div>`
                 }).join('')}
             </div>`;
-        container.appendChild(priorityContainer);
+    } else {
+        priorityContainer.innerHTML = `
+            <button class="priority-toggle-btn" style="pointer-events: none;">
+                MISSION PRIORITIES (0/6)
+            </button>
+            <div class="priority-list show" style="display: block;">
+                <div class="priority-item" style="justify-content:center; opacity:0.5; font-size:0.6rem;">NO ACTIVE MISSIONS</div>
+            </div>`;
     }
+    container.appendChild(priorityContainer);
+    // --------------------------------
 
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
@@ -821,6 +883,14 @@ function renderLevel3(container, footer) {
         star.style.left = (m.x + (m.driftX || 0)) + '%'; 
         star.style.top = (m.y + (m.driftY || 0)) + '%';
         
+        if (isDebris) {
+            const rx = (Math.random() - 0.5) * 40;
+            const ry = (Math.random() - 0.5) * 40;
+            const dur = 15 + Math.random() * 20;
+            star.style.setProperty('--dx', `${rx}px`);
+            star.style.setProperty('--dy', `${ry}px`);
+        }
+
         if (!m.captured) { 
             star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); }; 
             star.style.cursor = 'pointer'; 
@@ -836,14 +906,15 @@ function renderLevel3(container, footer) {
         let textColor = '#ffffff';
         let borderWidth = '2px';
 
+        // --- HARDCODED UI COLOR SYSTEM ---
         if (m.captured) {
-            bgFill = accentColor;
             borderColor = accentColor;
             textColor = 'var(--bg)';
             
             if (m.overdue) bgFill = '#ff2a2a'; 
             else if (m.warningLevel === 24) bgFill = '#ff9900'; 
             else if (m.warningLevel === 48) bgFill = '#ffd700';
+            else bgFill = accentColor;
 
             if (isDebris) {
                 borderWidth = '1px';
@@ -856,6 +927,7 @@ function renderLevel3(container, footer) {
             }
         } else {
             const isCrit = m.id === wireActive[0]?.id;
+            bgFill = 'var(--bg)';
             
             if (isDecay) { 
                 borderColor = '#ff2a2a'; 
