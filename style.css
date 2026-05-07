@@ -89,7 +89,7 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .overdue-sector { animation: sector-pulse 2s infinite ease-in-out; }
 
 /* Orbital Rings */
-.ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s; z-index: 2; }
+.ring-circle { position: absolute; border-radius: 50%; border: 1px solid var(--accent); display: flex; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(0, 0, 0, 0.2); font-size: 0.7rem; letter-spacing: 2px; color: var(--text); box-shadow: 0 0 20px var(--accent-glow) inset, 0 0 20px var(--accent-glow); transition: background 0.2s, opacity 0.3s; z-index: 2; }
 .ring-circle.overdue { background: var(--thrust-glow); border-color: var(--thrust); box-shadow: 0 0 20px var(--thrust) inset, 0 0 20px var(--thrust); color: #fff; text-shadow: 0 0 10px var(--thrust); animation: ring-pulse 1.5s infinite ease-in-out; }
 @keyframes ring-pulse { 0% { box-shadow: 0 0 20px var(--thrust) inset, 0 0 20px var(--thrust); background: rgba(255, 42, 42, 0.1); } 50% { box-shadow: 0 0 45px var(--thrust) inset, 0 0 45px var(--thrust); background: rgba(255, 42, 42, 0.35); } 100% { box-shadow: 0 0 20px var(--thrust) inset, 0 0 20px var(--thrust); background: rgba(255, 42, 42, 0.1); } }
 
@@ -184,7 +184,7 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     100% { transform: rotate(0deg) translate(0px, 0px); } 
 }
 
-/* < 24 Hours (Orange) - 50% Size, 50% Vibrate Distance, +50% Speed */
+/* < 24 Hours (Orange) - 25% Pulse Speed, Fast Small Vibrate */
 @keyframes pulse-orange {
     0%, 100% { box-shadow: 0 0 6px #ff9900; filter: brightness(1); }
     50% { box-shadow: 0 0 18px #ff9900; filter: brightness(1.15); }
@@ -208,6 +208,16 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     50% { background: rgba(255, 42, 42, 0.4); box-shadow: inset 0 0 20px rgba(255,42,42,0.6); }
 }
 
+/* Generic Floating Debris (Driven by JS Variables) */
+@keyframes debris-float { 
+    0% { transform: translate(0, 0); } 
+    100% { transform: translate(var(--dx, 20px), var(--dy, 20px)); } 
+}
+.debris-node { 
+    animation: debris-float var(--float-dur, 15s) infinite alternate ease-in-out; 
+    pointer-events: none; 
+}
+
 /* Applications */
 .star-container.decaying { animation: drift-decay 0.8s infinite; z-index: 15; }
 .star-container.decaying .star-node { 
@@ -224,9 +234,6 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     animation: pulse-yellow 9s infinite ease-in-out;
 }
 
-.debris-node { 
-    pointer-events: none; 
-}
 
 /* --- TACTICAL UPGRADES --- */
 .modal-input::placeholder { color: rgba(255, 255, 255, 0.3) !important; font-style: italic !important; }
