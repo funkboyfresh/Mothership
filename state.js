@@ -25,4 +25,7 @@ let state = {
     sectors: JSON.parse(localStorage.getItem('sectors')) || [...defaultSectors],
     missions: JSON.parse(localStorage.getItem('missions')) || {},
     shipPos: { x: 50, y: 50 } 
+    state.scrap = parseInt(localStorage.getItem('scrap')) || 0;
+    state.shipParts = JSON.parse(localStorage.getItem('shipParts')) || {
+        reactor: 1, thrusters: 1, hull: 1, shields: 1, sensors: 1, magnet: 1
 };
