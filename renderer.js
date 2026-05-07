@@ -628,6 +628,10 @@ function renderLevel4(container, footer) {
     const viewMode = getEncounterViewMode(m.encounterId);
     const encounterName = ENCOUNTER_TYPES[m.encounterId] || "Unknown Phenomenon";
 
+    // Pre-calculate progress for the gauges
+    const comp = m.subs.filter(s => s.c).length;
+    const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
+
     const bridge = document.createElement('div');
     bridge.className = `target-lock warp-transition ${isDecay ? 'critical' : ''}`;
     
@@ -639,11 +643,10 @@ function renderLevel4(container, footer) {
         </div>
     `;
 
-   // --- [ START OF UPGRADED STAGE ] ---
     const stage = document.createElement('div');
     stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
     
-    // Add Tactical Data Streams (Scrolling background data)
+    // Tactical Data Streams
     const streamL = document.createElement('div');
     streamL.className = 'data-stream-left';
     streamL.innerHTML = `<div class="stream-content">${(Math.random().toString(16) + '<br>').repeat(50)}</div>`;
@@ -662,7 +665,6 @@ function renderLevel4(container, footer) {
     if (viewMode === 'external') {
         drawModularShip(heroUnit, state.shipParts); 
     } else {
-        // [ UPGRADED ] Advanced Internal Cockpit View
         heroUnit.innerHTML = `
             <svg width="180" height="120" viewBox="0 0 150 100">
                 <rect x="5" y="5" width="140" height="90" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.3" stroke-dasharray="2,2"/>
@@ -680,7 +682,7 @@ function renderLevel4(container, footer) {
     stage.appendChild(heroUnit);
     bridge.appendChild(stage);
 
-    // Component HUD
+    // Component Status Bar (Only declared ONCE now)
     const partStatus = document.createElement('div');
     partStatus.style.cssText = 'display:flex; gap:8px; margin-bottom:10px; opacity:0.8;';
     partStatus.innerHTML = Object.keys(state.shipParts).map(p => 
@@ -688,29 +690,16 @@ function renderLevel4(container, footer) {
     ).join('');
     bridge.appendChild(partStatus);
     
-    // --- [ END OF UPGRADED STAGE ] ---
-    
-
-    const comp = m.subs.filter(s => s.c).length;
-    const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
-    
     bridge.insertAdjacentHTML('beforeend', `
-        <div class="progress-wrapper" style="margin-top: 25px;">
+        <div class="progress-wrapper" style="margin-top: 15px;">
             <div class="progress-bar-container">
                 <div class="progress-fill" style="width: ${prog}%;"></div>
             </div>
             <div class="progress-text">${prog}% OPERATIONAL</div>
         </div>
     `);
-
-// Component Status Bar
-    const partStatus = document.createElement('div');
-    partStatus.style.cssText = 'display:flex; gap:8px; margin-bottom:10px; opacity:0.8;';
-    partStatus.innerHTML = Object.keys(state.shipParts).map(p => 
-        `<div style="font-size:0.45rem; border:1px solid var(--accent); padding:2px 4px;">${p[0].toUpperCase()}:${state.shipParts[p]}</div>`
-    ).join('');
-    bridge.appendChild(partStatus);
     
+    // Sub-routine Terminal
     const terminal = document.createElement('div');
     terminal.className = 'terminal-console';
     
@@ -764,28 +753,6 @@ function renderLevel4(container, footer) {
     }
 
     container.appendChild(bridge);
-} 
-
-// --- MODULAR SHIP CONSTRUCTION ---
-
-// --- ADVANCED MODULAR SHIP CONSTRUCTION ---
-
-function drawModularShip(targetElement, parts) {
-    targetElement.innerHTML = `
-        <svg viewBox="0 0 100 100" class="ship-hero-unit">
-            ${renderShieldComponent(parts.shields)}
-            
-            ${renderThrusterComponent(parts.thrusters)}
-            
-            ${renderHullComponent(parts.hull)}
-            
-            ${renderReactorComponent(parts.reactor)}
-            
-            ${renderSensorComponent(parts.sensors)}
-            
-            ${renderMagnetComponent(parts.magnet)}
-        </svg>
-    `;
 }
 
 function renderHullComponent(level) {
