@@ -892,38 +892,39 @@ function renderCellsComponent(level) {
     return cells;
 }
 
+// --- SHIPYARD HANGAR UI ---
+
 function renderHangar(container) {
     container.innerHTML = `
-        <div class="target-lock warp-transition">
-            <div class="view-level-title">DRY DOCK // SHIPYARD</div>
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px;">
+            <div class="view-level-title" style="margin-top:0;">DRY DOCK // SHIPYARD</div>
             <h1 class="view-main-title">Hangar Bay</h1>
             
-            <div class="ship-view-stage" style="height: 150px; margin-bottom: 20px;">
+            <div class="ship-view-stage" style="height: 160px; margin-bottom: 15px;">
                 <div id="hangar-ship-preview"></div>
             </div>
 
-            <div class="terminal-console" style="max-height: 300px; overflow-y: auto;">
-                <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:10px;">
+            <div class="terminal-console" style="width: 95%; max-width: 500px; padding: 15px 10px; overflow: hidden;">
+                <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:12px; padding: 0 5px;">
                     <span>MODULAR_FRIGATE_ASSEMBLY</span>
-                    <span>SCRAP: ${state.scrap}</span>
+                    <span style="color: var(--captured); opacity: 1; font-weight: bold; font-size: 0.6rem;">SCRAP: ${state.scrap}</span>
                 </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
                 ${Object.keys(state.shipParts).map(part => {
                     const level = state.shipParts[part];
                     const cost = level * 15;
                     return `
-                        <div class="system-node" onclick="upgradeShipPart('${part}')">
-                            <div class="node-status-light" style="background: var(--accent)"></div>
-                            <div style="flex:1; text-align:left;">
-                                <div style="font-size:0.7rem; font-weight:bold;">${part.toUpperCase()}</div>
-                                <div style="font-size:0.5rem; opacity:0.6;">LEVEL ${level} // UPGRADE: ${cost} SCRAP</div>
-                            </div>
-                            <span style="font-size:0.8rem;">+</span>
+                        <div class="system-node" onclick="upgradeShipPart('${part}')" style="margin:0; padding: 10px 2px; flex-direction:column; gap:6px; text-align:center; border-radius:4px; height: 100%; box-sizing: border-box;">
+                            <div style="font-size:0.45rem; font-weight:bold; color:var(--accent); letter-spacing:1px; width:100%; overflow:hidden; text-overflow:ellipsis;">${part.toUpperCase()}</div>
+                            <div style="font-size:0.65rem; font-family: monospace;">L${level}</div>
+                            <div style="font-size:0.45rem; opacity:0.6;">${cost} SCR</div>
+                            <div style="margin-top:auto; width:80%; background:var(--accent); color:var(--bg); font-weight:bold; font-size:0.6rem; padding:4px 0; border-radius:2px; box-shadow: 0 0 5px var(--accent-glow);">+</div>
                         </div>
                     `;
                 }).join('')}
+                </div>
             </div>
-
-            <button class="mod-btn" style="margin-top: 20px;" onclick="state.level = 1; render();">RETURN TO BRIDGE</button>
         </div>
     `;
     
