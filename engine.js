@@ -31,6 +31,8 @@ function save() {
     localStorage.setItem('energy', state.energy);
     localStorage.setItem('playerLevel', state.playerLevel);
     localStorage.setItem('hapticsEnabled', state.hapticsEnabled);
+    localStorage.setItem('scrap', state.scrap);
+    localStorage.setItem('shipParts', JSON.stringify(state.shipParts));
 }
 
 function getCapturedCount(sectorId = null) {
@@ -180,9 +182,17 @@ function toggleSubTask(idx) {
     const m = safelyGetActiveMission(); 
     if (m?.subs[idx]) { 
         m.subs[idx].c = !m.subs[idx].c; 
-        if (m.subs[idx].c) { triggerHaptic(30); addEnergy(5); } 
-        else addEnergy(-5); 
-        save(); render(); 
+        if (m.subs[idx].c) { 
+            triggerHaptic(30); 
+            addEnergy(5); 
+            // Award Scrap
+            state.scrap += 1; 
+        } else { 
+            addEnergy(-5); 
+            state.scrap = Math.max(0, state.scrap - 1);
+        } 
+        save(); 
+        render(); 
     } 
 }
 
