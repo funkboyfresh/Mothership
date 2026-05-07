@@ -661,6 +661,11 @@ function renderLevel2(container, footer, activeSector) {
         particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
         particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
         particle.style.setProperty('--float-dur', `${15 + Math.random() * 20}s`);
+
+        // [ PATCHED ] Velocity increased by 50% (duration reduced from 15-35s to 10-23s)
+        particle.style.setProperty('--float-dur', `${10 + Math.random() * 13.3}s`);
+        
+        debrisField.appendChild(particle);
         
         debrisField.appendChild(particle);
     });
@@ -866,10 +871,13 @@ function renderLevel3(container, footer) {
         }
     }
     
-    [...debrisMissions, ...wireTasks].forEach((m) => {
+  [...debrisMissions, ...wireTasks].forEach((m) => {
         const star = document.createElement('div');
         const isDebris = debrisMissions.includes(m);
-        const isCapOnWire = wireCaptured.includes(m);
+        
+        // [ PATCHED ] Cleared the reference error halting the render loop
+        const isCapOnWire = preCaptured.includes(m); 
+        
         const isDecay = m.overdue;
         
         let warnClass = ''; 
