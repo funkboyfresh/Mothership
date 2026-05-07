@@ -237,11 +237,12 @@ function completeMission() {
     } 
 }
 
+// [ PATCHED ] Forces IDs into Strings for bulletproof deletion
 function deleteMission(id) { 
     if(confirm("Destroy?")) { 
         HORIZONS.forEach(h => { 
             if(state.missions[state.sectorId]?.[h]) {
-                state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => m.id !== id); 
+                state.missions[state.sectorId][h] = state.missions[state.sectorId][h].filter(m => String(m.id) !== String(id)); 
             }
         }); 
         save(); state.level = 3; render(); 
@@ -307,10 +308,11 @@ function saveTaskModal() {
     render();
 }
 
+// [ PATCHED ] Forces IDs into Strings for bulletproof matching against legacy data
 function safelyGetActiveMission() {
     if(!state.sectorId || !state.missions[state.sectorId]) return null;
     for (let h of HORIZONS) { 
-        const found = state.missions[state.sectorId][h].find(x => x.id === state.activeMissionId); 
+        const found = state.missions[state.sectorId][h].find(x => String(x.id) === String(state.activeMissionId)); 
         if (found) { state.horizon = h; return found; } 
     }
     return null;
@@ -386,8 +388,14 @@ function togglePilotLog() {
     logModal.style.display = 'flex';
 }
 
+// --- [ DEEP CLEAN MIGRATION PROTOCOLS ] ---
+
+let missionIdCounter = 0; // Ensures absolute uniqueness
+
 function runDatabaseMigration() {
     let migrated = false;
+    const seenIds = new Set();
+
     state.sectors.forEach(s => {
         if (!state.missions[s.id]) {
             state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
@@ -400,17 +408,33 @@ function runDatabaseMigration() {
             if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
             
             state.missions[s.id][h].forEach((m, index, arr) => {
-                // Catch old Ghost nodes missing an ID
-                if (m.id === undefined) {
+                // 1. Deep Clean: Enforce Number IDs and eliminate Duplicates
+                if (m.id !== undefined) m.id = Number(m.id);
+                
+                if (m.id === undefined || isNaN(m.id) || seenIds.has(m.id)) {
                     missionIdCounter++;
                     m.id = Date.now() + missionIdCounter;
                     migrated = true;
                 }
+                seenIds.add(m.id);
+
+                // 2. Deep Clean: Convert legacy string subtasks to secure objects
+                if (m.subs && m.subs.length > 0) {
+                    m.subs = m.subs.map(sub => {
+                        if (typeof sub === 'string') { migrated = true; return { t: sub, c: false }; }
+                        if (!sub || typeof sub !== 'object') { migrated = true; return { t: "UNKNOWN ROUTINE", c: false }; }
+                        return sub;
+                    });
+                }
+
+                // 3. Deep Clean: Fix missing Spatial Coordinates
                 if (m.x === undefined || isNaN(m.x)) {
                     let coords = getSafeCoordinates(arr.slice(0, index));
                     m.x = coords.x; m.y = coords.y; 
                     migrated = true;
                 }
+                
+                // 4. Deep Clean: Missing Encounter Intel
                 if (m.encounterId === undefined) {
                     m.encounterId = Math.floor(Math.random() * ENCOUNTER_TYPES.length);
                     migrated = true;
