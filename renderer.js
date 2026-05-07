@@ -787,21 +787,30 @@ function renderHangar(container) {
     const preview = document.getElementById('hangar-ship-preview');
     if (preview) drawModularShip(preview, state.shipParts);
 }
+
 // --- MODULAR SHIP CONSTRUCTION ---
 
 function drawModularShip(targetElement, parts) {
+    // Fallback logic in case localStorage is holding onto an older 6-part save
+    const p = parts || {};
+    
     targetElement.innerHTML = `
         <svg viewBox="0 0 100 100" class="ship-hero-unit">
-            ${renderShieldComponent(parts.shields)}
-            ${renderThrusterComponent(parts.thrusters)}
-            ${renderHullComponent(parts.hull)}
-            ${renderReactorComponent(parts.reactor)}
-            ${renderSensorComponent(parts.sensors)}
-            ${renderMagnetComponent(parts.magnet)}
+            ${renderShieldComponent(p.shields || 1)}
+            ${renderCommsComponent(p.comms || 1)}
+            ${renderSinksComponent(p.sinks || 1)}
+            ${renderThrusterComponent(p.thrusters || 1)}
+            ${renderHabitatComponent(p.habitat || 1)}
+            ${renderHullComponent(p.hull || 1)}
+            ${renderCellsComponent(p.cells || 1)}
+            ${renderReactorComponent(p.reactor || 1)}
+            ${renderSensorComponent(p.sensors || 1)}
+            ${renderMagnetComponent(p.magnet || 1)}
         </svg>
     `;
 }
 
+// 1. Titanium Hull
 function renderHullComponent(level) {
     const w = 15 + (level * 2);
     let path = `<path d="M50 15 L${50+w} 85 L50 70 L${50-w} 85 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
@@ -810,6 +819,7 @@ function renderHullComponent(level) {
     return path;
 }
 
+// 2. Chrono-Thrusters
 function renderThrusterComponent(level) {
     let flares = `<path d="M42 75 L50 95 L58 75" fill="none" stroke="var(--thrust)" stroke-width="1.5" class="engine-flare"/>`;
     if (level >= 3) flares += `<path d="M30 70 L35 85 L40 70 M60 70 L65 85 L70 70" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare" style="animation-delay: 0.05s"/>`;
@@ -817,6 +827,7 @@ function renderThrusterComponent(level) {
     return flares;
 }
 
+// 3. Reactor Core
 function renderReactorComponent(level) {
     const size = 3 + level;
     return `<circle cx="50" cy="55" r="${size}" fill="none" stroke="var(--accent)" stroke-width="1.5" class="engine-glow">
@@ -824,12 +835,14 @@ function renderReactorComponent(level) {
     </circle>`;
 }
 
+// 4. Aegis Shields
 function renderShieldComponent(level) {
     if (level < 2) return '';
     const opacity = Math.min(0.1 + (level * 0.05), 0.4);
     return `<circle cx="50" cy="50" r="45" fill="var(--accent)" fill-opacity="${opacity}" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="4,2" opacity="0.6"/>`;
 }
 
+// 5. Omni-Sensors
 function renderSensorComponent(level) {
     if (level < 2) return '';
     let sensors = `<path d="M30 40 L20 30 M70 40 L80 30" stroke="var(--accent)" stroke-width="1"/>`;
@@ -837,9 +850,46 @@ function renderSensorComponent(level) {
     return sensors;
 }
 
+// 6. Scrap-Magnet
 function renderMagnetComponent(level) {
     if (level < 2) return '';
     return `<path d="M40 85 Q50 100 60 85" fill="none" stroke="var(--captured)" stroke-width="${level}" opacity="0.5" stroke-linecap="round"/>`;
+}
+
+// 7. Cryo-Habitat (NEW)
+function renderHabitatComponent(level) {
+    if (level < 2) return '';
+    let hab = `<rect x="35" y="45" width="30" height="10" rx="2" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.8"/>`;
+    if (level >= 3) hab += `<circle cx="40" cy="50" r="2" fill="var(--captured)"/><circle cx="60" cy="50" r="2" fill="var(--captured)"/>`;
+    if (level >= 5) hab += `<path d="M25 50 A 25 25 0 0 1 75 50" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2,4"/>`;
+    return hab;
+}
+
+// 8. Quantum Comm-Array (NEW)
+function renderCommsComponent(level) {
+    if (level < 2) return '';
+    let comms = `<line x1="50" y1="15" x2="50" y2="5" stroke="var(--accent)" stroke-width="1.5"/>`;
+    if (level >= 3) comms += `<line x1="45" y1="10" x2="55" y2="10" stroke="var(--accent)" stroke-width="1"/><circle cx="50" cy="5" r="1.5" fill="var(--captured)"/>`;
+    if (level >= 5) comms += `<path d="M40 5 Q50 -5 60 5" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.6"/>`;
+    return comms;
+}
+
+// 9. Thermal Sink Array (NEW)
+function renderSinksComponent(level) {
+    if (level < 2) return '';
+    let sinks = `<path d="M35 65 L25 60 M65 65 L75 60" stroke="var(--accent)" stroke-width="1" opacity="0.6"/>`;
+    if (level >= 3) sinks += `<path d="M35 70 L20 65 M65 70 L80 65" stroke="var(--accent)" stroke-width="1" opacity="0.8"/>`;
+    if (level >= 5) sinks += `<path d="M35 75 L15 70 M65 75 L85 70" stroke="var(--thrust)" stroke-width="1" opacity="0.7"/>`;
+    return sinks;
+}
+
+// 10. Dark-Matter Cells (NEW)
+function renderCellsComponent(level) {
+    if (level < 2) return '';
+    let cells = `<circle cx="45" cy="65" r="2" fill="var(--captured)" opacity="0.5"/><circle cx="55" cy="65" r="2" fill="var(--captured)" opacity="0.5"/>`;
+    if (level >= 3) cells = `<circle cx="45" cy="65" r="3" fill="var(--captured)" opacity="0.8"/><circle cx="55" cy="65" r="3" fill="var(--captured)" opacity="0.8"/>`;
+    if (level >= 5) cells += `<circle cx="40" cy="72" r="2.5" fill="var(--captured)"/><circle cx="60" cy="72" r="2.5" fill="var(--captured)"/>`;
+    return cells;
 }
 
 function renderHangar(container) {
