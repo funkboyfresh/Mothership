@@ -297,6 +297,62 @@ function checkDecayStatus() {
     }
 }
 
+// --- DEFAULT PROTOCOL GENERATOR ---
+function generateDefaultMission(sectorName, horizon) {
+    let tName = `${horizon} PROTOCOL: ${sectorName.toUpperCase()}`;
+    let sub1 = "Establish primary objective";
+    let sub2 = "Allocate sector resources";
+    let sub3 = "Commence routine tracking";
+    
+    let sec = sectorName.toUpperCase();
+    if (sec.includes('CAREER')) {
+        tName = `${horizon} CAREER MILESTONE`;
+        sub1 = "Audit professional ledger";
+        sub2 = "Define growth metrics";
+        sub3 = "Execute networking protocol";
+    } else if (sec.includes('FINANC')) {
+        tName = `${horizon} FISCAL BASELINE`;
+        sub1 = "Audit capital reserves";
+        sub2 = "Review recurring liabilities";
+        sub3 = "Project quarterly growth";
+    } else if (sec.includes('PERSONAL')) {
+        tName = `${horizon} VITALITY METRICS`;
+        sub1 = "Assess physical readiness";
+        sub2 = "Schedule downtime cycle";
+        sub3 = "Review personal goals";
+    } else if (sec.includes('HEALTH') || sec.includes('FITNESS')) {
+        tName = `${horizon} BIOMETRIC TARGET`;
+        sub1 = "Log baseline metrics";
+        sub2 = "Establish nutritional baseline";
+        sub3 = "Schedule physical conditioning";
+    } else if (sec.includes('CREATIVE') || sec.includes('ART')) {
+        tName = `${horizon} CREATIVE INITIATIVE`;
+        sub1 = "Gather reference material";
+        sub2 = "Draft initial concepts";
+        sub3 = "Refine creative output";
+    } else if (sec.includes('HOME') || sec.includes('HOUSE')) {
+        tName = `${horizon} HABITAT MAINTENANCE`;
+        sub1 = "Audit structural integrity";
+        sub2 = "Optimize living space";
+        sub3 = "Execute environmental cleaning";
+    }
+
+    const uniqueId = Date.now() + Math.floor(Math.random() * 1000000);
+
+    return { 
+        id: uniqueId, 
+        name: tName, 
+        subs: [ {t: sub1, c: false}, {t: sub2, c: false}, {t: sub3, c: false} ], 
+        x: undefined, 
+        y: undefined, 
+        dueDate: null, 
+        dueTime: null, 
+        captured: false, 
+        overdue: false, 
+        warningLevel: 0 
+    };
+}
+
 // --- RENDER SYSTEM ---
 function safelyGetActiveMission() {
     if(!state.sectorId || !state.missions[state.sectorId]) return null;
@@ -446,7 +502,6 @@ function renderLevel1(container, footer) {
             particle.setAttribute("cy", py);
             particle.setAttribute("r", "2.25");
             
-            // Reverted to hardcoded UX colors
             let pColor = s.color;
             if (m.overdue) pColor = '#ff2a2a';
             else if (m.warningLevel === 24) pColor = '#ff9900';
@@ -571,7 +626,6 @@ function renderLevel2(container, footer, activeSector) {
         gravityWell.appendChild(p);
     }
     
-    // --- ADDED LEVEL 2 DEBRIS FIELD ---
     const debrisField = document.createElement('div');
     debrisField.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index: 15;';
     
@@ -597,12 +651,11 @@ function renderLevel2(container, footer, activeSector) {
         else if (m.warningLevel === 48) pColor = '#ffd700';
         
         particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; opacity:0.6; left:${px}px; top:${py}px;`;
-        particle.className = 'debris-node'; // Ties into standard CSS float (No shake/pulse)
+        particle.className = 'debris-node'; 
         debrisField.appendChild(particle);
     });
     gravityWell.appendChild(debrisField);
     center.appendChild(gravityWell);
-    // ------------------------------------
 
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
@@ -750,7 +803,6 @@ function renderLevel3(container, footer) {
         const isCapOnWire = wireCaptured.includes(m);
         const isDecay = m.overdue;
         
-        // --- FIXED: Only apply animation classes if ACTIVE ---
         let warnClass = ''; 
         if (!m.captured) {
             if (isDecay) warnClass = 'decaying'; 
@@ -777,23 +829,21 @@ function renderLevel3(container, footer) {
         }
 
         const node = document.createElement('div'); 
-        node.className = `star-node`; // Removed captured class from CSS tracking to allow pure JS color assignment
+        node.className = `star-node`; 
         
-        // --- UNIFIED INLINE COLOR LOGIC ---
         let borderColor = accentColor;
         let bgFill = 'var(--bg)';
         let textColor = '#ffffff';
         let borderWidth = '2px';
 
         if (m.captured) {
-            // Closed Task Fills
             bgFill = accentColor;
             borderColor = accentColor;
             textColor = 'var(--bg)';
             
-            if (m.overdue) bgFill = '#ff2a2a'; // Red
-            else if (m.warningLevel === 24) bgFill = '#ff9900'; // Orange
-            else if (m.warningLevel === 48) bgFill = '#ffd700'; // Yellow
+            if (m.overdue) bgFill = '#ff2a2a'; 
+            else if (m.warningLevel === 24) bgFill = '#ff9900'; 
+            else if (m.warningLevel === 48) bgFill = '#ffd700';
 
             if (isDebris) {
                 borderWidth = '1px';
@@ -805,7 +855,6 @@ function renderLevel3(container, footer) {
                 node.style.opacity = '1.0';
             }
         } else {
-            // Active Task Fills
             const isCrit = m.id === wireActive[0]?.id;
             
             if (isDecay) { 
@@ -824,7 +873,7 @@ function renderLevel3(container, footer) {
         node.style.color = textColor;
         node.style.borderWidth = borderWidth;
         node.style.borderStyle = 'solid';
-        node.style.boxShadow = 'none'; // Absolutely clears any inherited glow on closed tasks
+        node.style.boxShadow = 'none'; 
 
         if (!isDebris) {
             node.textContent = missions.indexOf(m) + 1;
@@ -1129,8 +1178,15 @@ function renderSectorEditList() {
 
 function resetSectorMissions(sid) { 
     if(confirm("Wipe sector missions?")) { 
+        const s = state.sectors.find(sec => sec.id === sid) || editingSectors.find(sec => sec.id === sid);
         state.missions[sid] = { TRAJECTORY: [], HORIZON: [], IMMINENT: [] }; 
+        if (s) {
+            HORIZONS.forEach(h => {
+                state.missions[sid][h].push(generateDefaultMission(s.name, h));
+            });
+        }
         save(); 
+        runDatabaseMigration();
         render(); 
     } 
 }
@@ -1156,10 +1212,16 @@ function addNewSector() {
 
 function saveSectorModal() { 
     editingSectors.forEach(s => { 
-        if (!state.missions[s.id]) state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; 
+        if (!state.missions[s.id]) {
+            state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; 
+            HORIZONS.forEach(h => {
+                state.missions[s.id][h].push(generateDefaultMission(s.name, h));
+            });
+        }
     }); 
     state.sectors = JSON.parse(JSON.stringify(editingSectors)); 
     save(); 
+    runDatabaseMigration();
     closeSectorModal(); 
     render(); 
 }
@@ -1256,6 +1318,9 @@ function runDatabaseMigration() {
     state.sectors.forEach(s => {
         if (!state.missions[s.id]) { 
             state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]}; 
+            HORIZONS.forEach(h => {
+                state.missions[s.id][h].push(generateDefaultMission(s.name, h));
+            });
             migrated = true; 
         }
         HORIZONS.forEach(h => {
@@ -1282,12 +1347,10 @@ runDatabaseMigration();
 generateStarfield(); 
 render();
 
-// FIXED: Global Temporal Pulse (Every 60 Seconds)
 setInterval(() => {
     render(); 
 }, 60000);
 
-// Handle responsive resizing
 window.addEventListener('resize', () => { 
     if(state.level === 1) render(); 
 });
