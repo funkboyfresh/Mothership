@@ -1,4 +1,6 @@
-/** * RENDERER.JS* Handles all visual output and bridge aesthetics.*/
+/** * RENDERER.JS
+ * Handles all visual output and bridge aesthetics.
+ */
 
 // --- HUD & GLOBAL EFFECTS ---
 
@@ -65,7 +67,8 @@ function relaxLloyds(seeds, iterations) {
 
 // --- MAIN RENDER LOOP ---
 
-function  {
+// [ FIXED ] Added the function name back!
+function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
     
@@ -94,7 +97,7 @@ function  {
         case 2: renderLevel2(container, footer, activeSector); break;
         case 3: renderLevel3(container, footer); break;
         case 4: renderLevel4(container, footer); break;
-        case 5: renderHangar(container); break; // [ ADDED ]
+        case 5: renderHangar(container); break;
     }
 }
 
@@ -102,12 +105,12 @@ function  {
 
 function renderLevel1(container, footer) {
     if(footer) { 
-    footer.style.display = 'flex'; 
-    footer.innerHTML = `
-        <button class="zoom-btn" onclick="openSectorModal()">[ SECTORS ]</button>
-        <button class="zoom-btn" style="margin-left:10px; border-color: var(--captured); color: var(--captured);" onclick="state.level = 5; ;">[ HANGAR ]</button>
-    `; 
-}
+        footer.style.display = 'flex'; 
+        footer.innerHTML = `
+            <button class="zoom-btn" onclick="openSectorModal()">[ SECTORS ]</button>
+            <button class="zoom-btn" style="margin-left:10px; border-color: var(--captured); color: var(--captured);" onclick="state.level = 5; render();">[ HANGAR ]</button>
+        `; // [ FIXED ] Restored the render() call!
+    }
     
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
@@ -134,7 +137,8 @@ function renderLevel1(container, footer) {
         path.setAttribute("stroke-width", "2"); 
         path.setAttribute("class", `voronoi-cell ${overdue ? 'overdue-sector' : ''}`);
         
-        path.onclick = () => { state.sectorId = s.id; state.level = 2; ; }; 
+        // [ FIXED ] Restored the render() call!
+        path.onclick = () => { state.sectorId = s.id; state.level = 2; render(); }; 
         svg.appendChild(path);
         
         const cx = seeds[i].x * w;
@@ -372,11 +376,12 @@ function renderLevel2(container, footer, activeSector) {
             wrapper.style.boxShadow = `0 0 ${spread}px var(--accent-glow) inset, 0 0 ${spread}px var(--accent-glow)`;
         }
         
+        // [ FIXED ] Restored the render() call!
         wrapper.onclick = (e) => { 
             e.stopPropagation(); 
             state.horizon = d.id; 
             state.level = 3; 
-            ; 
+            render(); 
         };
         
         if (d.id === 'IMMINENT') {
@@ -438,7 +443,6 @@ function renderLevel3(container, footer) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "constellation-svg"; 
     
-    // [ PATCHED ] Set viewBox to 100x100 to map exactly to percentage coordinates
     svg.setAttribute("viewBox", "0 0 100 100"); 
     svg.setAttribute("preserveAspectRatio", "none"); 
     container.appendChild(svg);
@@ -519,7 +523,8 @@ function renderLevel3(container, footer) {
         }
 
         if (!m.captured) { 
-            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; ; }; 
+            // [ FIXED ] Restored the render() call!
+            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); }; 
             star.style.cursor = 'pointer'; 
         } else { 
             star.style.pointerEvents = 'none'; 
@@ -665,11 +670,9 @@ function renderLevel4(container, footer) {
         </div>
     `);
 
-    // --- [ START OF TERMINAL OVERHAUL ] ---
     const terminal = document.createElement('div');
     terminal.className = 'terminal-console';
     
-    // Header for the console showing real-time Scrap stats
     terminal.innerHTML = `
         <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:10px; letter-spacing:1px;">
             <span>SYSTEM_DIAGNOSTIC: ACTIVE</span>
@@ -689,11 +692,9 @@ function renderLevel4(container, footer) {
         
         if (!m.captured) {
             node.onclick = () => {
-                // Trigger the kinetic pulse effect immediately
                 const pulse = node.querySelector('.pulse-line');
                 pulse.classList.add('active-pulse');
                 
-                // Allow a brief moment for the animation before the state re-renders
                 setTimeout(() => {
                     triggerHaptic(20);
                     toggleSubTask(i);
@@ -703,7 +704,7 @@ function renderLevel4(container, footer) {
         terminal.appendChild(node);
     });
     
-bridge.appendChild(terminal);
+    bridge.appendChild(terminal);
 
     const btnWrap = document.createElement('div'); 
     btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
@@ -745,7 +746,7 @@ function renderThrusterComponent(level) {
     return `<path d="M40 90 L50 100 L60 90" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare"/>`;
 }
 
-//The Hanger - Ship Upgrades//
+// [ FIXED ] Added name and proper render() call!
 function renderHangar(container) {
     container.innerHTML = `
         <div class="target-lock warp-transition">
@@ -781,7 +782,6 @@ function renderHangar(container) {
         </div>
     `;
     
-    // Draw the ship in the preview window
     const preview = document.getElementById('hangar-ship-preview');
     if (preview) drawModularShip(preview, state.shipParts);
 }
