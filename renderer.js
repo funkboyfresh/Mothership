@@ -445,7 +445,6 @@ function renderLevel3(container, footer) {
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
-    // --- WIRE LOGIC: Isolating the 6-mission priority window ---
     const allActive = missions.filter(m => !m.captured);
     const wireActive = allActive.slice(0, 6);
     const firstActiveIdx = wireActive.length > 0 ? missions.indexOf(wireActive[0]) : missions.length;
@@ -469,7 +468,6 @@ function renderLevel3(container, footer) {
     
     const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m)).slice(-20);
 
-    // [ PATCHED ] Initialize drift for ALL renderable nodes BEFORE drawing lines
     const renderSet = [...debrisMissions, ...wireTasks];
     renderSet.forEach(m => {
         if (m.driftX === undefined) {
@@ -479,7 +477,6 @@ function renderLevel3(container, footer) {
         }
     });
 
-    // [ PATCHED ] Wire lines now track m.x + m.driftX for perfect alignment
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
             const m1 = wireTasks[i];
@@ -497,7 +494,6 @@ function renderLevel3(container, footer) {
         }
     }
     
-    // --- NODE RENDERING ---
     renderSet.forEach((m) => {
         const star = document.createElement('div');
         const isDebris = debrisMissions.includes(m);
@@ -575,7 +571,6 @@ function renderLevel3(container, footer) {
         container.appendChild(star);
     });
 
-    // --- HEADERS & PRIORITY DROPDOWN (Restored High Detail) ---
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
     header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
@@ -614,7 +609,7 @@ function renderLevel3(container, footer) {
     container.appendChild(priorityContainer);
 }
 
-// --- SHIP VIEW (L4 - TARGET LOCK LEGACY) ---
+// --- SHIP VIEW (L4 - TARGET LOCK) ---
 
 function renderLevel4(container, footer) {
     if(footer) footer.style.display = 'none';
@@ -624,11 +619,9 @@ function renderLevel4(container, footer) {
     const isDecay = m.overdue && !m.captured;
     if (isDecay) document.getElementById('app').classList.add('critical-mode');
 
-    // 1. Determine View Mode (Internal HUD vs External Space)
     const viewMode = getEncounterViewMode(m.encounterId);
     const encounterName = ENCOUNTER_TYPES[m.encounterId] || "Unknown Phenomenon";
 
-    // 2. Build the Command Deck
     const bridge = document.createElement('div');
     bridge.className = `target-lock warp-transition ${isDecay ? 'critical' : ''}`;
     
@@ -640,30 +633,27 @@ function renderLevel4(container, footer) {
         </div>
     `;
 
-    // 3. Create the Visual Stage
     const stage = document.createElement('div');
     stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
     
-    // Add the "Hero Unit" (Your Ship or the Console)
+    // [ FIXED ] Corrected heroUnit declaration (Removed duplicate 'const')
     const heroUnit = document.createElement('div');
     heroUnit.className = 'ship-hero-unit engine-glow';
     
-    // Simple SVG representation for now (We will upgrade these later)
     if (viewMode === 'external') {
-        heroUnit.innerHTML = `<svg width="80" height="80" viewBox="0 0 100 100">
-            <path d="M50 10 L90 90 L50 75 L10 90 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>
-        </svg>`;
+        drawModularShip(heroUnit, state.shipParts); 
     } else {
-        heroUnit.innerHTML = `<svg width="120" height="80" viewBox="0 0 150 100">
-            <rect x="10" y="10" width="130" height="80" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4"/>
-            <path d="M30 40 L120 40 M30 60 L120 60" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
-        </svg>`;
+        // [ PATCHED ] Added Internal HUD fallback SVG
+        heroUnit.innerHTML = `
+            <svg width="150" height="100" viewBox="0 0 150 100">
+                <rect x="10" y="10" width="130" height="80" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4"/>
+                <path d="M30 40 L120 40 M30 60 L120 60" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
+            </svg>`;
     }
     
     stage.appendChild(heroUnit);
     bridge.appendChild(stage);
 
-    // 4. Progress Metrics
     const comp = m.subs.filter(s => s.c).length;
     const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
     
@@ -676,7 +666,6 @@ function renderLevel4(container, footer) {
         </div>
     `);
 
-    // 5. The System Nodes (Subtasks as Buttons)
     const nodeContainer = document.createElement('div');
     nodeContainer.style.cssText = 'width: 90%; max-width: 400px; margin-top: 10px;';
 
@@ -696,7 +685,6 @@ function renderLevel4(container, footer) {
     
     bridge.appendChild(nodeContainer);
 
-    // 6. Navigation Controls
     const btnWrap = document.createElement('div'); 
     btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
     btnWrap.innerHTML = `
@@ -714,4 +702,25 @@ function renderLevel4(container, footer) {
     }
 
     container.appendChild(bridge);
+}
+
+// --- MODULAR SHIP CONSTRUCTION ---
+
+function drawModularShip(targetElement, parts) {
+    targetElement.innerHTML = `
+        <svg viewBox="0 0 100 100" class="ship-hero-unit engine-glow">
+            ${renderHullComponent(parts.hull)}
+            ${renderThrusterComponent(parts.thrusters)}
+        </svg>
+    `;
+}
+
+function renderHullComponent(level) {
+    const width = 20 + (level * 2); 
+    return `<path d="M50 10 L${50+width} 90 L50 75 L${50-width} 90 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+}
+
+function renderThrusterComponent(level) {
+    if (level < 2) return '';
+    return `<path d="M40 90 L50 100 L60 90" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare"/>`;
 }
