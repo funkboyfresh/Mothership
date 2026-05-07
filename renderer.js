@@ -721,26 +721,7 @@ bridge.appendChild(terminal);
     }
 
     container.appendChild(bridge);
-}
-
-    const btnWrap = document.createElement('div'); 
-    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
-    btnWrap.innerHTML = `
-        <button class="mod-btn" onclick="openEditModal(${m.id})">RECONFIGURE</button>
-        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">ABORT</button>
-    `;
-    bridge.appendChild(btnWrap); 
-
-    if (prog === 100 && !m.captured) {
-        const modal = document.createElement('div'); 
-        modal.className = 'hex-modal warp-transition'; 
-        modal.innerHTML = `<h2 style="color: var(--captured)">OBJECTIVE SECURED</h2>
-                          <button class="success-btn" onclick="completeMission()">LOG DATA & DISENGAGE</button>`; 
-        bridge.appendChild(modal);
-    }
-
-    container.appendChild(bridge);
-}
+} 
 
 // --- MODULAR SHIP CONSTRUCTION ---
 
