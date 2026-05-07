@@ -25,7 +25,6 @@ let state = {
         comms: 1, thrusters: 1, sinks: 1, sensors: 1, cells: 1
     }
 };
-};
 
 let editModeId = null;
 let defaultHorizonContext = null;
