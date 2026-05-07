@@ -757,7 +757,7 @@ function renderLevel2(container, footer, activeSector) {
 
             // Node width/height increased to 24px (4x original mass). 
             // Positional offset adjusted to 12px to maintain perfect ring alignment.
-            dot.style.cssText = `position:absolute; width:24px; height:24px; border-radius:50%; background:${dotColor}; left:calc(${140 + r * Math.cos(angle)}px - 12px); top:calc(${140 + r * Math.sin(angle)}px - 12px); box-shadow: 0 0 15px ${dotColor};`;
+            dot.style.cssText = `position:absolute; width:16px; height:16px; border-radius:50%; background:${dotColor}; left:calc(${140 + r * Math.cos(angle)}px - 8px); top:calc(${140 + r * Math.sin(angle)}px - 8px); box-shadow: 0 0 12px ${dotColor};`;
             starField.appendChild(dot);
         });
         
