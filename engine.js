@@ -49,9 +49,18 @@ function getCapturedCount(sectorId = null) {
 
 // --- NAVIGATION & SPATIAL GEOMETRY ---
 
+/**
+ * [ PATCHED ] Counter-Clockwise helper for line intersection math.
+ */
+function ccw(A, B, C) {
+    return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+}
+
+/**
+ * [ PATCHED ] Determines if two mission-link segments cross.
+ */
 function doLinesIntersect(p1, q1, p2, q2) {
-    const ccw = (A, B, C) => (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
-    return ccw(p1, p2, q2) !== ccw(q1, p2, q2) && ccw(p1, q1, p2) !== ccw(p1, q1, q2);
+    return ccw(p1, q1, p2) !== ccw(p1, q1, q2) && ccw(p2, q2, p1) !== ccw(p2, q2, q1);
 }
 
 function getDistanceToSegment(p, a, b) {
@@ -63,7 +72,6 @@ function getDistanceToSegment(p, a, b) {
 
 function getSafeCoordinates(existingMissions) {
     const activeMissions = (existingMissions || []).filter(m => !m.captured);
-    const activeWire = activeMissions.slice(-8);
     const margin = 15;
     const usableSpace = 70;
     
@@ -190,6 +198,15 @@ function safelyGetActiveMission() {
     return null;
 }
 
+/**
+ * [ PATCHED ] Determines the visual perspective for Level 4.
+ */
+function getEncounterViewMode(encounterId) {
+    const externalCats = [0, 1, 2, 3, 5, 7, 8, 9, 14, 15, 16, 18, 19]; 
+    const categoryIndex = Math.floor(encounterId / 20);
+    return externalCats.includes(categoryIndex) ? 'external' : 'internal';
+}
+
 // --- DATABASE MIGRATION & INIT ---
 
 function runDatabaseMigration() {
@@ -205,8 +222,23 @@ function runDatabaseMigration() {
     save();
 }
 
+// --- SYSTEM INITIALIZATION ---
 runDatabaseMigration(); 
 generateStarfield(); 
 render();
+
 setInterval(render, 60000);
-window.addEventListener('resize', () => { if(state.level === 1) render(); });
+
+window.addEventListener('resize', () => { 
+    if(state.level === 1) render(); 
+});
+
+/**
+ * [ PATCHED ] Soft Warning event listener for UI stability.
+ */
+window.addEventListener('click', (e) => {
+    const toast = document.getElementById('soft-warning-toast');
+    if (toast && toast.classList.contains('show')) {
+        toast.classList.remove('show');
+    }
+});
