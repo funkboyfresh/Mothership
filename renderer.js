@@ -628,7 +628,6 @@ function renderLevel4(container, footer) {
     const viewMode = getEncounterViewMode(m.encounterId);
     const encounterName = ENCOUNTER_TYPES[m.encounterId] || "Unknown Phenomenon";
 
-    // Pre-calculate progress for the gauges
     const comp = m.subs.filter(s => s.c).length;
     const prog = m.subs.length ? Math.round((comp / m.subs.length) * 100) : 0;
 
@@ -643,10 +642,10 @@ function renderLevel4(container, footer) {
         </div>
     `;
 
+    // --- [ UPGRADED STAGE ] ---
     const stage = document.createElement('div');
     stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
     
-    // Tactical Data Streams
     const streamL = document.createElement('div');
     streamL.className = 'data-stream-left';
     streamL.innerHTML = `<div class="stream-content">${(Math.random().toString(16) + '<br>').repeat(50)}</div>`;
@@ -658,7 +657,6 @@ function renderLevel4(container, footer) {
     stage.appendChild(streamL);
     stage.appendChild(streamR);
 
-    // The Hero Unit (Ship or Internal HUD)
     const heroUnit = document.createElement('div');
     heroUnit.className = 'ship-hero-unit engine-glow';
     
@@ -682,7 +680,7 @@ function renderLevel4(container, footer) {
     stage.appendChild(heroUnit);
     bridge.appendChild(stage);
 
-    // Component Status Bar (Only declared ONCE now)
+    // Component HUD (Declared only once)
     const partStatus = document.createElement('div');
     partStatus.style.cssText = 'display:flex; gap:8px; margin-bottom:10px; opacity:0.8;';
     partStatus.innerHTML = Object.keys(state.shipParts).map(p => 
@@ -698,8 +696,7 @@ function renderLevel4(container, footer) {
             <div class="progress-text">${prog}% OPERATIONAL</div>
         </div>
     `);
-    
-    // Sub-routine Terminal
+
     const terminal = document.createElement('div');
     terminal.className = 'terminal-console';
     
@@ -724,11 +721,7 @@ function renderLevel4(container, footer) {
             node.onclick = () => {
                 const pulse = node.querySelector('.pulse-line');
                 pulse.classList.add('active-pulse');
-                
-                setTimeout(() => {
-                    triggerHaptic(20);
-                    toggleSubTask(i);
-                }, 150);
+                setTimeout(() => { triggerHaptic(20); toggleSubTask(i); }, 150);
             };
         }
         terminal.appendChild(node);
@@ -753,50 +746,6 @@ function renderLevel4(container, footer) {
     }
 
     container.appendChild(bridge);
-}
-
-function renderHullComponent(level) {
-    const w = 15 + (level * 2);
-    // Base Hull
-    let path = `<path d="M50 15 L${50+w} 85 L50 70 L${50-w} 85 Z" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
-    // Tactical Plating (Lvl 3+)
-    if (level >= 3) path += `<path d="M40 40 L60 40 M35 60 L65 60" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>`;
-    // Heavy Armor (Lvl 5+)
-    if (level >= 5) path += `<path d="M50 15 L${50+w+5} 90 L50 75 L${50-w-5} 90 Z" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2,1"/>`;
-    return path;
-}
-
-function renderThrusterComponent(level) {
-    let flares = `<path d="M42 75 L50 95 L58 75" fill="none" stroke="var(--thrust)" stroke-width="1.5" class="engine-flare"/>`;
-    if (level >= 3) flares += `<path d="M30 70 L35 85 L40 70 M60 70 L65 85 L70 70" fill="none" stroke="var(--thrust)" stroke-width="1" class="engine-flare" style="animation-delay: 0.05s"/>`;
-    if (level >= 5) flares += `<path d="M50 70 L50 100" stroke="var(--thrust)" stroke-width="3" opacity="0.4" class="engine-flare"/>`;
-    return flares;
-}
-
-function renderReactorComponent(level) {
-    const size = 3 + level;
-    // Central glowing core
-    return `<circle cx="50" cy="55" r="${size}" fill="none" stroke="var(--accent)" stroke-width="1.5" class="engine-glow">
-        <animate attributeName="r" values="${size};${size+2};${size}" dur="2s" repeatCount="indefinite" />
-    </circle>`;
-}
-
-function renderShieldComponent(level) {
-    if (level < 2) return '';
-    const opacity = Math.min(0.1 + (level * 0.05), 0.4);
-    return `<circle cx="50" cy="50" r="45" fill="var(--accent)" fill-opacity="${opacity}" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="4,2" opacity="0.6"/>`;
-}
-
-function renderSensorComponent(level) {
-    if (level < 2) return '';
-    let sensors = `<path d="M30 40 L20 30 M70 40 L80 30" stroke="var(--accent)" stroke-width="1"/>`;
-    if (level >= 4) sensors += `<circle cx="20" cy="30" r="2" fill="var(--accent)"/><circle cx="80" cy="30" r="2" fill="var(--accent)"/>`;
-    return sensors;
-}
-
-function renderMagnetComponent(level) {
-    if (level < 2) return '';
-    return `<path d="M40 85 Q50 100 60 85" fill="none" stroke="var(--captured)" stroke-width="${level}" opacity="0.5" stroke-linecap="round"/>`;
 }
 
 // [ FIXED ] Added name and proper render() call!
