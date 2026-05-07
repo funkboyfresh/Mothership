@@ -49,7 +49,22 @@ function getCapturedCount(sectorId = null) {
     return count;
 }
 
-//
+function showSoftWarning(message) {
+    let toast = document.getElementById('soft-warning-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'soft-warning-toast';
+        toast.className = 'soft-warning';
+        document.getElementById('app').appendChild(toast);
+    }
+    toast.innerText = message;
+    toast.classList.add('show');
+    
+    // Clear after 3 seconds
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+//Sip upgrade system//
 function upgradeShipPart(part) {
     const currentLevel = state.shipParts[part];
     const cost = currentLevel * 15; // Escalating cost logic
