@@ -663,10 +663,10 @@ function renderLevel2(container, footer, activeSector) {
         else if (m.warningLevel === 24) { pColor = '#ff9900'; }
         else if (m.warningLevel === 48) { pColor = '#ffd700'; }
         
-        // [ PATCHED ] Ring color locked to decay state fill color
+        // Ring color locked to decay state fill color
         let bColor = pColor;
         
-        // [ PATCHED ] Mass randomized from 1x up to 200% larger
+        // Mass randomized from 1x up to 200% larger
         const size = 4 * (1 + (Math.random() * 2));
         
         particle.style.cssText = `position:absolute; width:${size}px; height:${size}px; border-radius:50%; background:${pColor}; border:1px solid ${bColor}; opacity:0.6; left:${px}px; top:${py}px;`;
@@ -674,7 +674,7 @@ function renderLevel2(container, footer, activeSector) {
         particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
         particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
 
-        // [ PATCHED ] Velocity randomized from current speed up to 100% faster
+        // Velocity randomized from current speed up to 100% faster
         const speedMultiplier = 1 + Math.random();
         const floatDur = (10 + Math.random() * 13.3) / speedMultiplier;
         particle.style.setProperty('--float-dur', `${floatDur}s`);
@@ -694,9 +694,9 @@ function renderLevel2(container, footer, activeSector) {
     
     // --- FIX 5: Custom planetary dimming logic ---
     const views = [ 
-        { id: 'TRAJECTORY', size: 280, speed: 60, op: 0.5, glowMult: 0.5 }, // 50% opacity
-        { id: 'HORIZON', size: 190, speed: 30, op: 0.75, glowMult: 0.75 }, // 75% opacity 
-        { id: 'IMMINENT', size: 100, speed: 15, op: 1.0, glowMult: 1.5 } // 100% opacity, +50% brightness
+        { id: 'TRAJECTORY', size: 280, speed: 60, op: 0.5, glowMult: 0.5 }, 
+        { id: 'HORIZON', size: 190, speed: 30, op: 0.75, glowMult: 0.75 },  
+        { id: 'IMMINENT', size: 100, speed: 15, op: 1.0, glowMult: 1.5 } 
     ];
     
     views.forEach(d => {
@@ -755,8 +755,9 @@ function renderLevel2(container, footer, activeSector) {
             else if (m.warningLevel === 24) dotColor = '#ff9900';
             else if (m.warningLevel === 48) dotColor = '#ffd700';
 
-            // --- FIX 2: Anchors perfectly to the 280x280 center box so dots ride the ring perfectly ---
-            dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${dotColor}; left:calc(${140 + r * Math.cos(angle)}px - 3px); top:calc(${140 + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${dotColor};`;
+            // Node width/height increased to 24px (4x original mass). 
+            // Positional offset adjusted to 12px to maintain perfect ring alignment.
+            dot.style.cssText = `position:absolute; width:24px; height:24px; border-radius:50%; background:${dotColor}; left:calc(${140 + r * Math.cos(angle)}px - 12px); top:calc(${140 + r * Math.sin(angle)}px - 12px); box-shadow: 0 0 15px ${dotColor};`;
             starField.appendChild(dot);
         });
         
