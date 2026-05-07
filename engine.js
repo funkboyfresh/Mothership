@@ -500,7 +500,10 @@ function renderLevel1(container, footer) {
             const py = cy + (Math.random() - 0.5) * (h * 0.7);
             particle.setAttribute("cx", px);
             particle.setAttribute("cy", py);
-            particle.setAttribute("r", "2.25");
+            
+            // [ PATCHED ] Mass randomized from 1x up to 200% larger (3x total)
+            const rSize = 2.25 * (1 + (Math.random() * 2));
+            particle.setAttribute("r", rSize.toString());
             
             let pColor = s.color;
             if (m.overdue) pColor = '#ff2a2a';
@@ -510,17 +513,22 @@ function renderLevel1(container, footer) {
             particle.setAttribute("fill", pColor);
             particle.setAttribute("opacity", "0.6");
             
+            // [ PATCHED ] Velocity randomized from current speed up to 100% faster
+            const speedMultiplier = 1 + Math.random(); 
+            const durX = (15 + Math.random() * 20) / speedMultiplier;
+            const durY = (15 + Math.random() * 20) / speedMultiplier;
+
             // --- BULLETPROOF SVG DEBRIS ANIMATION ---
             const animX = document.createElementNS("http://www.w3.org/2000/svg", "animate");
             animX.setAttribute("attributeName", "cx");
             animX.setAttribute("values", `${px}; ${px + (Math.random()-0.5)*60}; ${px}`);
-            animX.setAttribute("dur", `${15 + Math.random()*20}s`);
+            animX.setAttribute("dur", `${durX}s`);
             animX.setAttribute("repeatCount", "indefinite");
 
             const animY = document.createElementNS("http://www.w3.org/2000/svg", "animate");
             animY.setAttribute("attributeName", "cy");
             animY.setAttribute("values", `${py}; ${py + (Math.random()-0.5)*60}; ${py}`);
-            animY.setAttribute("dur", `${15 + Math.random()*20}s`);
+            animY.setAttribute("dur", `${durY}s`);
             animY.setAttribute("repeatCount", "indefinite");
 
             particle.appendChild(animX);
@@ -651,24 +659,29 @@ function renderLevel2(container, footer, activeSector) {
         const py = 140 + r * Math.sin(angle);
         
         let pColor = activeSector.color;
-        let bColor = activeSector.color;
         if (m.overdue) { pColor = '#ff2a2a'; }
         else if (m.warningLevel === 24) { pColor = '#ff9900'; }
         else if (m.warningLevel === 48) { pColor = '#ffd700'; }
         
-        particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; border:1px solid ${bColor}; opacity:0.6; left:${px}px; top:${py}px;`;
-        particle.className = 'debris-node'; // Driven by pure CSS float logic now
+        // [ PATCHED ] Ring color locked to decay state fill color
+        let bColor = pColor;
+        
+        // [ PATCHED ] Mass randomized from 1x up to 200% larger
+        const size = 4 * (1 + (Math.random() * 2));
+        
+        particle.style.cssText = `position:absolute; width:${size}px; height:${size}px; border-radius:50%; background:${pColor}; border:1px solid ${bColor}; opacity:0.6; left:${px}px; top:${py}px;`;
+        particle.className = 'debris-node'; 
         particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
         particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
-        particle.style.setProperty('--float-dur', `${15 + Math.random() * 20}s`);
 
-        // [ PATCHED ] Velocity increased by 50% (duration reduced from 15-35s to 10-23s)
-        particle.style.setProperty('--float-dur', `${10 + Math.random() * 13.3}s`);
-        
-        debrisField.appendChild(particle);
+        // [ PATCHED ] Velocity randomized from current speed up to 100% faster
+        const speedMultiplier = 1 + Math.random();
+        const floatDur = (10 + Math.random() * 13.3) / speedMultiplier;
+        particle.style.setProperty('--float-dur', `${floatDur}s`);
         
         debrisField.appendChild(particle);
     });
+    
     gravityWell.appendChild(debrisField);
     center.appendChild(gravityWell);
     // ---------------------------------------------
