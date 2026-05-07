@@ -636,14 +636,12 @@ function renderLevel4(container, footer) {
     const stage = document.createElement('div');
     stage.className = `ship-view-stage view-${viewMode} ${isDecay ? 'status-danger' : ''}`;
     
-    // [ FIXED ] Corrected heroUnit declaration (Removed duplicate 'const')
     const heroUnit = document.createElement('div');
     heroUnit.className = 'ship-hero-unit engine-glow';
     
     if (viewMode === 'external') {
         drawModularShip(heroUnit, state.shipParts); 
     } else {
-        // [ PATCHED ] Added Internal HUD fallback SVG
         heroUnit.innerHTML = `
             <svg width="150" height="100" viewBox="0 0 150 100">
                 <rect x="10" y="10" width="130" height="80" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4"/>
@@ -666,24 +664,65 @@ function renderLevel4(container, footer) {
         </div>
     `);
 
-    const nodeContainer = document.createElement('div');
-    nodeContainer.style.cssText = 'width: 90%; max-width: 400px; margin-top: 10px;';
+    // --- [ START OF TERMINAL OVERHAUL ] ---
+    const terminal = document.createElement('div');
+    terminal.className = 'terminal-console';
+    
+    // Header for the console showing real-time Scrap stats
+    terminal.innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:10px; letter-spacing:1px;">
+            <span>SYSTEM_DIAGNOSTIC: ACTIVE</span>
+            <span>SCRAP_RESERVES: ${state.scrap}</span>
+        </div>
+    `;
 
     m.subs.forEach((s, i) => {
         const node = document.createElement('div');
         node.className = `system-node ${s.c ? 'resolved' : ''}`;
-        node.innerHTML = `<span>${s.c ? '●' : '○'}</span> <span style="flex:1">${s.t}</span>`;
+        
+        node.innerHTML = `
+            <div class="node-status-light"></div>
+            <span style="flex:1; font-family:'Courier New', monospace; font-size:0.75rem;">${s.t.toUpperCase()}</span>
+            <div class="pulse-line"></div>
+        `;
         
         if (!m.captured) {
             node.onclick = () => {
-                triggerHaptic(20);
-                toggleSubTask(i);
+                // Trigger the kinetic pulse effect immediately
+                const pulse = node.querySelector('.pulse-line');
+                pulse.classList.add('active-pulse');
+                
+                // Allow a brief moment for the animation before the state re-renders
+                setTimeout(() => {
+                    triggerHaptic(20);
+                    toggleSubTask(i);
+                }, 150);
             };
         }
-        nodeContainer.appendChild(node);
+        terminal.appendChild(node);
     });
     
-    bridge.appendChild(nodeContainer);
+    bridge.appendChild(terminal);
+    // --- [ END OF TERMINAL OVERHAUL ] ---
+
+    const btnWrap = document.createElement('div'); 
+    btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
+    btnWrap.innerHTML = `
+        <button class="mod-btn" onclick="openEditModal(${m.id})">RECONFIGURE</button>
+        <button class="mod-btn" onclick="deleteMission(${m.id})" style="color:var(--thrust)">ABORT</button>
+    `;
+    bridge.appendChild(btnWrap); 
+
+    if (prog === 100 && !m.captured) {
+        const modal = document.createElement('div'); 
+        modal.className = 'hex-modal warp-transition'; 
+        modal.innerHTML = `<h2 style="color: var(--captured)">OBJECTIVE SECURED</h2>
+                          <button class="success-btn" onclick="completeMission()">LOG DATA & DISENGAGE</button>`; 
+        bridge.appendChild(modal);
+    }
+
+    container.appendChild(bridge);
+}
 
     const btnWrap = document.createElement('div'); 
     btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
