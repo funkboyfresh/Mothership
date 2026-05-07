@@ -391,3 +391,43 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     background: var(--border);
     border-radius: 2px;
 }
+
+/* --- TACTICAL DATA STREAMS --- */
+
+.data-stream-left, .data-stream-right {
+    position: absolute;
+    top: 15%;
+    width: 60px;
+    height: 50%;
+    font-family: 'Courier New', monospace;
+    font-size: 0.45rem;
+    color: var(--accent);
+    opacity: 0.3;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 1.2;
+    mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+
+.data-stream-left { left: 10px; text-align: left; }
+.data-stream-right { right: 10px; text-align: right; }
+
+.stream-content {
+    animation: stream-scroll 10s linear infinite;
+}
+
+@keyframes stream-scroll {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+}
+
+/* Internal HUD Gauges */
+.cockpit-gauge {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: gauge-load 2s ease-out forwards;
+}
+
+@keyframes gauge-load {
+    to { stroke-dashoffset: var(--gauge-val); }
+}
