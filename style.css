@@ -196,10 +196,16 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
     75% { transform: translate(0, -0.6px); }
 }
 
-/* 24-48 Hours (Yellow) - 50% Pulse Speed of Orange, No Vibrate */
+/* 24-48 Hours (Yellow) - 25% Reduced Spread, 25% Faster Pulse, No Vibrate */
 @keyframes pulse-yellow {
-    0%, 100% { box-shadow: 0 0 9px #ffd700; filter: brightness(1); }
-    50% { box-shadow: 0 0 27px #ffd700; filter: brightness(1.05); }
+    /* [ PATCHED ] Pulse spread reduced from 9px/27px to 7px/20px */
+    0%, 100% { box-shadow: 0 0 7px #ffd700; filter: brightness(1); }
+    50% { box-shadow: 0 0 20px #ffd700; filter: brightness(1.05); }
+}
+
+.star-container.warning-48 .star-node {
+    /* [ PATCHED ] Pulse speed increased by 25% (duration reduced from 9s to 7.2s) */
+    animation: pulse-yellow 7.2s infinite ease-in-out;
 }
 
 /* Priority Menu Red Flasher */
