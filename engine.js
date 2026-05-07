@@ -379,9 +379,7 @@ window.addEventListener('resize', () => {
     if(state.level === 1) render(); 
 });
 
-/**
- * [ PATCHED ] Soft Warning event listener for UI stability.
- */
+/** [ PATCHED ] Soft Warning event listener for UI stability.*/
 window.addEventListener('click', (e) => {
     const toast = document.getElementById('soft-warning-toast');
     if (toast && toast.classList.contains('show')) {
