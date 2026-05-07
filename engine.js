@@ -1,5 +1,10 @@
 const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
 const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
+const ENCOUNTER_TYPES = [
+    'Corrosive Nebula', 'Gravitational Anomaly', 'Solar Flare', 'Asteroid Field', 'Ion Storm',
+    'Pirate Ambush', 'First Contact Protocol', 'Bio-Mimetic Swarm', 'Cyber-Infiltration', 'Tractor Beam Snare',
+    'Resource Extraction', 'Derelict Salvage', 'Quantum Slipstream', 'Deep Space Relay', 'Distress Beacon'
+];
 
 const defaultSectors = [
     { id: 'sec_career', name: 'CAREER', color: '#00e5ff', seed: {x: 0.3, y: 0.3} },
@@ -298,6 +303,7 @@ function checkDecayStatus() {
 }
 
 // --- DEFAULT PROTOCOL GENERATOR ---
+// --- DEFAULT PROTOCOL GENERATOR ---
 function generateDefaultMission(sectorName, horizon) {
     let tName = `${horizon} PROTOCOL: ${sectorName.toUpperCase()}`;
     let sub1 = "Establish primary objective";
@@ -349,7 +355,8 @@ function generateDefaultMission(sectorName, horizon) {
         dueTime: null, 
         captured: false, 
         overdue: false, 
-        warningLevel: 0 
+        warningLevel: 0,
+        encounterId: Math.floor(Math.random() * 15) // [ PATCHED ] Encounter seed injected
     };
 }
 
@@ -1177,7 +1184,8 @@ function saveTaskModal() {
                 state.missions[state.sectorId][finalH].push({ 
                     id: editModeId, name, 
                     subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-                    x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr 
+                    x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
+                    encounterId: Math.floor(Math.random() * 15) // [ PATCHED ] Encounter seed injected
                 }); 
             }
         }
@@ -1186,7 +1194,8 @@ function saveTaskModal() {
         state.missions[state.sectorId][finalH].push({ 
             id: Date.now(), name, 
             subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
-            x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr 
+            x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
+            encounterId: Math.floor(Math.random() * 15) // [ PATCHED ] Encounter seed injected
         }); 
     }
     
