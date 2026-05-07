@@ -49,18 +49,30 @@ function getCapturedCount(sectorId = null) {
     return count;
 }
 
+//
+function upgradeShipPart(part) {
+    const currentLevel = state.shipParts[part];
+    const cost = currentLevel * 15; // Escalating cost logic
+
+    if (state.scrap >= cost) {
+        state.scrap -= cost;
+        state.shipParts[part]++;
+        triggerHaptic([50, 100, 50]);
+        save();
+        render(); // Refresh UI to show new ship form and scrap balance
+    } else {
+        showSoftWarning(`INSUFFICIENT SCRAP: NEED ${cost}`);
+    }
+}
+
 // --- NAVIGATION & SPATIAL GEOMETRY ---
 
-/**
- * [ PATCHED ] Counter-Clockwise helper for line intersection math.
- */
+/*** [ PATCHED ] Counter-Clockwise helper for line intersection math.*/
 function ccw(A, B, C) {
     return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
 }
 
-/**
- * [ PATCHED ] Determines if two mission-link segments cross.
- */
+/*** [ PATCHED ] Determines if two mission-link segments cross.*/
 function doLinesIntersect(p1, q1, p2, q2) {
     return ccw(p1, q1, p2) !== ccw(p1, q1, q2) && ccw(p2, q2, p1) !== ccw(p2, q2, q1);
 }
@@ -286,9 +298,7 @@ function safelyGetActiveMission() {
     return null;
 }
 
-/**
- * [ PATCHED ] Determines the visual perspective for Level 4.
- */
+/*** [ PATCHED ] Determines the visual perspective for Level 4. */
 function getEncounterViewMode(encounterId) {
     const externalCats = [0, 1, 2, 3, 5, 7, 8, 9, 14, 15, 16, 18, 19]; 
     const categoryIndex = Math.floor(encounterId / 20);
@@ -331,11 +341,8 @@ function togglePilotLog() {
     logModal.innerHTML = `<div class="modal-box"><div class="modal-header">PILOT FLIGHT LOG</div><div class="subtasks-container">${allLogs.map(m => `<div class="log-entry">${m.name} [SECURED]</div>`).join('')}</div><button class="mod-btn" onclick="this.closest('.modal-overlay').style.display='none'">DISMISS</button></div>`;
     logModal.style.display = 'flex';
 }
-// Add the missing saveTaskModal from our previous turn here too!
 
-// --- DATABASE MIGRATION & INIT ---
-
-//
+// --- DATABASE MIGRATION & INIT ---//
 function runDatabaseMigration() {
     let migrated = false;
     state.sectors.forEach(s => {
