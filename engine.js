@@ -510,15 +510,16 @@ function renderLevel1(container, footer) {
             particle.setAttribute("fill", pColor);
             particle.setAttribute("opacity", "0.6");
             
+            // --- BULLETPROOF SVG DEBRIS ANIMATION ---
             const animX = document.createElementNS("http://www.w3.org/2000/svg", "animate");
             animX.setAttribute("attributeName", "cx");
-            animX.setAttribute("values", `${px}; ${px + (Math.random()-0.5)*40}; ${px}`);
+            animX.setAttribute("values", `${px}; ${px + (Math.random()-0.5)*60}; ${px}`);
             animX.setAttribute("dur", `${15 + Math.random()*20}s`);
             animX.setAttribute("repeatCount", "indefinite");
 
             const animY = document.createElementNS("http://www.w3.org/2000/svg", "animate");
             animY.setAttribute("attributeName", "cy");
-            animY.setAttribute("values", `${py}; ${py + (Math.random()-0.5)*40}; ${py}`);
+            animY.setAttribute("values", `${py}; ${py + (Math.random()-0.5)*60}; ${py}`);
             animY.setAttribute("dur", `${15 + Math.random()*20}s`);
             animY.setAttribute("repeatCount", "indefinite");
 
@@ -529,8 +530,10 @@ function renderLevel1(container, footer) {
         
         const rings = [ { id: 'IMMINENT', r: 12, s: 10 }, { id: 'HORIZON', r: 20, s: 20 }, { id: 'TRAJECTORY', r: 28, s: 40 } ];
         
-        const ringOffset = Math.random() * Math.PI * 2;
         rings.forEach(ring => {
+            // --- FIX 1: Unique randomization offset per ring ---
+            const ringOffset = Math.random() * Math.PI * 2; 
+
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", cx); 
             circle.setAttribute("cy", cy); 
@@ -627,7 +630,7 @@ function renderLevel2(container, footer, activeSector) {
         gravityWell.appendChild(p);
     }
     
-    // --- L2 DEBRIS FIELD WITH DRIFT ---
+    // --- L2 DEBRIS RESTORED WITH PURE CSS DRIFT ---
     const debrisField = document.createElement('div');
     debrisField.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index: 15;';
     
@@ -648,20 +651,22 @@ function renderLevel2(container, footer, activeSector) {
         const py = 140 + r * Math.sin(angle);
         
         let pColor = activeSector.color;
-        if (m.overdue) pColor = '#ff2a2a';
-        else if (m.warningLevel === 24) pColor = '#ff9900';
-        else if (m.warningLevel === 48) pColor = '#ffd700';
+        let bColor = activeSector.color;
+        if (m.overdue) { pColor = '#ff2a2a'; }
+        else if (m.warningLevel === 24) { pColor = '#ff9900'; }
+        else if (m.warningLevel === 48) { pColor = '#ffd700'; }
         
-        particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; opacity:0.6; left:${px}px; top:${py}px;`;
-        particle.className = 'debris-node'; 
-        particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 40}px`);
-        particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 40}px`);
+        particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; border:1px solid ${bColor}; opacity:0.6; left:${px}px; top:${py}px;`;
+        particle.className = 'debris-node'; // Driven by pure CSS float logic now
+        particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
+        particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
         particle.style.setProperty('--float-dur', `${15 + Math.random() * 20}s`);
         
         debrisField.appendChild(particle);
     });
     gravityWell.appendChild(debrisField);
     center.appendChild(gravityWell);
+    // ---------------------------------------------
 
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
@@ -669,11 +674,11 @@ function renderLevel2(container, footer, activeSector) {
     textSvg.innerHTML = `<defs><path id="path-horizon" d="M 67.5,140 A 72.5,72.5 0 0,1 212.5,140" /><path id="path-trajectory" d="M 22.5,140 A 117.5,117.5 0 0,1 257.5,140" /></defs>`;
     center.appendChild(textSvg);
     
-    // --- L2 CONFIG: Adjusted Opacity & Brightness ---
+    // --- FIX 5: Custom planetary dimming logic ---
     const views = [ 
-        { id: 'TRAJECTORY', size: 280, speed: 60, op: 0.5, glowMult: 0.5 }, 
-        { id: 'HORIZON', size: 190, speed: 30, op: 0.75, glowMult: 0.75 }, 
-        { id: 'IMMINENT', size: 100, speed: 15, op: 1.0, glowMult: 1.5 } 
+        { id: 'TRAJECTORY', size: 280, speed: 60, op: 0.5, glowMult: 0.5 }, // 50% opacity
+        { id: 'HORIZON', size: 190, speed: 30, op: 0.75, glowMult: 0.75 }, // 75% opacity 
+        { id: 'IMMINENT', size: 100, speed: 15, op: 1.0, glowMult: 1.5 } // 100% opacity, +50% brightness
     ];
     
     views.forEach(d => {
@@ -684,7 +689,7 @@ function renderLevel2(container, footer, activeSector) {
         wrapper.style.height = d.size + 'px';
         
         wrapper.style.opacity = overdue ? 1 : d.op;
-        if (!overdue && d.glowMult !== 1) {
+        if (!overdue) {
             const spread = 20 * d.glowMult;
             wrapper.style.boxShadow = `0 0 ${spread}px var(--accent-glow) inset, 0 0 ${spread}px var(--accent-glow)`;
         }
@@ -721,6 +726,7 @@ function renderLevel2(container, footer, activeSector) {
         
         const missions = (state.missions[state.sectorId]?.[d.id] || []).filter(m => !m.captured);
         const ringOffset = Math.random() * Math.PI * 2;
+        
         missions.forEach((m, i) => {
             const angle = ringOffset + (i / missions.length) * Math.PI * 2;
             const r = d.size/2;
@@ -731,7 +737,8 @@ function renderLevel2(container, footer, activeSector) {
             else if (m.warningLevel === 24) dotColor = '#ff9900';
             else if (m.warningLevel === 48) dotColor = '#ffd700';
 
-            dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${dotColor}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${dotColor};`;
+            // --- FIX 2: Anchors perfectly to the 280x280 center box so dots ride the ring perfectly ---
+            dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${dotColor}; left:calc(${140 + r * Math.cos(angle)}px - 3px); top:calc(${140 + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${dotColor};`;
             starField.appendChild(dot);
         });
         
@@ -757,8 +764,8 @@ function renderLevel3(container, footer) {
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
     const now = Date.now();
-    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
     
+    // Wire logic isolates strictly to active targets and the most recently captured nodes
     const allActive = missions.filter(m => !m.captured);
     const wireActive = allActive.slice(0, 6);
     
@@ -770,7 +777,7 @@ function renderLevel3(container, footer) {
     
     for (let i = firstActiveIdx - 1; i >= 0; i--) {
         let m = missions[i];
-        if (m.captured && (now - (m.completionTimestamp || 0) < threeDaysMs)) {
+        if (m.captured) {
             preCaptured.unshift(m);
             if (preCaptured.length >= 2) break;
         }
@@ -781,12 +788,13 @@ function renderLevel3(container, footer) {
         let m = missions[i];
         if (!m.captured) {
             wireTasks.push(m);
-        } else if (m.captured && (now - (m.completionTimestamp || 0) < threeDaysMs)) {
+        } else if (m.captured) {
             wireTasks.push(m);
         }
     }
     
-    const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m) && (now - (m.completionTimestamp || 0) < threeDaysMs)).slice(-20);
+    // Always render completed tasks not actively linking the wire as debris
+    const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m)).slice(-20);
 
     const header = document.createElement('div');
     header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
@@ -871,6 +879,7 @@ function renderLevel3(container, footer) {
             else if (m.warningLevel === 48) warnClass = 'warning-48';
         }
 
+        // Apply debris class for drifting, or standard static transition
         star.className = `star-container ${isDebris ? 'debris-node' : 'warp-transition'} ${warnClass}`;
         
         if (isDebris && !m.scale) { 
@@ -885,7 +894,7 @@ function renderLevel3(container, footer) {
         if (isDebris) {
             star.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
             star.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
-            star.style.setProperty('--float-dur', `${10 + Math.random() * 15}s`);
+            star.style.setProperty('--float-dur', `${15 + Math.random() * 15}s`);
         }
 
         if (!m.captured) { 
@@ -956,6 +965,8 @@ function renderLevel3(container, footer) {
         
         star.appendChild(node); 
         star.appendChild(label); 
+        
+        // This append ensures all generated DOM nodes actually hit the viewport
         container.appendChild(star);
     });
 }
