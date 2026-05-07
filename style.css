@@ -231,7 +231,12 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 }
 .star-container.decaying .star-label { color: var(--thrust) !important; text-shadow: 0 0 10px var(--thrust) !important; }
 
-.star-container.warning-24 { animation: vibrate-fast 0.13s infinite; }
+/* < 24 Hours (Orange) - Vibrate neutralized, Pulse intact */
+.star-container.warning-24 { 
+    /* [ PATCHED ] Kinetic vibration severed from parent container */
+    animation: none; 
+}
+
 .star-container.warning-24 .star-node {
     animation: pulse-orange 6s infinite ease-in-out;
 }
