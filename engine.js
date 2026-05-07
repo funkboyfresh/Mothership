@@ -389,14 +389,6 @@ function togglePilotLog() {
     logModal.style.display = 'flex';
 }
 
-// --- [ DEEP CLEAN MIGRATION PROTOCOLS ] ---
-
-let missionIdCounter = 0; // Ensures absolute uniqueness
-
-// --- [ DEEP CLEAN MIGRATION PROTOCOLS ] ---
-
-let missionIdCounter = 0; // Ensures absolute uniqueness
-
 // --- SECTOR & SETTINGS MANAGEMENT ---
 
 function openSectorModal() {
