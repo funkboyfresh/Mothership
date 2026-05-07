@@ -184,7 +184,10 @@ function checkDecayStatus() {
     }
 }
 
+let missionIdCounter = 0; // Ensures absolute uniqueness
+
 function generateDefaultMission(sectorName, horizon) {
+    missionIdCounter++;
     let tName = `${horizon} PROTOCOL: ${sectorName.toUpperCase()}`;
     let sub1 = "Establish primary objective", sub2 = "Allocate sector resources", sub3 = "Commence routine tracking";
     
@@ -194,7 +197,7 @@ function generateDefaultMission(sectorName, horizon) {
     else if (sec.includes('PERSONAL')) { tName = `${horizon} VITALITY METRICS`; sub1 = "Assess physical readiness"; sub2 = "Schedule downtime cycle"; sub3 = "Review personal goals"; }
 
     return { 
-        id: Date.now() + Math.floor(Math.random() * 1000), 
+        id: Date.now() + missionIdCounter, // Guaranteed unique ID
         name: tName, 
         subs: [ {t: sub1, c: false}, {t: sub2, c: false}, {t: sub3, c: false} ], 
         x: undefined, y: undefined, dueDate: null, dueTime: null, 
@@ -331,7 +334,33 @@ function openTaskModal(h, f) {
     document.getElementById('task-modal-overlay').style.display = 'flex'; 
 }
 
-function closeTaskModal() { document.getElementById('task-modal-overlay').style.display = 'none'; }
+function openEditModal(id) {
+    const m = safelyGetActiveMission();
+    if (!m) return;
+    
+    editModeId = id;
+    defaultHorizonContext = state.horizon;
+    isHorizonFixed = false;
+    
+    document.getElementById('modal-task-name').value = m.name;
+    document.getElementById('modal-horizon-select').value = state.horizon;
+    document.getElementById('modal-horizon-group').style.display = 'block';
+    
+    document.getElementById('modal-task-date').value = m.dueDate || '';
+    document.getElementById('modal-task-time').value = m.dueTime || '';
+    
+    tempSubtasks = m.subs.map(s => s.t);
+    while (tempSubtasks.length < 3) tempSubtasks.push(''); // Ensure blank inputs exist
+    renderModalSubtasks();
+    
+    document.getElementById('modal-header-text').innerText = 'RECONFIGURE TARGET';
+    document.getElementById('task-modal-overlay').style.display = 'flex';
+}
+
+function closeTaskModal() { 
+    document.getElementById('task-modal-overlay').style.display = 'none'; 
+    editModeId = null; // Clear edit state
+}
 
 function renderModalSubtasks() {
     const list = document.getElementById('modal-subtasks-list'); 
@@ -357,7 +386,6 @@ function togglePilotLog() {
     logModal.style.display = 'flex';
 }
 
-// --- DATABASE MIGRATION & INIT ---//
 function runDatabaseMigration() {
     let migrated = false;
     state.sectors.forEach(s => {
@@ -371,12 +399,16 @@ function runDatabaseMigration() {
         HORIZONS.forEach(h => {
             if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
             
-            // [ PATCHED ] Assign coordinates to nodes that are missing them (Premade Nodes)
             state.missions[s.id][h].forEach((m, index, arr) => {
+                // Catch old Ghost nodes missing an ID
+                if (m.id === undefined) {
+                    missionIdCounter++;
+                    m.id = Date.now() + missionIdCounter;
+                    migrated = true;
+                }
                 if (m.x === undefined || isNaN(m.x)) {
                     let coords = getSafeCoordinates(arr.slice(0, index));
-                    m.x = coords.x; 
-                    m.y = coords.y; 
+                    m.x = coords.x; m.y = coords.y; 
                     migrated = true;
                 }
                 if (m.encounterId === undefined) {
