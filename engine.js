@@ -1,18 +1,26 @@
 const HORIZONS = ['TRAJECTORY', 'HORIZON', 'IMMINENT'];
 const AUTO_PALETTE = ['#00e5ff', '#ffd700', '#ff00ff', '#00ff88', '#ff3366', '#a200ff', '#00ffcc', '#ff9900'];
 const ENCOUNTER_TYPES = [
-    // Category Alpha: Environmental
-    'Corrosive Nebula', 'Gravitational Anomaly', 'Solar Flare', 'Asteroid Field', 'Ion Storm',
-    'Dark Matter Reef', 'Quantum Micro-Fracture', 'Hyper-Velocity Dust Storm', 'Sub-Space Sinkhole', 'Supernova Shockwave',
-    // Category Beta: Hostile
-    'Pirate Ambush', 'First Contact Protocol', 'Bio-Mimetic Swarm', 'Cyber-Infiltration', 'Tractor Beam Snare',
-    'Mercenary Blockade', 'Parasitic AI Infection', 'Cloaked Stalker', 'Automated Defense Platform', 'Mutineer Boarding Party',
-    // Category Gamma: Operations
-    'Resource Extraction', 'Derelict Salvage', 'Quantum Slipstream', 'Deep Space Relay', 'Distress Beacon',
-    'Stellar Cartography', 'Orbital Facility Construction', 'Exotic Flora Retrieval', 'Artifact Excavation', 'Comet Water Harvesting',
-    // Category Delta: Social
-    'Nomad Merchant Caravan', 'Civilian Evacuation', 'Diplomatic Escort', 'Stranded Smuggler', 'Refugee Flotilla',
-    'Sector Patrol Inspection', 'Medical Supply Run', 'Rogue AI Diplomat', 'VIP Extraction', 'Interstellar Regatta'
+    // 1. ENVIRONMENTAL (20)
+    'Corrosive Nebula', 'Solar Flare', 'Ion Storm', 'Asteroid Field', 'Gravitational Anomaly', 'Dark Matter Reef', 'Supernova Shockwave', 'Quantum Micro-Fracture', 'Hyper-Velocity Dust', 'Sub-Space Sinkhole', 'Electromagnetic Pulse', 'Radiation Belt', 'Frozen Gas Cloud', 'Micrometeoroid Shower', 'Unstable Wormhole', 'Neutron Star Pull', 'Cometary Tail', 'Void Pocket', 'Atmospheric Friction', 'Gamma Ray Burst',
+    // 2. TACTICAL COMBAT (20)
+    'Pirate Ambush', 'Mercenary Blockade', 'Automated Defense', 'Cloaked Stalker', 'Mutineer Boarding', 'System Patrol', 'Bounty Hunter', 'Carrier Strike', 'Weapon Platform', 'Guerrilla Raid', 'Stellar Siege', 'Supply Line Raid', 'Frigate Skirmish', 'Minefield Navigation', 'Escort Interception', 'Shadow Fleet Pursuit', 'Orbital Bombardment', 'Rebel Insurgency', 'Dreadnought Duel', 'Stealth Infiltration',
+    // 3. OPERATIONS (20)
+    'Resource Extraction', 'Deep Space Relay', 'Distress Beacon', 'Stellar Cartography', 'Orbital Construction', 'Comet Harvesting', 'Satellite Deployment', 'Fuel Siphoning', 'Survey Drone Launch', 'Planetary Landing', 'Cargo Hooking', 'Engine Tuning', 'Antenna Alignment', 'Shield Calibration', 'Reactor Purge', 'Sensor Sweep', 'Navigation Update', 'Emergency Patching', 'Scrap Metal Recovery', 'Drill Calibration',
+    // 4. SOCIAL & DIPLOMATIC (20)
+    'Merchant Caravan', 'Civilian Evacuation', 'Diplomatic Escort', 'Stranded Smuggler', 'Refugee Flotilla', 'Inspection Boarding', 'Medical Supply Run', 'Rogue AI Diplomat', 'VIP Extraction', 'Interstellar Regatta', 'Trade Negotiation', 'Cultural Exchange', 'Peace Treaty', 'Pilgrimage Fleet', 'Black Market Deal', 'Prisoner Exchange', 'Tourist Transport', 'Science Expedition', 'Relief Effort', 'Ambassador Transit',
+    // 5. INTERNAL CRISIS (20)
+    'Warp Core Leak', 'Hydroponics Overgrowth', 'Gravity Inversion', 'Rogue Repair Bot', 'Toxic Air Leak', 'Fire in Sector 4', 'Mainframe Overheat', 'Water Reclamation Failure', 'Medical Bay Outage', 'Airlock Malfunction', 'Power Grid Surge', 'Inertial Dampener Fail', 'Hull Stress Fracture', 'Cryo-Pod Failure', 'Shield Harmonic Drift', 'Computer Virus', 'Oxygen Depletion', 'Internal Sabotage', 'Battery Explosion', 'Bridge Lockout',
+    // 6. COSMIC ANOMALIES (20)
+    'Temporal Loop', 'Dimensional Bleed', 'Sentient Nebula', 'Non-Euclidean Space', 'Psychic Resonance', 'Mirrored Reality', 'Time Dilation', 'Crystalline Echo', 'Dark Energy Knot', 'Parallel Bridge', 'Chroniton Spike', 'Ethereal Entity', 'Gravity Wave', 'Spatial Fold', 'Void Whisper', 'Reality Tear', 'Phantom Signal', 'Probability Field', 'Singularity Pulse', 'Matter Mirror',
+    // 7. LOGISTICS & CARGO (20)
+    'Volatile Cargo', 'Fuel Contamination', 'Customs Evasion', 'Atmospheric Leak', 'Cryo-Malfunction', 'Overweight Load', 'Cargo Shift', 'Illegal Contraband', 'Perishable Goods', 'Luxury Escort', 'Industrial Parts', 'Heavy Machinery', 'Art Collection', 'Livestock Transit', 'Radioactive Waste', 'Medical Samples', 'Data Drive Transport', 'Ore Delivery', 'Weapon Shipment', 'Classified Tech',
+    // 8. XENOBIOLOGY (20)
+    'Bio-Mimetic Swarm', 'Sentient Spores', 'Hull Parasites', 'Giant Amoeba', 'Exotic Flora', 'Crystalline Life', 'Brain-Slug Infestation', 'Psychotropic Pollen', 'Void Whale', 'Viral Outbreak', 'Mutated Specimen', 'Egg Nest Discovery', 'DNA Corruption', 'Symbiotic Bond', 'Neural Parasite', 'Pheromone Cloud', 'Hive Mind Contact', 'Ancient Spore', 'Biological Signature', 'Alien Specimen',
+    // 9. ARCHAEOLOGY (20)
+    'Derelict Salvage', 'Ancient Ruins', 'Ghost Ship', 'Artifact Excavation', 'Forbidden Tech', 'Tomb World', 'Legacy Database', 'Monolith Discovery', 'Primitive Colony', 'Lost Voyager', 'Ruined Megastructure', 'Sunken City', 'Temple of Stars', 'Scripture Decryption', 'Buried Engine', 'Ancient AI Vault', 'Genetic Archive', 'Statue Collection', 'Obsidian Spire', 'Relic Retrieval',
+    // 10. CYBERNETICS (20)
+    'Cyber-Infiltration', 'AI Takeover', 'Sensor Jamming', 'Data Corruption', 'Firewall Breach', 'Logic Bomb', 'Encryption Key', 'Signal Ghost', 'Ghost in the Machine', 'Network Lockdown', 'Satellite Hack', 'Comm-Link Sever', 'Malware Node', 'Hard Drive Wipe', 'Digital Sabotage', 'Protocol Override', 'Mainframe Purge', 'Botnet Attack', 'Hardware Glitch', 'System Reboot'
 ];
 
 const defaultSectors = [
@@ -1195,8 +1203,7 @@ function saveTaskModal() {
                     subs: tempSubtasks.filter(t => t.trim()).map(t => ({t, c:false})), 
                     x: coords.x, y: coords.y, dueDate: dateStr || null, dueTime: timeStr,
                     // [ PATCHED ] Dynamic generation based on total array size
-                    encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length)                }); 
-            }
+                    encounterId: Math.floor(Math.random() * ENCOUNTER_TYPES.length) //            }
         }
     } else { 
         const coords = getSafeCoordinates(hzMissions); 
