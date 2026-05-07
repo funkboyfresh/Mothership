@@ -436,14 +436,18 @@ function renderLevel3(container, footer) {
     const missions = state.missions[state.sectorId]?.[state.horizon] || [];
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "constellation-svg"; 
+    
+    // [ PATCHED ] Set viewBox to 100x100 to map exactly to percentage coordinates
+    svg.setAttribute("viewBox", "0 0 100 100"); 
+    svg.setAttribute("preserveAspectRatio", "none"); 
     container.appendChild(svg);
     
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const accentColor = activeSector ? activeSector.color : '#00e5ff';
 
+    // --- WIRE LOGIC: Isolating the 6-mission priority window ---
     const allActive = missions.filter(m => !m.captured);
     const wireActive = allActive.slice(0, 6);
-    
     const firstActiveIdx = wireActive.length > 0 ? missions.indexOf(wireActive[0]) : missions.length;
     const lastActiveIdx = wireActive.length > 0 ? missions.indexOf(wireActive[wireActive.length - 1]) : -1;
     
@@ -460,91 +464,45 @@ function renderLevel3(container, footer) {
     wireTasks.push(...preCaptured);
     
     for (let i = firstActiveIdx; i <= lastActiveIdx; i++) {
-        let m = missions[i];
-        if (!m.captured) {
-            wireTasks.push(m);
-        } else if (m.captured) {
-            wireTasks.push(m);
-        }
+        wireTasks.push(missions[i]);
     }
     
     const debrisMissions = missions.filter(m => m.captured && !wireTasks.includes(m)).slice(-20);
 
-    const header = document.createElement('div');
-    header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
-    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
-    container.appendChild(header);
+    // [ PATCHED ] Initialize drift for ALL renderable nodes BEFORE drawing lines
+    const renderSet = [...debrisMissions, ...wireTasks];
+    renderSet.forEach(m => {
+        if (m.driftX === undefined) {
+            m.driftX = (Math.random()-0.5) * 8; 
+            m.driftY = (Math.random()-0.5) * 8; 
+            m.scale = 0.3 + (Math.random() * 0.4);
+        }
+    });
 
-    const priorityContainer = document.createElement('div');
-    priorityContainer.className = 'priority-dropdown-container';
-    priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
-    
-    if (wireActive.length > 0) {
-        priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
-            </button>
-            <div class="priority-list">
-                ${wireActive.map((m, i) => {
-                    const isDecaying = m.overdue && !m.captured;
-                    const isCrit = i === 0;
-                    
-                    let itemStyle = '';
-                    let statusText = '';
-                    
-                    if (isDecaying) {
-                        itemStyle = `--sector-color: rgba(255, 42, 42, 0.3); --sector-border: #ff2a2a; animation: priority-flash-red 1.5s infinite;`;
-                        statusText = '[ CRITICAL DECAY ]';
-                    } else if (m.warningLevel === 24) {
-                        itemStyle = `--sector-color: rgba(255, 153, 0, 0.3); --sector-border: #ff9900;`;
-                        statusText = isCrit ? '[ MISSION CRITICAL ]' : '[ WARNING: 24H ]';
-                    } else if (m.warningLevel === 48) {
-                        itemStyle = `--sector-color: rgba(255, 215, 0, 0.3); --sector-border: #ffd700;`;
-                        statusText = isCrit ? '[ MISSION CRITICAL ]' : '[ INCOMING: SUB-48 HOURS ]';
-                    } else if (isCrit) {
-                        itemStyle = `--sector-color: ${accentColor}22; --sector-border: ${accentColor};`;
-                        statusText = '[ MISSION CRITICAL ]';
-                    }
-                    
-                    return `<div class="priority-item ${isCrit || isDecaying || m.warningLevel ? 'mission-critical-active' : ''}" 
-                         style="${itemStyle}" onclick="state.activeMissionId = ${m.id}; state.level = 4; render();">
-                        <span class="p-num">${missions.indexOf(m) + 1}</span>
-                        <span class="p-status" style="color: ${isDecaying ? 'var(--thrust)' : (m.warningLevel===24 ? '#ff9900' : (m.warningLevel===48 ? '#ffd700' : ''))}">${statusText}</span>
-                        <span class="p-text">${m.name}</span>
-                    </div>`
-                }).join('')}
-            </div>`;
-    } else {
-        priorityContainer.innerHTML = `
-            <button class="priority-toggle-btn" style="pointer-events: none;">
-                MISSION PRIORITIES (0/6)
-            </button>
-            <div class="priority-list show" style="display: block;">
-                <div class="priority-item" style="justify-content:center; opacity:0.5; font-size:0.6rem; border:none;">NO ACTIVE MISSIONS</div>
-            </div>`;
-    }
-    container.appendChild(priorityContainer);
-
+    // [ PATCHED ] Wire lines now track m.x + m.driftX for perfect alignment
     if (wireTasks.length > 1) {
         for (let i = 0; i < wireTasks.length - 1; i++) {
+            const m1 = wireTasks[i];
+            const m2 = wireTasks[i+1];
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", wireTasks[i].x + "%"); 
-            line.setAttribute("y1", wireTasks[i].y + "%");
-            line.setAttribute("x2", wireTasks[i+1].x + "%"); 
-            line.setAttribute("y2", wireTasks[i+1].y + "%");
+            line.setAttribute("x1", m1.x + m1.driftX); 
+            line.setAttribute("y1", m1.y + m1.driftY);
+            line.setAttribute("x2", m2.x + m2.driftX); 
+            line.setAttribute("y2", m2.y + m2.driftY);
             line.setAttribute("stroke", "var(--accent)"); 
-            line.setAttribute("stroke-width", "1.5"); 
-            line.setAttribute("stroke-dasharray", "5,5"); 
+            line.setAttribute("stroke-width", "0.5"); 
+            line.setAttribute("stroke-dasharray", "1,1"); 
             line.setAttribute("opacity", "0.8");
             svg.appendChild(line);
         }
     }
     
- [...debrisMissions, ...wireTasks].forEach((m) => {
+    // --- NODE RENDERING ---
+    renderSet.forEach((m) => {
         const star = document.createElement('div');
         const isDebris = debrisMissions.includes(m);
         const isCapOnWire = preCaptured.includes(m); 
-        const isDecay = m.overdue;
+        const isDecay = m.overdue && !m.captured;
         
         let warnClass = ''; 
         if (!m.captured) {
@@ -554,15 +512,8 @@ function renderLevel3(container, footer) {
         }
 
         star.className = `star-container ${isDebris ? 'debris-node' : 'warp-transition'} ${warnClass}`;
-        
-        if (isDebris && !m.scale) { 
-            m.driftX = (Math.random()-0.5)*8; 
-            m.driftY = (Math.random()-0.5)*8; 
-            m.scale = 0.3 + (Math.random()*0.4); 
-        }
-        
-        star.style.left = (m.x + (m.driftX || 0)) + '%'; 
-        star.style.top = (m.y + (m.driftY || 0)) + '%';
+        star.style.left = (m.x + m.driftX) + '%'; 
+        star.style.top = (m.y + m.driftY) + '%';
         
         if (isDebris) {
             star.style.setProperty('--dx', `${(Math.random() - 0.5) * 60}px`);
@@ -592,22 +543,17 @@ function renderLevel3(container, footer) {
             else if (m.warningLevel === 48) bgFill = '#ffd700';
             else bgFill = accentColor;
             borderColor = bgFill; 
-
             if (isDebris) {
                 borderWidth = '1px';
                 node.style.transform = `scale(${m.scale})`;
                 node.style.opacity = '0.22'; 
                 textColor = 'transparent';
-            } else {
-                borderWidth = '2px';
-                node.style.opacity = '1.0';
             }
         } else {
             const isCrit = m.id === wireActive[0]?.id;
-            bgFill = 'var(--bg)';
             if (isDecay) { borderColor = '#ff2a2a'; textColor = '#ff2a2a'; } 
-            else if (m.warningLevel === 24) { borderColor = '#ff9900'; } 
-            else if (m.warningLevel === 48) { borderColor = '#ffd700'; }
+            else if (m.warningLevel === 24) borderColor = '#ff9900'; 
+            else if (m.warningLevel === 48) borderColor = '#ffd700';
             if (isCrit) borderWidth = '3px';
         }
 
@@ -628,6 +574,44 @@ function renderLevel3(container, footer) {
         star.appendChild(label); 
         container.appendChild(star);
     });
+
+    // --- HEADERS & PRIORITY DROPDOWN (Restored High Detail) ---
+    const header = document.createElement('div');
+    header.style.cssText = 'position: absolute; bottom: 20px; text-align: center; width: 100%; pointer-events: none;';
+    header.innerHTML = `<div class="view-level-title">LEVEL 3 // ${state.horizon}</div><h1 class="view-main-title" style="margin-bottom:0;">Constellation Map</h1>`;
+    container.appendChild(header);
+
+    const priorityContainer = document.createElement('div');
+    priorityContainer.className = 'priority-dropdown-container';
+    priorityContainer.style.cssText = 'position: absolute; top: 12px; z-index: 100; left: 20px;'; 
+    
+    if (wireActive.length > 0) {
+        priorityContainer.innerHTML = `
+            <button class="priority-toggle-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                MISSION PRIORITIES (${wireActive.length}/6) <span>v</span>
+            </button>
+            <div class="priority-list">
+                ${wireActive.map((m, i) => {
+                    const isDecaying = m.overdue && !m.captured;
+                    const isCrit = i === 0;
+                    let itemStyle = isDecaying ? `--sector-color: rgba(255, 42, 42, 0.3); --sector-border: #ff2a2a; animation: priority-flash-red 1.5s infinite;` : 
+                                   (m.warningLevel === 24 ? `--sector-color: rgba(255, 153, 0, 0.3); --sector-border: #ff9900;` : 
+                                   (m.warningLevel === 48 ? `--sector-color: rgba(255, 215, 0, 0.3); --sector-border: #ffd700;` : 
+                                   (isCrit ? `--sector-color: ${accentColor}22; --sector-border: ${accentColor};` : '')));
+                    const statusText = isDecaying ? '[ CRITICAL DECAY ]' : (m.warningLevel === 24 ? '[ WARNING: 24H ]' : (m.warningLevel === 48 ? '[ WARNING: 48H ]' : (isCrit ? '[ MISSION CRITICAL ]' : '')));
+                    
+                    return `<div class="priority-item ${isCrit || isDecaying || m.warningLevel ? 'mission-critical-active' : ''}" 
+                         style="${itemStyle}" onclick="state.activeMissionId = ${m.id}; state.level = 4; render();">
+                        <span class="p-num">${missions.indexOf(m) + 1}</span>
+                        <span class="p-status">${statusText}</span>
+                        <span class="p-text">${m.name}</span>
+                    </div>`
+                }).join('')}
+            </div>`;
+    } else {
+        priorityContainer.innerHTML = `<button class="priority-toggle-btn" style="pointer-events: none;">MISSION PRIORITIES (0/6)</button>`;
+    }
+    container.appendChild(priorityContainer);
 }
 
 // --- SHIP VIEW (L4 - TARGET LOCK LEGACY) ---
