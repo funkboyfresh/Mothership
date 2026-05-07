@@ -93,21 +93,6 @@ function getCapturedCount(sectorId = null) {
     return count;
 }
 
-// --- COLOR PROCESSING ---
-function shiftHue(hex, degree) {
-    if (!hex || hex.length !== 7) return hex; // Failsafe for valid hex
-    let r = parseInt(hex.substring(1,3), 16) / 255, g = parseInt(hex.substring(3,5), 16) / 255, b = parseInt(hex.substring(5,7), 16) / 255;
-    let max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-        let d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; }
-        h /= 6;
-    }
-    h = Math.round(h * 360);
-    return `hsl(${(h + degree) % 360}, ${Math.round(s*100)}%, ${Math.round(l*100)}%)`;
-}
 
 // --- NAVIGATION & SPATIAL GEOMETRY ---
 function doLinesIntersect(p1, q1, p2, q2) {
@@ -123,7 +108,6 @@ function getDistanceToSegment(p, a, b) {
 }
 
 function getSafeCoordinates(existingMissions) {
-    // 1. BUG FIX: Filter out captured missions so they don't clog the grid
     const activeMissions = (existingMissions || []).filter(m => !m.captured);
     const activeWire = activeMissions.slice(-8);
     const count = activeMissions.length;
@@ -142,7 +126,7 @@ function getSafeCoordinates(existingMissions) {
 
     let bestCandidate = null;
     let bestScore = -Infinity;
-    const n0 = activeMissions[0]; // Gravity centers on active wire, not dead stars
+    const n0 = activeMissions[0]; 
 
     for (let attempts = 0; attempts < 2500; attempts++) {
         let nodePadding = attempts > 1500 ? 10 : 18;
@@ -153,19 +137,16 @@ function getSafeCoordinates(existingMissions) {
         const newNode = { x, y };
         let safe = true;
 
-        // 2. FEATURE: Angular Variance Check (5 Degree Minimum)
         if (activeWire.length >= 2) {
             const lastNode = activeWire[activeWire.length - 1];
             const prevNode = activeWire[activeWire.length - 2];
             
-            // Calculate vectors using arctangent
             const anglePrev = Math.atan2(lastNode.y - prevNode.y, lastNode.x - prevNode.x);
             const angleNew = Math.atan2(newNode.y - lastNode.y, newNode.x - lastNode.x);
             
             let diff = Math.abs(angleNew - anglePrev) * (180 / Math.PI);
             if (diff > 180) diff = 360 - diff;
             
-            // Reject if less than 5 degrees variance, or if it perfectly backtracks (175+)
             if (diff < 5 || diff > 175) { 
                 safe = false; 
                 continue; 
@@ -173,7 +154,6 @@ function getSafeCoordinates(existingMissions) {
         }
 
         let minDistToNode = Infinity;
-        // Only check collision against active missions
         for (let m of activeMissions) {
             if (!m || isNaN(m.x)) continue;
             let d = Math.sqrt((m.x - x)**2 + (m.y - y)**2);
@@ -245,7 +225,6 @@ function getHorizonFromDate(dateStr, fallbackHorizon) {
     if (!dateStr) return fallbackHorizon || 'TRAJECTORY';
     const today = new Date(); today.setHours(0,0,0,0);
     
-    // FIXED: WebKit Safe Date Parsing
     let d = new Date(dateStr + 'T00:00:00');
     if (isNaN(d.getTime())) {
         d = new Date(dateStr.replace(/-/g, '/') + ' 00:00:00');
@@ -266,7 +245,6 @@ function processTimeMechanics() {
                 
                 if (m && !m.captured) {
                     if (m.dueDate) {
-                        // FIXED: Enforce accurate seconds for WebKit/Safari parsing
                         let t = m.dueTime || "23:59:59";
                         if (t.split(':').length === 2) t += ":00"; 
                         
@@ -279,7 +257,7 @@ function processTimeMechanics() {
                         const diffDays = Math.ceil(diffHrs / 24);
 
                         if (diffHrs < 0 && !m.overdue) {
-                            addEnergy(-10); // Deduct penalty only once when crossing threshold
+                            addEnergy(-10); 
                         }
                         
                         m.overdue = diffHrs < 0; 
@@ -290,14 +268,12 @@ function processTimeMechanics() {
                             else if (diffHrs <= 48) m.warningLevel = 48;
                         }
 
-                        // Shift Horizons if necessary
                         let targetH = diffDays <= 7 ? 'IMMINENT' : (diffDays <= 14 ? 'HORIZON' : 'TRAJECTORY');
                         if (targetH !== h) { 
                             state.missions[s.id][targetH].push(m); 
                             state.missions[s.id][h].splice(i, 1); 
                         }
                     } else {
-                        // FIXED: Clear warnings if user deletes a previously assigned date
                         m.overdue = false;
                         m.warningLevel = 0;
                     }
@@ -352,7 +328,6 @@ function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
     
-    // Engine cleanly evaluates time logic before drawing the screen
     processTimeMechanics(); 
     checkDecayStatus();
     
@@ -471,11 +446,11 @@ function renderLevel1(container, footer) {
             particle.setAttribute("cy", py);
             particle.setAttribute("r", "2.25");
             
-            // --- UPDATED PROCEDURAL COLOR LOGIC (DEBRIS) ---
+            // Reverted to hardcoded UX colors
             let pColor = s.color;
-            if (m.overdue) pColor = 'var(--thrust)';
-            else if (m.warningLevel === 24) pColor = shiftHue(s.color, 180);
-            else if (m.warningLevel === 48) pColor = shiftHue(s.color, 90);
+            if (m.overdue) pColor = '#ff2a2a';
+            else if (m.warningLevel === 24) pColor = '#ff9900';
+            else if (m.warningLevel === 48) pColor = '#ffd700';
             
             particle.setAttribute("fill", pColor);
             particle.setAttribute("opacity", "0.6");
@@ -523,11 +498,10 @@ function renderLevel1(container, footer) {
                     dot.setAttribute("cy", cy + ring.r * Math.sin(angle)); 
                     dot.setAttribute("r", "1.5");
                     
-                    // --- UPDATED PROCEDURAL COLOR LOGIC (ORBITAL DOTS) ---
                     let dotColor = color; 
-                    if (m.overdue) dotColor = 'var(--thrust)';
-                    else if (m.warningLevel === 24) dotColor = shiftHue(s.color, 180);
-                    else if (m.warningLevel === 48) dotColor = shiftHue(s.color, 90);
+                    if (m.overdue) dotColor = '#ff2a2a';
+                    else if (m.warningLevel === 24) dotColor = '#ff9900';
+                    else if (m.warningLevel === 48) dotColor = '#ffd700';
 
                     dot.setAttribute("fill", dotColor); 
                     group.appendChild(dot);
@@ -596,8 +570,40 @@ function renderLevel2(container, footer, activeSector) {
         p.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:#fff; border-radius:50%; opacity:${Math.random() * 0.4 + 0.1}; left:${x}px; top:${y}px; animation: orbit-spin ${40 + Math.random() * 80}s linear infinite;`;
         gravityWell.appendChild(p);
     }
-    center.appendChild(gravityWell);
     
+    // --- ADDED LEVEL 2 DEBRIS FIELD ---
+    const debrisField = document.createElement('div');
+    debrisField.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index: 15;';
+    
+    let completedMissions = [];
+    HORIZONS.forEach(h => {
+        if (state.missions[state.sectorId] && state.missions[state.sectorId][h]) {
+            completedMissions.push(...state.missions[state.sectorId][h].filter(m => m.captured));
+        }
+    });
+    completedMissions.sort((a,b) => a.completionTimestamp - b.completionTimestamp);
+    completedMissions = completedMissions.slice(-100);
+
+    completedMissions.forEach((m) => {
+        const particle = document.createElement('div');
+        const r = 60 + Math.random() * 80; 
+        const angle = Math.random() * Math.PI * 2;
+        const px = 140 + r * Math.cos(angle); 
+        const py = 140 + r * Math.sin(angle);
+        
+        let pColor = activeSector.color;
+        if (m.overdue) pColor = '#ff2a2a';
+        else if (m.warningLevel === 24) pColor = '#ff9900';
+        else if (m.warningLevel === 48) pColor = '#ffd700';
+        
+        particle.style.cssText = `position:absolute; width:4px; height:4px; border-radius:50%; background:${pColor}; opacity:0.6; left:${px}px; top:${py}px;`;
+        particle.className = 'debris-node'; // Ties into standard CSS float (No shake/pulse)
+        debrisField.appendChild(particle);
+    });
+    gravityWell.appendChild(debrisField);
+    center.appendChild(gravityWell);
+    // ------------------------------------
+
     const textSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     textSvg.style.cssText = 'position:absolute; width:100%; height:100%; pointer-events:none; z-index:20;';
     textSvg.setAttribute("viewBox", "0 0 280 280");
@@ -653,11 +659,10 @@ function renderLevel2(container, footer, activeSector) {
             const r = d.size/2;
             const dot = document.createElement('div'); 
             
-            // --- UPDATED PROCEDURAL COLOR LOGIC (PLANETARY MAP DOTS) ---
             let dotColor = activeSector.color; 
-            if (m.overdue) dotColor = 'var(--thrust)';
-            else if (m.warningLevel === 24) dotColor = shiftHue(activeSector.color, 180);
-            else if (m.warningLevel === 48) dotColor = shiftHue(activeSector.color, 90);
+            if (m.overdue) dotColor = '#ff2a2a';
+            else if (m.warningLevel === 24) dotColor = '#ff9900';
+            else if (m.warningLevel === 48) dotColor = '#ffd700';
 
             dot.style.cssText = `position:absolute; width:6px; height:6px; border-radius:50%; background:${dotColor}; left:calc(${r + r * Math.cos(angle)}px - 3px); top:calc(${r + r * Math.sin(angle)}px - 3px); box-shadow: 0 0 8px ${dotColor};`;
             starField.appendChild(dot);
@@ -745,10 +750,13 @@ function renderLevel3(container, footer) {
         const isCapOnWire = wireCaptured.includes(m);
         const isDecay = m.overdue;
         
+        // --- FIXED: Only apply animation classes if ACTIVE ---
         let warnClass = ''; 
-        if (isDecay && !m.captured) warnClass = 'decaying'; 
-        else if (m.warningLevel === 24) warnClass = 'warning-24'; 
-        else if (m.warningLevel === 48) warnClass = 'warning-48';
+        if (!m.captured) {
+            if (isDecay) warnClass = 'decaying'; 
+            else if (m.warningLevel === 24) warnClass = 'warning-24'; 
+            else if (m.warningLevel === 48) warnClass = 'warning-48';
+        }
 
         star.className = `star-container ${isDebris ? 'debris-node' : ''} ${warnClass} warp-transition`;
         
@@ -769,55 +777,56 @@ function renderLevel3(container, footer) {
         }
 
         const node = document.createElement('div'); 
-        node.className = `star-node ${m.captured ? 'captured' : ''}`;
+        node.className = `star-node`; // Removed captured class from CSS tracking to allow pure JS color assignment
         
-        if (isDebris) { 
-            let warningFill = accentColor; 
-            if (isDecay) warningFill = 'var(--thrust)'; 
-            else if (m.warningLevel === 24) warningFill = shiftHue(accentColor, 180);
-            else if (m.warningLevel === 48) warningFill = shiftHue(accentColor, 90);
+        // --- UNIFIED INLINE COLOR LOGIC ---
+        let borderColor = accentColor;
+        let bgFill = 'var(--bg)';
+        let textColor = '#ffffff';
+        let borderWidth = '2px';
 
-            node.style.transform = `scale(${m.scale})`; 
-            node.style.opacity = '0.35'; 
-            node.style.backgroundColor = warningFill;
-            node.style.borderColor = accentColor;
-            node.style.borderWidth = '1px';
-            node.style.borderStyle = 'solid';
-            node.style.boxShadow = 'none'; 
-        } else if (isCapOnWire) {
-            let warningFill = accentColor; 
-            if (isDecay) warningFill = 'var(--thrust)'; 
-            else if (m.warningLevel === 24) warningFill = shiftHue(accentColor, 180);
-            else if (m.warningLevel === 48) warningFill = shiftHue(accentColor, 90);
+        if (m.captured) {
+            // Closed Task Fills
+            bgFill = accentColor;
+            borderColor = accentColor;
+            textColor = 'var(--bg)';
             
-            node.style.opacity = '1.0'; 
-            node.style.backgroundColor = warningFill; 
-            node.style.borderColor = accentColor; 
-            node.style.borderWidth = '2px';
-            node.style.borderStyle = 'solid';
-            node.style.color = '#ffffff'; 
-            node.style.textShadow = '0px 0px 3px rgba(0,0,0,0.8)';
-            node.style.boxShadow = `0 0 10px ${warningFill}99`; 
-            node.textContent = missions.indexOf(m) + 1;
-        } else {
-            const isCrit = m.id === wireActive[0]?.id;
-            let warnColor = accentColor;
-            
-            // Procedural Logic
-            if (isDecay) { 
-                warnColor = 'var(--thrust)'; 
-            } else if (m.warningLevel === 24) { 
-                warnColor = shiftHue(accentColor, 180); // 180 degree contrast
-            } else if (m.warningLevel === 48) { 
-                warnColor = shiftHue(accentColor, 90); // 90 degree contrast
+            if (m.overdue) bgFill = '#ff2a2a'; // Red
+            else if (m.warningLevel === 24) bgFill = '#ff9900'; // Orange
+            else if (m.warningLevel === 48) bgFill = '#ffd700'; // Yellow
+
+            if (isDebris) {
+                borderWidth = '1px';
+                node.style.transform = `scale(${m.scale})`;
+                node.style.opacity = '0.35';
+                textColor = 'transparent';
+            } else {
+                borderWidth = '2px';
+                node.style.opacity = '1.0';
             }
+        } else {
+            // Active Task Fills
+            const isCrit = m.id === wireActive[0]?.id;
+            
+            if (isDecay) { 
+                borderColor = '#ff2a2a'; 
+                textColor = '#ff2a2a'; 
+            } else if (m.warningLevel === 24) { 
+                borderColor = '#ff9900'; 
+            } else if (m.warningLevel === 48) { 
+                borderColor = '#ffd700'; 
+            }
+            if (isCrit) borderWidth = '3px';
+        }
 
-            // Strictly applies the outer procedural color, keeping the core black
-            node.style.setProperty('--dynamic-warn', warnColor);
-            node.style.borderColor = warnColor; 
-            node.style.backgroundColor = 'var(--bg)'; // Forces black core
-            node.style.color = '#ffffff'; // Keeps text white
-            if (isCrit) node.style.borderWidth = '3px'; 
+        node.style.borderColor = borderColor;
+        node.style.backgroundColor = bgFill;
+        node.style.color = textColor;
+        node.style.borderWidth = borderWidth;
+        node.style.borderStyle = 'solid';
+        node.style.boxShadow = 'none'; // Absolutely clears any inherited glow on closed tasks
+
+        if (!isDebris) {
             node.textContent = missions.indexOf(m) + 1;
         }
 
@@ -930,7 +939,6 @@ function moveMission(direction) {
 }
 
 function openTaskModal(h, f) { 
-    // --- NEW: Block access at the door if at mission limit ---
     const hzMissions = (state.missions[state.sectorId]?.[h]) ? state.missions[state.sectorId][h] : [];
     const activeCount = hzMissions.filter(m => !m.captured).length;
     
@@ -938,7 +946,6 @@ function openTaskModal(h, f) {
         showSoftWarning("TARGET LIMIT REACHED (6/6).\nCOMPLETE ACTIVE MISSIONS TO OPEN NEW TRAJECTORIES.");
         return; 
     }
-    // ---------------------------------------------------------
 
     editModeId = null; 
     defaultHorizonContext = h; 
@@ -990,7 +997,6 @@ function saveTaskModal() {
     const hzMissions = (state.missions[state.sectorId]?.[h]) ? state.missions[state.sectorId][h] : [];
     const activeCount = hzMissions.filter(m => !m.captured).length;
     
-    // --- UPDATED: Replaced rigid alert with soft warning ---
     if (!editModeId && activeCount >= 6) { 
         showSoftWarning("TARGET LIMIT REACHED (6/6).\nCOMPLETE ACTIVE MISSIONS TO OPEN NEW TRAJECTORIES."); 
         return; 
@@ -1285,6 +1291,7 @@ setInterval(() => {
 window.addEventListener('resize', () => { 
     if(state.level === 1) render(); 
 });
+
 // --- SOFT WARNING SYSTEM ---
 let warningTimeout;
 function showSoftWarning(message) {
@@ -1297,7 +1304,6 @@ function showSoftWarning(message) {
     }
     toast.innerText = message;
 
-    // Small delay ensures the opening click doesn't immediately dismiss it
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
@@ -1308,7 +1314,6 @@ function showSoftWarning(message) {
     }, 4000);
 }
 
-// Dismiss the warning if the pilot clicks anywhere on the screen
 window.addEventListener('click', (e) => {
     const toast = document.getElementById('soft-warning-toast');
     if (toast && toast.classList.contains('show')) {
