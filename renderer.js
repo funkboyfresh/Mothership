@@ -82,8 +82,8 @@ function render() {
     
     if(!container) return; 
     container.innerHTML = ''; 
-    if(zoomBtn) zoomBtn.style.visibility = state.level > 1 ? 'visible' : 'hidden';
-    
+// [ PATCHED ] Hides the Zoom Out button when in the Hangar (Level 5)
+    if(zoomBtn) zoomBtn.style.visibility = (state.level > 1 && state.level !== 5) ? 'visible' : 'hidden';    
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const currentAccent = activeSector ? activeSector.color : '#00e5ff';
     
@@ -894,11 +894,17 @@ function renderCellsComponent(level) {
 
 // --- SHIPYARD HANGAR UI ---
 
+// --- SHIPYARD HANGAR UI ---
+
 function renderHangar(container) {
     container.innerHTML = `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px;">
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
+            
+            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);" onclick="state.level = 1; render();">×</button>
+            
             <div class="view-level-title" style="margin-top:0;">DRY DOCK // SHIPYARD</div>
-            <h1 class="view-main-title">Hangar Bay</h1>
+            
+            <h1 class="view-main-title" onclick="state.scrap += 500; save(); render();" style="cursor: pointer;" title="Click for Test Scrap">Hangar Bay</h1>
             
             <div class="ship-view-stage" style="height: 160px; margin-bottom: 15px;">
                 <div id="hangar-ship-preview"></div>
