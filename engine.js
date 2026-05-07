@@ -393,11 +393,104 @@ function togglePilotLog() {
 
 let missionIdCounter = 0; // Ensures absolute uniqueness
 
+// --- [ DEEP CLEAN MIGRATION PROTOCOLS ] ---
+
+let missionIdCounter = 0; // Ensures absolute uniqueness
+
+// --- SECTOR & SETTINGS MANAGEMENT ---
+
+function openSectorModal() {
+    editingSectors = JSON.parse(JSON.stringify(state.sectors));
+    renderSectorEditList();
+    document.getElementById('sector-modal-overlay').style.display = 'flex';
+}
+
+function closeSectorModal() {
+    document.getElementById('sector-modal-overlay').style.display = 'none';
+}
+
+function renderSectorEditList() {
+    const list = document.getElementById('sector-edit-list');
+    if(!list) return;
+    list.innerHTML = '';
+    editingSectors.forEach((s, i) => {
+        list.insertAdjacentHTML('beforeend', `
+            <div class="subtask-row">
+                <input type="color" value="${s.color}" onchange="editingSectors[${i}].color = this.value" style="width:30px; height:30px; padding:0; border:none; background:none;">
+                <input type="text" class="modal-input" value="${s.name}" oninput="editingSectors[${i}].name = this.value" style="flex:1">
+                ${editingSectors.length > 1 ? `<button class="subtask-remove-minimal" onclick="editingSectors.splice(${i}, 1); renderSectorEditList();">−</button>` : ''}
+            </div>
+        `);
+    });
+}
+
+function addNewSector() {
+    if(editingSectors.length < 8) {
+        editingSectors.push({ 
+            id: 'sec_' + Date.now(), 
+            name: 'NEW SECTOR', 
+            color: AUTO_PALETTE[editingSectors.length % AUTO_PALETTE.length],
+            seed: {x: 0.2 + Math.random()*0.6, y: 0.2 + Math.random()*0.6}
+        });
+        renderSectorEditList();
+    }
+}
+
+function saveSectorModal() {
+    const validSectors = editingSectors.filter(s => s.name.trim() !== '');
+    if(validSectors.length === 0) { showSoftWarning("MUST HAVE AT LEAST ONE SECTOR"); return; }
+    
+    // Assign new random seeds for a fresh Voronoi layout
+    validSectors.forEach(s => {
+        if (!s.seed) s.seed = {x: 0.2 + Math.random()*0.6, y: 0.2 + Math.random()*0.6};
+    });
+    
+    state.sectors = validSectors;
+    
+    state.sectors.forEach(s => {
+        if(!state.missions[s.id]) {
+            state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
+            HORIZONS.forEach(h => {
+                state.missions[s.id][h].push(generateDefaultMission(s.name, h));
+            });
+        }
+    });
+    
+    save();
+    closeSectorModal();
+    render();
+}
+
+function openSettingsModal() {
+    document.getElementById('settings-haptics-toggle').checked = state.hapticsEnabled;
+    document.getElementById('settings-modal-overlay').style.display = 'flex';
+}
+
+function closeSettingsModal() {
+    state.hapticsEnabled = document.getElementById('settings-haptics-toggle').checked;
+    save();
+    document.getElementById('settings-modal-overlay').style.display = 'none';
+}
+
+function factoryReset() {
+    if(confirm("WARNING: THIS WILL WIPE ALL DATA. PROCEED?")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
 function runDatabaseMigration() {
     let migrated = false;
     const seenIds = new Set();
 
-    state.sectors.forEach(s => {
+    state.sectors.forEach((s, i) => {
+        // [ PATCHED ] The Black Screen Fix: Restore missing seeds to legacy sectors
+        if (!s.seed) {
+            const fallbackSeeds = [{x: 0.3, y: 0.3}, {x: 0.7, y: 0.3}, {x: 0.5, y: 0.7}];
+            s.seed = fallbackSeeds[i % 3];
+            migrated = true;
+        }
+
         if (!state.missions[s.id]) {
             state.missions[s.id] = {TRAJECTORY:[], HORIZON:[], IMMINENT:[]};
             HORIZONS.forEach(h => {
@@ -405,6 +498,7 @@ function runDatabaseMigration() {
             });
             migrated = true;
         }
+        
         HORIZONS.forEach(h => {
             if (!state.missions[s.id][h]) { state.missions[s.id][h] = []; migrated = true; }
             
