@@ -251,7 +251,13 @@ function deleteMission(id) {
 }
 
 function zoomOut() { 
-    state.level = Math.max(1, state.level - 1); 
+    // [ PATCHED ] Seamless Hangar Exit Protocol
+    if (state.level === 5) {
+        state.level = 1;
+    } else {
+        state.level = Math.max(1, state.level - 1); 
+    }
+    
     if (state.level === 1) { 
         state.sectorId = null; 
         state.horizon = null; 
