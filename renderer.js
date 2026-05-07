@@ -702,7 +702,7 @@ function renderLevel4(container, footer) {
         terminal.appendChild(node);
     });
     
-  bridge.appendChild(terminal);
+bridge.appendChild(terminal);
 
     const btnWrap = document.createElement('div'); 
     btnWrap.style.cssText = 'display:flex; gap:10px; margin-top: auto; padding: 20px 0;';
