@@ -19,9 +19,12 @@ let state = {
     missions: JSON.parse(localStorage.getItem('missions')) || {},
     shipPos: { x: 50, y: 50 },
     scrap: parseInt(localStorage.getItem('scrap')) || 0,
+    // [ UPGRADED ] The Perfect 10 Module Manifest
     shipParts: JSON.parse(localStorage.getItem('shipParts')) || {
-        reactor: 1, thrusters: 1, hull: 1, shields: 1, sensors: 1, magnet: 1
+        magnet: 1, reactor: 1, habitat: 1, hull: 1, shields: 1,
+        comms: 1, thrusters: 1, sinks: 1, sensors: 1, cells: 1
     }
+};
 };
 
 let editModeId = null;
