@@ -918,12 +918,33 @@ function renderLevel3(container, footer) {
             star.style.setProperty('--float-dur', `${15 + Math.random() * 15}s`);
         }
 
-        if (!m.captured) { 
-            star.onclick = () => { state.activeMissionId = m.id; state.level = 4; render(); }; 
-            star.style.cursor = 'pointer'; 
-        } else { 
-            star.style.pointerEvents = 'none'; 
-        }
+        let borderColor = accentColor;
+        let bgFill = 'var(--bg)';
+        let textColor = '#ffffff';
+        let borderWidth = '2px';
+
+        if (m.captured) {
+            textColor = 'var(--bg)';
+            
+            if (m.overdue) bgFill = '#ff2a2a'; 
+            else if (m.warningLevel === 24) bgFill = '#ff9900'; 
+            else if (m.warningLevel === 48) bgFill = '#ffd700';
+            else bgFill = accentColor;
+
+            // [ PATCHED ] Ring color synchronized with the decay state fill
+            borderColor = bgFill; 
+
+            if (isDebris) {
+                borderWidth = '1px';
+                node.style.transform = `scale(${m.scale})`;
+                // [ PATCHED ] Brightness reduced by 35% (opacity lowered from 0.35 to 0.22)
+                node.style.opacity = '0.22'; 
+                textColor = 'transparent';
+            } else {
+                borderWidth = '2px';
+                node.style.opacity = '1.0';
+            }
+        } else {
 
         const node = document.createElement('div'); 
         node.className = `star-node`; 
