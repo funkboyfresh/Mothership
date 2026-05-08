@@ -1243,7 +1243,7 @@ function renderAscensionTower(towerId) {
             <div class="view-level-title" style="color: ${data.color}; letter-spacing: 5px; margin-bottom: 20px;">${data.name}</div>
             
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; gap: 10px; align-items: center; justify-content: center;">
-OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
+                OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderAscensionTower(${towerId});" style="background: transparent; border: 1px solid ${data.color}; color: ${data.color}; font-size: 0.5rem; padding: 2px 6px; cursor: pointer;">[+5 DEV]</button>
             </div>
     `;
@@ -1277,9 +1277,7 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
         
         html += `<div style="display: flex; flex-direction: column; align-items: center; width: 30%; z-index: 1;">`;
         
-        // 1. The Keystone Node
-        html += `
-            // 1. The Keystone Node
+        // 1. The Keystone Node (Fully assembled with click logic)
         html += `
             <div onclick="openOfferingModal('${d.k}', ${towerId}, 6, false)" style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px; cursor: pointer;">
                 <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1rem;">◈</span>
@@ -1287,7 +1285,7 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
             <div style="font-size: 0.55rem; color: ${data.color}; margin-bottom: 15px; font-weight: bold; text-align: center; height: 15px;">${d.n.toUpperCase()}</div>
         `;
 
-        // 2. The 5 Minor Nodes (flex-direction: column-reverse forces them to build UPWARDS)
+        // 2. The 5 Minor Nodes (Fully assembled with click logic)
         html += `<div style="display: flex; flex-direction: column-reverse; gap: 15px; align-items: center; position: relative; padding-bottom: 20px;">`;
         
         // Vertical track line connecting the nodes
@@ -1295,14 +1293,13 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
 
         for(let i = 1; i <= 5; i++) {
             const isActive = level >= i;
-            const isNext = level === (i - 1); 
+            const isNext = level === (i - 1);
             
             let bg = isActive ? data.color : '#000';
             let cursor = (isActive || isNext) ? 'cursor: pointer;' : 'cursor: default;';
             let pulse = (isNext && state.offerings > 0) ? `animation: pulse-glow 1.5s infinite; box-shadow: 0 0 10px ${data.color};` : '';
             let opacity = (isActive || isNext) ? '1' : '0.3';
             
-            // [ UPGRADED ] Re-routed the click to open the Communion Modal
             let clickAction = (isActive || isNext) ? `openOfferingModal('${d.k}', ${towerId}, ${i}, ${isNext})` : '';
             
             html += `
@@ -1321,6 +1318,7 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
     
     container.innerHTML = html;
 }
+
 
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
