@@ -1079,7 +1079,6 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Expanded text box for single-line strings, Zenith lifted 1x height
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1133,12 +1132,12 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] Added translateY(-100%) to push it up exactly 1x its height */
+            /* [ UPGRADED ] Y-Translation changed from -100% to -50% to drop it by exactly 0.5x its height */
             .zenith-apex-void {
                 position: absolute;
                 top: 18%; 
                 left: 50%;
-                transform: translate(-50%, -100%); 
+                transform: translate(-50%, -50%); 
                 font-size: 8rem;
                 color: #000; 
                 z-index: 16; 
@@ -1156,11 +1155,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
+            /* [ UPGRADED ] Pushed the bottom 15vh deeper into the floor */
             .monolith-spire {
                 position: absolute;
-                bottom: 0; left: 0; 
+                bottom: -15vh; left: 0; 
                 width: 100%; 
-                height: 82%; 
+                height: calc(82% + 15vh); 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1175,6 +1175,7 @@ function renderVoidPantheon() {
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
             }
 
+            /* [ UPGRADED ] Text and icons moved down 15vh to match the new extended floor */
             .tower-content {
                 position: relative;
                 z-index: 20; 
@@ -1183,9 +1184,9 @@ function renderVoidPantheon() {
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
+                transform: translateY(15vh);
             }
 
-            /* [ UPGRADED ] Expanded height and added white-space: nowrap to force single string */
             .spire-text {
                 height: 380px; 
                 display: flex;
@@ -1208,9 +1209,11 @@ function renderVoidPantheon() {
                 margin-top: 15px;
             }
 
+            /* [ UPGRADED ] translateY(50%) forces the top of the new position to perfectly align with the old center */
             .tower-icon {
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
+                transform: translateY(50%);
             }
         </style>
     `;
