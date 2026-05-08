@@ -1060,18 +1060,22 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
-    let pantheonStars = '';
+    // [ UPGRADED ] 1,125 Stars split into 3 Parallax Layers (Deep, Mid, Foreground)
+    let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
-        let size = Math.random() * 2 + 'px';
-        let left = Math.random() * 100 + '%';
-        let top = Math.random() * 100 + '%';
-        let dur = (Math.random() * 5 + 3) + 's';
-        let del = (Math.random() * 5) + 's';
-        pantheonStars += `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; animation-duration:${dur}; animation-delay:${del};"></div>`;
+        const getStar = (scale) => {
+            let size = (Math.random() * 2 * scale) + 'px';
+            let left = Math.random() * 100 + '%';
+            let top = Math.random() * 100 + '%';
+            let dur = (Math.random() * 5 + 3) + 's';
+            let del = (Math.random() * 5) + 's';
+            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; animation-duration:${dur}; animation-delay:${del};"></div>`;
+        };
+        bgStars += getStar(0.7); // Deep background (smaller)
+        midStars += getStar(1.1); // Suspended in gas (medium)
+        fgStars += getStar(1.6); // Foreground (largest)
     }
 
-    // [ UPGRADED ] Lowered Monolith height by 25% for a deeper fade-out
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1084,10 +1088,10 @@ function renderVoidPantheon() {
                 100% { transform: translateX(5%); }
             }
 
-            /* LAYER 1: HIGH DENSITY STARFIELD */
+            /* MULTI-LAYER STARFIELD CONTAINER */
             .pantheon-starfield-container {
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 0; pointer-events: none; overflow: hidden;
+                pointer-events: none; overflow: hidden;
             }
 
             /* LAYER 2: DEEP BACKGROUND CLOUDS (z-index: 1) */
@@ -1137,12 +1141,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* LAYER 3: TOWER HULL (z-index: 5, stays behind clouds) */
+            /* LAYER 3: TOWER HULL (z-index: 5, stays behind mid-stars and foreground clouds) */
             .monolith-spire {
                 position: absolute;
-                bottom: 0; left: 0; /* [ ADJUSTED ] Anchored to the bottom instead of the top */
+                bottom: 0; left: 0; 
                 width: 100%; 
-                height: 75%; /* [ ADJUSTED ] Height capped at 75% so it stops much lower */
+                height: 75%; 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1150,7 +1154,6 @@ function renderVoidPantheon() {
                 box-shadow: 0 0 25px -5px var(--t-color); 
                 transition: filter 0.3s;
                 z-index: 5; 
-                /* [ ADJUSTED ] Mask shifted to match the new compressed height */
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
@@ -1189,8 +1192,8 @@ function renderVoidPantheon() {
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="pantheon-starfield-container">
-                ${pantheonStars}
+            <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">
+                ${bgStars}
             </div>
 
             <div class="bg-stellar-nursery"></div>
@@ -1223,7 +1226,15 @@ function renderVoidPantheon() {
 
             </div>
 
+            <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">
+                ${midStars}
+            </div>
+
             <div class="fg-stellar-nursery"></div>
+
+            <div class="pantheon-starfield-container" style="z-index: 22;">
+                ${fgStars}
+            </div>
 
             <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
