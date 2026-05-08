@@ -1138,7 +1138,7 @@ function renderVoidPantheon() {
             /* [ UPDATED ] Shifted down by 5% (from 18% to 23%) */
             .zenith-apex-void {
                 position: absolute;
-                top: 23%; 
+                top: 26%; 
                 left: 50%;
                 transform: translate(-50%, -125%); 
                 font-size: 8rem;
