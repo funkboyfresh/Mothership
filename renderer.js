@@ -26,9 +26,14 @@ function updateHUD() {
     const energyEl = document.getElementById('hud-energy-readout');
     const barEl = document.getElementById('hud-capacitor-bar');
     
-    if(levelEl) levelEl.innerText = `PILOT LEVEL ${state.playerLevel}`;
-    if(energyEl) energyEl.innerText = `CAPACITOR ${state.energy}%`;
-    if(barEl) barEl.style.width = `${state.energy}%`;
+    let maxEnergy = typeof getMaxEnergy === 'function' ? getMaxEnergy() : 100;
+    let title = typeof getFleetTitle === 'function' ? getFleetTitle(state.playerLevel).toUpperCase() : 'PILOT';
+    
+    if(levelEl && !document.getElementById('app').classList.contains('critical-mode')) {
+        levelEl.innerText = `${title} // LEVEL ${state.playerLevel}`;
+    }
+    if(energyEl) energyEl.innerText = `CAPACITOR ${state.energy} / ${maxEnergy}`;
+    if(barEl) barEl.style.width = `${(state.energy / maxEnergy) * 100}%`;
 }
 
 function triggerHyperDrive() {
