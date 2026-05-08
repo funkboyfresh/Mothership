@@ -1289,9 +1289,30 @@ const PANTHEON_DATA = {
         name: "THE GENESIS SPHERE", color: "#00d4ff", 
         deities: [
             // Deconstructed Verdant Matrix (۞)
-            {k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉', 
-             minor: "CELESTIAL MAGNETISM: Increases base Scrap and Energy yields by +2% per Offering.", 
-             major: "THE MIDAS DRIVE: Securing a Level 4 Target converts 10% of your total lifetime Energy into a massive, one-time Scrap payout." },
+deities: [
+            {
+                k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉',
+                sectors: [
+                    { 
+                        id: 1, name: "Ignition Core", cost: 10,
+                        // 5 Nodes forming a Square-Forge shape
+                        coords: [{x:30,y:30}, {x:70,y:30}, {x:70,y:70}, {x:30,y:70}, {x:50,y:50}],
+                        perk: "MAGNETISM: +2% Base Yields"
+                    },
+                    { 
+                        id: 2, name: "Pulsar Hammer", cost: 10,
+                        // Forming a T-shape
+                        coords: [{x:20,y:20}, {x:50,y:20}, {x:80,y:20}, {x:50,y:50}, {x:50,y:80}],
+                        perk: "TEMPERING: Forge failure rate -5%"
+                    },
+                    { 
+                        id: 3, name: "The Great Split", cost: 10, isBranch: true,
+                        // Branching choice: Efficiency vs. Power
+                        paths: [
+                            { n: "Alpha: Cold-Forging", perk: "Offerings cost -10% Scrap", coords: [{x:20,y:50}, {x:40,y:40}, {x:60,y:40}, {x:80,y:50}, {x:50,y:20}] },
+                            { n: "Omega: Over-Heating", perk: "Bonus Yields +10%", coords: [{x:20,y:50}, {x:40,y:60}, {x:60,y:60}, {x:80,y:50}, {x:50,y:80}] }
+                        ]
+                    },
             {k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷', 
              minor: "TEMPORAL VELOCITY: Grants +5% bonus Scrap for targets secured before their 24h warning per Offering.", 
              major: "CHRONOS SHIFT: Once per week, instantly advance your Pilot Level by 1 without filling the Capacitor." },
