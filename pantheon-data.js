@@ -17,7 +17,7 @@ const PANTHEON_DATA = {
                     { id: 4, name: "Anvil Peak", coords: [{x:20,y:80}, {x:40,y:60}, {x:60,y:60}, {x:80,y:80}, {x:50,y:40}], perk: "REINFORCEMENT: Scrap payout +5%" },
                     { id: 5, name: "Solar Crucible", coords: [{x:50,y:10}, {x:20,y:40}, {x:80,y:40}, {x:30,y:80}, {x:70,y:80}], perk: "FORGE-MASTER: +1% Critical Craft chance" }
                 ],
-                major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Convert 10% of lifetime Energy into a massive Scrap payout." }
+                major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Convert 10% of lifetime Energy into a one-time Scrap payout." }
             },
             {
                 k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷',
@@ -54,7 +54,7 @@ const PANTHEON_DATA = {
         ] 
     },
     2: { 
-        name: "ABYSSAL SYNDICATE", color: "#ffd700", 
+        name: "THE ABYSSAL SYNDICATE", color: "#ffd700", 
         deities: [
             {
                 k:'syraxis', n:'Syraxis', title: 'The Shadow-Walker', icon: '◯',
