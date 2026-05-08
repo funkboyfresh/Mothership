@@ -1059,29 +1059,126 @@ function renderOuterworlds(container) {
 
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
-    container.innerHTML = `
+    
+    // [ UPGRADED ] Cosmic Atmosphere CSS injected directly into the view
+    const atmosStyles = `
+        <style>
+            @keyframes aurora-pulse {
+                0% { filter: brightness(1) contrast(1.1); transform: scale(1) translateY(0); }
+                100% { filter: brightness(1.4) contrast(1.4); transform: scale(1.05) translateY(-5px); }
+            }
+            @keyframes noxious-drift {
+                0% { background-position: 0% 0%; opacity: 0.3; }
+                50% { opacity: 0.6; }
+                100% { background-position: 100% 100%; opacity: 0.3; }
+            }
+            .monolith-spire {
+                flex: 1;
+                position: relative;
+                border: 1px solid var(--t-color);
+                border-bottom: none;
+                background: #030005;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                padding-bottom: 20px;
+                overflow: hidden;
+                box-shadow: inset 0 -20px 30px rgba(0,0,0,0.8);
+                transition: filter 0.3s;
+            }
+            .monolith-spire:hover {
+                filter: brightness(1.3);
+            }
+            .aurora-core {
+                position: absolute;
+                top: -10%; left: -50%; width: 200%; height: 75%;
+                background: radial-gradient(ellipse at 50% 25%, #ffffff 0%, var(--t-color) 15%, rgba(0,0,0,0) 65%);
+                mix-blend-mode: screen;
+                animation: aurora-pulse 4s infinite alternate ease-in-out;
+                pointer-events: none;
+                z-index: 1;
+            }
+            .noxious-gas {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: repeating-linear-gradient(45deg, transparent, var(--t-color) 8%, transparent 16%);
+                mix-blend-mode: color-dodge;
+                animation: noxious-drift 12s linear infinite;
+                pointer-events: none;
+                z-index: 2;
+            }
+            .tower-beam {
+                position: absolute;
+                bottom: 0; left: 30%; width: 40%; height: 100%;
+                background: linear-gradient(to top, rgba(0,0,0,0) 0%, var(--t-color) 70%, #ffffff 100%);
+                opacity: 0.15;
+                mix-blend-mode: screen;
+                pointer-events: none;
+                z-index: 1;
+            }
+            .apex-icon {
+                position: absolute;
+                top: 10%;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 2rem;
+                color: #fff;
+                text-shadow: 0 0 10px #fff, 0 0 20px var(--t-color), 0 0 40px var(--t-color);
+                z-index: 10;
+                pointer-events: none;
+            }
+            .spire-text {
+                color: var(--t-color);
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+                letter-spacing: 4px;
+                font-weight: bold;
+                font-size: 0.85rem;
+                text-shadow: 0 0 15px var(--t-color);
+                z-index: 10;
+                pointer-events: none;
+            }
+        </style>
+    `;
+
+    container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow: hidden; height: 100%; display: flex; flex-direction: column;">
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
 
             <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px;">THE VOID PANTHEON</div>
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
-OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
 
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 40px;">
                 
-                <div onclick="renderAscensionTower(1)" style="flex: 1; border: 1px solid #00d4ff; border-bottom: 0; background: linear-gradient(to top, rgba(0,212,255,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(0,212,255,0.05);">
-                    <div style="color: #00d4ff; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #00d4ff;">THE GENESIS SPHERE</div>
+                <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
+                    <div class="noxious-gas"></div>
+                    <div class="aurora-core"></div>
+                    <div class="tower-beam"></div>
+                    <div class="apex-icon">◬</div>
+                    <div class="spire-text">THE GENESIS SPHERE</div>
                 </div>
                 
-                <div onclick="renderAscensionTower(2)" style="flex: 1; border: 1px solid #a200ff; border-bottom: 0; background: linear-gradient(to top, rgba(162,0,255,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(162,0,255,0.05);">
-                    <div style="color: #a200ff; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #a200ff;">THE ABYSSAL SYNDICATE</div>
+                <div onclick="renderAscensionTower(2)" class="monolith-spire" style="--t-color: #a200ff;">
+                    <div class="noxious-gas"></div>
+                    <div class="aurora-core"></div>
+                    <div class="tower-beam"></div>
+                    <div class="apex-icon">◬</div>
+                    <div class="spire-text">THE ABYSSAL SYNDICATE</div>
                 </div>
                 
-                <div onclick="renderAscensionTower(3)" style="flex: 1; border: 1px solid #ffd700; border-bottom: 0; background: linear-gradient(to top, rgba(255,215,0,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(255,215,0,0.05);">
-                    <div style="color: #ffd700; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #ffd700;">CELESTIAL VANGUARD</div>
+                <div onclick="renderAscensionTower(3)" class="monolith-spire" style="--t-color: #ffd700;">
+                    <div class="noxious-gas"></div>
+                    <div class="aurora-core"></div>
+                    <div class="tower-beam"></div>
+                    <div class="apex-icon">◬</div>
+                    <div class="spire-text">CELESTIAL VANGUARD</div>
                 </div>
+
             </div>
         </div>
     `;
