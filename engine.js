@@ -12,12 +12,50 @@ function triggerHaptic(pattern) {
     }
 }
 
-function addEnergy(amount) {
+// [ UPGRADED ] RPG Progression Helpers
+function getFleetTitle(level) {
+    if (level < 5) return "Ensign";
+    if (level < 10) return "Lieutenant";
+    if (level < 15) return "Commander";
+    if (level < 20) return "Captain";
+    return "Admiral";
+}
+
+function getMaxEnergy() {
+    // Adds +50 Max Energy every 10 levels
+    return 100 + (Math.floor(state.playerLevel / 10) * 50);
+}
+
+function getYieldMultiplier() {
+    // +1% bonus to all yields per Pilot Level
+    return 1 + (state.playerLevel * 0.01);
+}
+
+
+function addEnergy(baseAmount) {
+    // [ UPGRADED ] Command Aptitude Multiplier applies to positive gains
+    let amount = baseAmount > 0 ? Math.floor(baseAmount * getYieldMultiplier()) : baseAmount;
+    
     state.energy += amount;
     if (state.energy < 0) state.energy = 0;
-    if (state.energy >= 100) {
-        state.playerLevel += Math.floor(state.energy / 100);
-        state.energy = state.energy % 100;
+    
+    let maxEnergy = getMaxEnergy();
+    
+    // Handle Level Up
+    if (state.energy >= maxEnergy) {
+        // Dark-Matter Cells: Carry over 10% excess energy per level of the module
+        let carryoverPct = (state.shipParts.cells || 1) * 0.1; 
+        let excess = state.energy - maxEnergy;
+        
+        state.playerLevel++;
+        state.energy = Math.floor(excess * carryoverPct); // Apply carryover
+        
+        // Level-Up Stipend: Level * 50 Scrap
+        let stipend = state.playerLevel * 50;
+        state.scrap += stipend;
+        
+        showSoftWarning(`HYPER-DRIVE ENGAGED\nPROMOTED TO ${getFleetTitle(state.playerLevel).toUpperCase()} (LVL ${state.playerLevel})\nSTIPEND: +${stipend} SCRAP`);
+        
         triggerHyperDrive();
         triggerHaptic([100, 50, 100, 50, 200]);
     }
@@ -179,7 +217,8 @@ function checkDecayStatus() {
     let hasDecay = state.sectors.some(s => HORIZONS.some(h => state.missions[s.id]?.[h]?.some(m => m.overdue && !m.captured)));
     const levelR = document.getElementById('hud-level');
     if (levelR) {
-        levelR.innerText = hasDecay ? "CRITICAL DECAY" : `PILOT LEVEL ${state.playerLevel}`;
+        let title = typeof getFleetTitle === 'function' ? getFleetTitle(state.playerLevel).toUpperCase() : 'PILOT';
+        levelR.innerText = hasDecay ? "CRITICAL DECAY" : `${title} // LEVEL ${state.playerLevel}`;
         levelR.className = hasDecay ? "hud-level-text hud-warning" : "hud-level-text";
     }
 }
@@ -215,8 +254,9 @@ function toggleSubTask(idx) {
         if (m.subs[idx].c) { 
             triggerHaptic(30); 
             addEnergy(5); 
-            // Magnet Multiplier: Level 1 = 1 scrap, Level 5 = 5 scrap
-            state.scrap += (state.shipParts.magnet || 1); 
+            // [ UPGRADED ] Command Aptitude Multiplier applied to Scrap
+            let baseScrap = state.shipParts.magnet || 1;
+            state.scrap += Math.floor(baseScrap * getYieldMultiplier()); 
         } else { 
             addEnergy(-5); 
             state.scrap = Math.max(0, state.scrap - (state.shipParts.magnet || 1));
