@@ -65,7 +65,7 @@ function addEnergy(baseAmount) {
     updateHUD();
 }
 
-function investOffering(deityKey) {
+function investOffering(deityKey, towerId) {
     if (state.offerings > 0 && state.pantheon[deityKey] < 5) {
         state.offerings--;
         state.pantheon[deityKey]++;
@@ -77,7 +77,13 @@ function investOffering(deityKey) {
         }
         
         save();
-        renderVoidPantheon(); 
+        
+        // [ UPGRADED ] Re-renders the specific tower you are currently inside
+        if (towerId) {
+            renderAscensionTower(towerId);
+        } else {
+            renderVoidPantheon(); 
+        }
     }
 }
 
