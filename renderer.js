@@ -109,19 +109,15 @@ function render() {
     
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
-         switch(state.level) {
-            case 1: 
-                renderMainMenuFooter(footer);
-                renderLevel1(container, null); // Pass null so L1 doesn't overwrite the global footer
-                break;
-            case 2: renderLevel2(container, footer, activeSector); break;
-            case 3: renderLevel3(container, footer); break;
-            case 4: renderLevel4(container, footer); break;
-            case 5: 
-                renderMainMenuFooter(footer);
-                renderHangar(container); 
-                break;
-        }
+    switch(state.level) {
+        case 1: renderLevel1(container, footer); break;
+        case 2: renderLevel2(container, footer, activeSector); break;
+        case 3: renderLevel3(container, footer); break;
+        case 4: renderLevel4(container, footer); break;
+        case 5: renderHangar(container); break;
+        case 6: renderNexus(container); break;
+        case 7: renderOuterworlds(container); break;
+    }
 
 }
 
@@ -186,11 +182,12 @@ function renderLevel1(container, footer) {
         footer.style.display = 'flex'; 
         footer.innerHTML = `
             <button class="zoom-btn" onclick="state.level = 1; render();" style="flex:1; border-color: var(--accent); color: var(--accent);">[ MAP ]</button>
-            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: 0.35;">[ HANGAR ]</button>
-            <button class="zoom-btn" onclick="showSoftWarning('OUTPOST UNDER CONSTRUCTION');" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.35;">[ OUTPOST ]</button>
-            <button class="zoom-btn" onclick="showSoftWarning('UPLINK OFFLINE');" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.35;">[ OUTERWORLDS ]</button>
+            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: 0.5;">[ HANGAR ]</button>
+            <button class="zoom-btn" onclick="state.level = 6; render();" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.5;">[ NEXUS ]</button>
+            <button class="zoom-btn" onclick="state.level = 7; render();" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.5;">[ OUTERWORLDS ]</button>
         `; 
     }
+
     
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
@@ -1017,3 +1014,36 @@ function renderHangar(container) {
     const preview = document.getElementById('hangar-ship-preview');
     if (preview) drawModularShip(preview, state.shipParts);
 }
+
+// --- INTERNAL HUB (L6) ---
+function renderNexus(container) {
+    container.innerHTML = `
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
+            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: #ff9900; text-shadow: 0 0 10px rgba(255, 153, 0, 0.5);" onclick="state.level = 1; render();">×</button>
+            <div class="view-level-title" style="margin-top:0; color: #ff9900; text-shadow: 0 0 8px rgba(255, 153, 0, 0.5);">INTERNAL HUB // QUARTERS</div>
+            <h1 class="view-main-title">The Nexus</h1>
+            
+            <div class="terminal-console" style="width: 95%; max-width: 500px; padding: 30px 10px; text-align: center; border-color: #ff9900; box-shadow: inset 0 0 15px rgba(255, 153, 0, 0.05);">
+                <div style="color: #ff9900; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">[ FACILITY UNDER CONSTRUCTION ]</div>
+                <div style="font-size: 0.7rem; opacity: 0.7; line-height: 1.5;">The Cryo-Chamber, Comm Array, and Archives will be installed here in a future update.</div>
+            </div>
+        </div>
+    `;
+}
+
+// --- EXTERNAL HUB (L7) ---
+function renderOuterworlds(container) {
+    container.innerHTML = `
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
+            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: #a200ff; text-shadow: 0 0 10px rgba(162, 0, 255, 0.5);" onclick="state.level = 1; render();">×</button>
+            <div class="view-level-title" style="margin-top:0; color: #a200ff; text-shadow: 0 0 8px rgba(162, 0, 255, 0.5);">EXTERNAL HUB // FRINGE</div>
+            <h1 class="view-main-title">The Outerworlds</h1>
+            
+            <div class="terminal-console" style="width: 95%; max-width: 500px; padding: 30px 10px; text-align: center; border-color: #a200ff; box-shadow: inset 0 0 15px rgba(162, 0, 255, 0.05);">
+                <div style="color: #a200ff; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">[ UPLINK OFFLINE ]</div>
+                <div style="font-size: 0.7rem; opacity: 0.7; line-height: 1.5;">The Black Market, The Forge, and the Underworld Cantina will be accessible once the signal is established.</div>
+            </div>
+        </div>
+    `;
+}
+
