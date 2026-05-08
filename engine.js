@@ -48,37 +48,28 @@ function addEnergy(baseAmount) {
         let excess = state.energy - maxEnergy;
         
         state.playerLevel++;
+        state.offerings++; // Grant 1 Void Offering
         state.energy = Math.floor(excess * carryoverPct); // Apply carryover
         
         // Level-Up Stipend: Level * 50 Scrap
         let stipend = state.playerLevel * 50;
         state.scrap += stipend;
         
-        showSoftWarning(`HYPER-DRIVE ENGAGED\nPROMOTED TO ${getFleetTitle(state.playerLevel).toUpperCase()} (LVL ${state.playerLevel})\nSTIPEND: +${stipend} SCRAP`);
+        showSoftWarning(`HYPER-DRIVE ENGAGED\nPROMOTED TO ${getFleetTitle(state.playerLevel).toUpperCase()}\nOFFERING GRANTED: +1 VOID OFFERING`);
         
         triggerHyperDrive();
         triggerHaptic([100, 50, 100, 50, 200]);
-   
-        // ... inside the Level Up (if state.energy >= maxEnergy) block
-        state.playerLevel++;
-        state.offerings++; // [ NEW ] Grant 1 Void Offering
-        state.energy = Math.floor(excess * carryoverPct); 
-        
-        let stipend = state.playerLevel * 50;
-        state.scrap += stipend;
-        
-        showSoftWarning(`HYPER-DRIVE ENGAGED\nPROMOTED TO ${getFleetTitle(state.playerLevel).toUpperCase()}\nOFFERING GRANTED: +1 VOID OFFERING`);
-        // ...
+    }
+    
+    save(); 
+    updateHUD();
+}
 
-    
-     }
-    
-    function investOffering(deityKey) {
+function investOffering(deityKey) {
     if (state.offerings > 0 && state.pantheon[deityKey] < 5) {
         state.offerings--;
         state.pantheon[deityKey]++;
         
-        // Trigger visual feedback
         triggerHaptic(50);
         
         if (state.pantheon[deityKey] === 5) {
@@ -86,12 +77,8 @@ function addEnergy(baseAmount) {
         }
         
         save();
-        renderVoidPantheon(); // Re-render the specific pantheon view
+        renderVoidPantheon(); 
     }
-}
-
-    save(); 
-    updateHUD();
 }
 
 function save() { 
@@ -99,9 +86,11 @@ function save() {
     localStorage.setItem('missions', JSON.stringify(state.missions)); 
     localStorage.setItem('energy', state.energy);
     localStorage.setItem('playerLevel', state.playerLevel);
+    localStorage.setItem('offerings', state.offerings); // Saved!
     localStorage.setItem('hapticsEnabled', state.hapticsEnabled);
     localStorage.setItem('scrap', state.scrap);
     localStorage.setItem('shipParts', JSON.stringify(state.shipParts));
+    localStorage.setItem('pantheon', JSON.stringify(state.pantheon)); // Saved!
 }
 
 function getCapturedCount(sectorId = null) {
