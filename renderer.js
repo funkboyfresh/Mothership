@@ -1060,7 +1060,7 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Pushed Fog Cores to -10% to bleed aggressively against the top HUD line
+    // [ UPGRADED ] Master Atmospheric Wrapper with a soft-ceiling mask to kill the clipping line
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1076,29 +1076,32 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. DENSE FOG LAYER (Forced through the ceiling to guarantee no gaps) */
+            /* 1. MASTER WRAPPER (Applies the fade-out to ALL lights and gas to prevent top/bottom clipping) */
+            .fog-master-wrapper {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                z-index: 0;
+                pointer-events: none;
+                /* The magic is here: Transparent at 0%, fully solid at 4%. This softly erases the clipping line. */
+                -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 35%, transparent 75%);
+                mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 35%, transparent 75%);
+            }
+
+            /* 2. DENSE FOG LAYER (Anchored to 0, cores pushed up via negative radial-gradient positions) */
             .dense-fog-layer {
                 position: absolute;
-                top: -10%; /* Bleeds off the top edge */
-                left: -10%; 
-                width: 120%; 
-                height: 115%; /* Compensate for the top shift */
+                top: 0; left: -10%; width: 120%; height: 100%;
                 background: 
-                    radial-gradient(ellipse 80% 50% at 20% 5%, rgba(0,212,255,0.5) 0%, transparent 60%),
-                    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(162,0,255,0.6) 0%, transparent 60%),
-                    radial-gradient(ellipse 80% 50% at 80% 5%, rgba(255,215,0,0.5) 0%, transparent 60%),
-                    radial-gradient(ellipse 120% 40% at 50% 15%, rgba(162,0,255,0.4) 0%, transparent 50%);
+                    radial-gradient(ellipse 80% 50% at 20% -5%, rgba(0,212,255,0.55) 0%, transparent 60%),
+                    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(162,0,255,0.65) 0%, transparent 60%),
+                    radial-gradient(ellipse 80% 50% at 80% -5%, rgba(255,215,0,0.55) 0%, transparent 60%),
+                    radial-gradient(ellipse 120% 40% at 50% 10%, rgba(162,0,255,0.4) 0%, transparent 50%);
                 filter: blur(25px); 
                 animation: fog-breathe 15s infinite alternate ease-in-out;
                 mix-blend-mode: screen;
-                pointer-events: none;
-                z-index: 0;
-                /* Mask pushed down slightly to ensure the top stays 100% thick against the HUD */
-                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 65%);
-                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 65%);
             }
 
-            /* 2. THE ASYMMETRIC LIGHT CLOUDS */
+            /* 3. THE ASYMMETRIC LIGHT CLOUDS */
             .fog-light-pocket {
                 position: absolute;
                 width: 8%; height: 8%; 
@@ -1107,11 +1110,9 @@ function renderVoidPantheon() {
                 filter: blur(8px);
                 mix-blend-mode: color-dodge;
                 animation: asymmetric-warp 12s infinite alternate ease-in-out;
-                z-index: 1;
-                pointer-events: none;
             }
 
-            /* 3. TOWER GEOMETRY */
+            /* 4. TOWER GEOMETRY */
             .monolith-spire {
                 flex: 1;
                 position: relative;
@@ -1151,14 +1152,16 @@ function renderVoidPantheon() {
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="dense-fog-layer"></div>
-            
-            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -2s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -4s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -6s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -3s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -7s;"></div>
+            <div class="fog-master-wrapper">
+                <div class="dense-fog-layer"></div>
+                
+                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -2s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -4s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -6s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -3s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -7s;"></div>
+            </div>
 
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 20;" onclick="state.level = 7; render();">×</button>
 
@@ -1189,8 +1192,6 @@ function renderVoidPantheon() {
         </div>
     `;
 }
-
-
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
