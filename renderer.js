@@ -1060,66 +1060,122 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     container.innerHTML = `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
-            <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
-            
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px;">THE VOID PANTHEON</div>
-            
-            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
+
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px;">THE VOID PANTHEON</div>
+            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                GNOSIS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
 
-            <div class="terminal-console" style="width: 90%; border-color: #00d4ff; margin-bottom: 20px; background: rgba(0, 212, 255, 0.03);">
-                <div style="color: #00d4ff; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION I: THE GENESIS SPHERE ]</div>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    ${renderDeityNode('Kaelen-Tor', 'The Star-Forge', 'kaelenTor', '#00d4ff')}
-                    ${renderDeityNode('Aethelgard', 'The Weaver', 'aethelgard', '#00d4ff')}
-                    ${renderDeityNode('Valerium', 'The Aegis Warden', 'valerium', '#00d4ff')}
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 40px;">
+                
+                <div onclick="renderAscensionTower(1)" style="flex: 1; border: 1px solid #00d4ff; border-bottom: 0; background: linear-gradient(to top, rgba(0,212,255,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(0,212,255,0.05);">
+                    <div style="color: #00d4ff; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #00d4ff;">THE GENESIS SPHERE</div>
+                </div>
+                
+                <div onclick="renderAscensionTower(2)" style="flex: 1; border: 1px solid #a200ff; border-bottom: 0; background: linear-gradient(to top, rgba(162,0,255,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(162,0,255,0.05);">
+                    <div style="color: #a200ff; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #a200ff;">THE ABYSSAL SYNDICATE</div>
+                </div>
+                
+                <div onclick="renderAscensionTower(3)" style="flex: 1; border: 1px solid #ffd700; border-bottom: 0; background: linear-gradient(to top, rgba(255,215,0,0.1), transparent); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; transition: 0.3s; box-shadow: inset 0 -20px 30px rgba(255,215,0,0.05);">
+                    <div style="color: #ffd700; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 0.8rem; text-shadow: 0 0 10px #ffd700;">CELESTIAL VANGUARD</div>
                 </div>
             </div>
-
-            <div class="terminal-console" style="width: 90%; border-color: #a200ff; margin-bottom: 20px; background: rgba(162, 0, 255, 0.03);">
-                <div style="color: #a200ff; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION II: THE ABYSSAL SYNDICATE ]</div>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    ${renderDeityNode('Syraxis', 'The Shadow-Walker', 'syraxis', '#a200ff')}
-                    ${renderDeityNode('Ignis-Kor', 'The Reality Shaper', 'ignisKor', '#a200ff')}
-                    ${renderDeityNode('Morvath', 'The Void Hunter', 'morvath', '#a200ff')}
-                </div>
-            </div>
-
-            <div class="terminal-console" style="width: 90%; border-color: #ffd700; margin-bottom: 20px; background: rgba(255, 215, 0, 0.03);">
-                <div style="color: #ffd700; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION III: THE CELESTIAL VANGUARD ]</div>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    ${renderDeityNode('Ragnarath', 'The Dread-Caller', 'ragnarath', '#ffd700')}
-                    ${renderDeityNode('Luminara', 'The Cosmic Veil', 'luminara', '#ffd700')}
-                    ${renderDeityNode('Xerxes', 'The Harvester of Suns', 'xerxes', '#ffd700')}
-                </div>
-            </div>
-
-            <p style="font-size: 0.6rem; opacity: 0.4; width: 80%; text-align: center; margin-bottom: 40px;">Spend 5 Offerings on a Deity to unlock their Major Keystone. Unlock all 3 in a Sphere to trigger Ascension.</p>
         </div>
     `;
 }
 
-function renderDeityNode(name, title, key, color) {
-    const level = state.pantheon[key];
-    const isMax = level >= 5;
-    return `
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-            <div style="text-align: left;">
-                <div style="color: ${color}; font-size: 0.9rem; font-weight: bold;">${name}</div>
-                <div style="font-size: 0.6rem; opacity: 0.7; font-style: italic;">${title}</div>
+const PANTHEON_DATA = {
+    1: { name: "THE GENESIS SPHERE", color: "#00d4ff", deities: [{k:'kaelenTor', n:'Kaelen-Tor'}, {k:'aethelgard', n:'Aethelgard'}, {k:'valerium', n:'Valerium'}] },
+    2: { name: "THE ABYSSAL SYNDICATE", color: "#a200ff", deities: [{k:'syraxis', n:'Syraxis'}, {k:'ignisKor', n:'Ignis-Kor'}, {k:'morvath', n:'Morvath'}] },
+    3: { name: "THE CELESTIAL VANGUARD", color: "#ffd700", deities: [{k:'ragnarath', n:'Ragnarath'}, {k:'luminara', n:'Luminara'}, {k:'xerxes', n:'Xerxes'}] }
+};
+
+function renderAscensionTower(towerId) {
+    const data = PANTHEON_DATA[towerId];
+    const container = document.getElementById('view-container');
+    
+    // Check if all 3 deities in this tower are maxed (Level 5)
+    const isAscended = data.deities.every(d => state.pantheon[d.k] >= 5);
+
+    let html = `
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
+            <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100;" onclick="renderVoidPantheon()">×</button>
+            <div class="view-level-title" style="color: ${data.color}; letter-spacing: 5px; margin-bottom: 20px;">${data.name}</div>
+            
+            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                GNOSIS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
+                <button onclick="state.offerings += 5; save(); renderAscensionTower(${towerId});" style="background: transparent; border: 1px solid ${data.color}; color: ${data.color}; font-size: 0.5rem; padding: 2px 6px; cursor: pointer;">[+5 DEV]</button>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="display: flex; gap: 3px;">
-                    ${[1, 2, 3, 4, 5].map(i => `<div style="width: 8px; height: 8px; border: 1px solid ${color}; background: ${level >= i ? color : 'transparent'}; border-radius: 50%;"></div>`).join('')}
-                </div>
-                <button class="subtask-btn" style="padding: 2px 10px; font-size: 0.6rem; border-color: ${color}; color: ${color};" 
-                        onclick="investOffering('${key}')" ${state.offerings <= 0 || isMax ? 'disabled style="opacity:0.3"' : ''}>
-                    ${isMax ? 'MAXED' : 'OFFER'}
-                </button>
+    `;
+
+    // THE ASCENSION APEX (Top Node)
+    html += `
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; position: relative; z-index: 10;">
+            <div style="width: 50px; height: 50px; border: 2px solid ${data.color}; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; background: ${isAscended ? data.color : 'rgba(0,0,0,0.8)'}; box-shadow: 0 0 20px ${isAscended ? data.color : 'transparent'};">
+                <div style="transform: rotate(-45deg); font-size: 1.2rem; color: ${isAscended ? '#000' : data.color}; text-shadow: none;">◬</div>
             </div>
+            <div style="font-size: 0.6rem; color: ${data.color}; margin-top: 15px; letter-spacing: 2px; font-weight: bold; background: #000; padding: 2px 5px;">ASCENSION APEX</div>
         </div>
     `;
+
+    // THE 3 BRANCHING TRACKS
+    html += `<div style="display: flex; justify-content: space-around; width: 95%; margin: 0 auto; position: relative;">`;
+    
+    // Background connecting lines
+    html += `
+        <svg style="position: absolute; top: -65px; left: 0; width: 100%; height: calc(100% + 65px); pointer-events: none; z-index: 0;">
+            <line x1="50%" y1="25" x2="16.6%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
+            <line x1="50%" y1="25" x2="50%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
+            <line x1="50%" y1="25" x2="83.3%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
+        </svg>
+    `;
+
+    // Render each Deity's path
+    data.deities.forEach(d => {
+        const level = state.pantheon[d.k];
+        const isKeystoneUnlocked = level >= 5;
+        
+        html += `<div style="display: flex; flex-direction: column; align-items: center; width: 30%; z-index: 1;">`;
+        
+        // 1. The Keystone Node
+        html += `
+            <div style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px;">
+                <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1rem;">◈</span>
+            </div>
+            <div style="font-size: 0.55rem; color: ${data.color}; margin-bottom: 15px; font-weight: bold; text-align: center; height: 15px;">${d.n.toUpperCase()}</div>
+        `;
+
+        // 2. The 5 Minor Nodes (flex-direction: column-reverse forces them to build UPWARDS)
+        html += `<div style="display: flex; flex-direction: column-reverse; gap: 15px; align-items: center; position: relative; padding-bottom: 20px;">`;
+        
+        // Vertical track line connecting the nodes
+        html += `<div style="position: absolute; width: 2px; height: 100%; background: ${data.color}; opacity: 0.2; z-index: -1;"></div>`;
+
+        for(let i = 1; i <= 5; i++) {
+            const isActive = level >= i;
+            const isNext = level === (i - 1) && state.offerings > 0; // Only the next node is clickable
+            
+            let bg = isActive ? data.color : '#000';
+            let cursor = isNext ? 'cursor: pointer;' : 'cursor: default;';
+            let pulse = isNext ? `animation: pulse-glow 1.5s infinite; box-shadow: 0 0 10px ${data.color};` : '';
+            let opacity = isActive || isNext ? '1' : '0.3';
+            
+            html += `
+                <div onclick="if(${isNext}) investOffering('${d.k}', ${towerId})" 
+                     style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${data.color}; background: ${bg}; ${cursor} ${pulse} opacity: ${opacity}; display: flex; align-items: center; justify-content: center; z-index: 1; transition: all 0.3s;">
+                </div>
+            `;
+        }
+        
+        html += `</div>`; // Close node column
+        html += `</div>`; // Close deity track
+    });
+
+    html += `</div>`; // Close the 3-track flex container
+    html += `</div>`; // Close main container
+    
+    container.innerHTML = html;
 }
