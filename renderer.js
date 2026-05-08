@@ -1060,18 +1060,15 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // Gravity-Weighted Starfield (375 Stars)
+    // Gravity-Weighted Starfield
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
-            
             let verticalBias = Math.pow(Math.random(), 0.45); 
             let top = verticalBias * 100 + '%';
-            
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
-            
             let dur = (Math.random() * 5 + 3) + 's';
             let del = (Math.random() * 5) + 's';
             
@@ -1082,7 +1079,7 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Black Zenith Apex, Unique Tower Icons, Bottom HUD
+    // [ UPGRADED ] Translated Apex, Dropped Tower Icons
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1100,7 +1097,6 @@ function renderVoidPantheon() {
                 pointer-events: none; overflow: hidden;
             }
 
-            /* LAYER 2: DEEP BACKGROUND CLOUDS */
             .bg-stellar-nursery {
                 position: absolute; top: -20%; left: -10%; width: 120%; height: 110%;
                 background: 
@@ -1112,7 +1108,6 @@ function renderVoidPantheon() {
                 animation: fog-breathe 23s infinite alternate ease-in-out;
             }
 
-            /* LAYER 4: THICK FOREGROUND CLOUDS (z-index: 15) */
             .fg-stellar-nursery {
                 position: absolute;
                 top: -25%; left: -10%; 
@@ -1138,18 +1133,16 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ NEW ] THE ZENITH APEX (The Black Void Triangle) */
-            /* Z-index 16 perfectly blocks the clouds (15) but lets the FG stars (22) drift in front of it */
+            /* [ UPGRADED ] The Zenith Apex now shifts upwards so its bottom perfectly aligns with the 8% line */
             .zenith-apex-void {
                 position: absolute;
                 top: 8%;
                 left: 50%;
-                transform: translateX(-50%);
+                transform: translate(-50%, -100%); 
                 font-size: 8rem;
-                color: #000; /* Pure black */
+                color: #000; 
                 z-index: 16; 
                 pointer-events: none;
-                /* Subtle glow to separate the black shape from the black floor behind the gas */
                 text-shadow: 0 0 30px rgba(255,255,255,0.1);
             }
 
@@ -1200,12 +1193,13 @@ function renderVoidPantheon() {
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
             }
-            /* [ UPGRADED ] Unique Sacred Geometry Icons */
+            /* [ UPGRADED ] translateY(50%) physically drops the icons down by half their height */
             .tower-icon {
                 font-size: 4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
                 margin-top: 15px; 
+                transform: translateY(50%);
             }
         </style>
     `;
@@ -1227,7 +1221,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE GENESIS SPHERE</div>
-                        <div class="tower-icon">⬡</div>
+                        <div class="tower-icon">۞</div> 
                     </div>
                 </div>
                 
@@ -1235,7 +1229,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE ABYSSAL SYNDICATE</div>
-                        <div class="tower-icon">◈</div>
+                        <div class="tower-icon">⎊</div>
                     </div>
                 </div>
                 
@@ -1243,7 +1237,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">CELESTIAL VANGUARD</div>
-                        <div class="tower-icon">⟡</div>
+                        <div class="tower-icon">❖</div>
                     </div>
                 </div>
 
