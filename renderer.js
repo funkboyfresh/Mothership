@@ -1061,7 +1061,18 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] Expanded Cloud Coverage (105% height + deeper mask) & Inverted Typography
+    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
+    let pantheonStars = '';
+    for(let i = 0; i < 375; i++) {
+        let size = Math.random() * 2 + 'px';
+        let left = Math.random() * 100 + '%';
+        let top = Math.random() * 100 + '%';
+        let dur = (Math.random() * 5 + 3) + 's';
+        let del = (Math.random() * 5) + 's';
+        pantheonStars += `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; animation-duration:${dur}; animation-delay:${del};"></div>`;
+    }
+
+    // [ UPGRADED ] Structurally Decoupled Typography, 30% Faster Shimmer, 15% Lifted Cloud Base
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1074,7 +1085,13 @@ function renderVoidPantheon() {
                 100% { transform: translateX(5%); }
             }
 
-            /* LAYER 1: DEEP BACKGROUND CLOUDS (z-index: 0, sits behind towers) */
+            /* LAYER 1: HIGH DENSITY STARFIELD */
+            .pantheon-starfield-container {
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                z-index: 0; pointer-events: none; overflow: hidden;
+            }
+
+            /* LAYER 2: DEEP BACKGROUND CLOUDS (z-index: 1) */
             .bg-stellar-nursery {
                 position: absolute; top: -10%; left: -10%; width: 120%; height: 100%;
                 background: 
@@ -1082,16 +1099,17 @@ function renderVoidPantheon() {
                     radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.5) 0%, transparent 60%),
                     radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.5) 0%, transparent 60%);
                 filter: blur(30px);
-                z-index: 0;
-                animation: fog-breathe 40s infinite alternate ease-in-out;
+                z-index: 1;
+                /* Speed increased 30%: 40s -> 31s */
+                animation: fog-breathe 31s infinite alternate ease-in-out;
             }
 
-            /* LAYER 3: THICK FOREGROUND CLOUDS (z-index: 15, sits in front of towers) */
+            /* LAYER 4: THICK FOREGROUND CLOUDS (z-index: 15) */
             .fg-stellar-nursery {
                 position: absolute;
                 top: -15%; left: -10%; 
                 width: 120%; 
-                height: 105%; /* [ INCREASED ] Expanded size to cover 25% more screen */
+                height: 105%; 
                 background: 
                     radial-gradient(circle at 20% 30%, rgba(0,212,255,0.85) 0%, rgba(0,212,255,0.3) 30%, transparent 50%),
                     radial-gradient(circle at 50% 25%, rgba(162,0,255,0.95) 0%, rgba(162,0,255,0.4) 35%, transparent 60%),
@@ -1105,35 +1123,53 @@ function renderVoidPantheon() {
                 mix-blend-mode: hard-light; 
                 z-index: 15;
                 pointer-events: none;
-                animation: slow-drift 60s infinite alternate ease-in-out;
-                /* [ INCREASED ] Mask remains solid black until 75%, pushing the fog further down */
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
-                mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+                /* Speed increased 30%: 60s -> 46s */
+                animation: slow-drift 46s infinite alternate ease-in-out;
+                
+                /* [ ADJUSTED ] Lifted the bottom fade by 15% (75/100 -> 60/85) */
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
+                mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
             }
 
-            /* LAYER 2: TOWER GEOMETRY (z-index: 5) */
-            .monolith-spire {
+            /* STRUCTURAL DECOUPLING: THE WRAPPER */
+            .tower-wrapper {
                 flex: 1;
                 position: relative;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                align-items: center;
+            }
+
+            /* LAYER 3: TOWER HULL (z-index: 5, stays behind clouds) */
+            .monolith-spire {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
                 background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
                 box-shadow: 0 0 25px -5px var(--t-color); 
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-end; 
-                padding-bottom: 25px; 
                 transition: filter 0.3s;
                 z-index: 5; 
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
             }
-            .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
+            .tower-wrapper:hover .monolith-spire { 
+                filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
+            }
 
-            /* TYPOGRAPHY & ICONS */
+            /* LAYER 5: TOWER CONTENT (z-index: 20, completely above clouds) */
+            .tower-content {
+                position: relative;
+                z-index: 20; 
+                padding-bottom: 25px; 
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                pointer-events: none;
+            }
             .spire-text {
                 color: var(--t-color); 
                 writing-mode: vertical-rl; 
@@ -1142,14 +1178,12 @@ function renderVoidPantheon() {
                 font-weight: bold; 
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
-                pointer-events: none;
             }
             .apex-icon {
                 font-size: 4.4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-                margin-top: 15px; /* [ ADJUSTED ] Margin moved to the top to separate from the text above */
-                pointer-events: none;
+                margin-top: 15px; 
             }
         </style>
     `;
@@ -1157,30 +1191,43 @@ function renderVoidPantheon() {
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
+            <div class="pantheon-starfield-container">
+                ${pantheonStars}
+            </div>
+
             <div class="bg-stellar-nursery"></div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 5;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0;">
                 
-                <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
-                    <div class="spire-text">THE GENESIS SPHERE</div>
-                    <div class="apex-icon">◬</div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;">
+                    <div class="monolith-spire"></div>
+                    <div class="tower-content">
+                        <div class="spire-text">THE GENESIS SPHERE</div>
+                        <div class="apex-icon">◬</div>
+                    </div>
                 </div>
                 
-                <div onclick="renderAscensionTower(2)" class="monolith-spire" style="--t-color: #a200ff;">
-                    <div class="spire-text">THE ABYSSAL SYNDICATE</div>
-                    <div class="apex-icon">◬</div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #a200ff;">
+                    <div class="monolith-spire"></div>
+                    <div class="tower-content">
+                        <div class="spire-text">THE ABYSSAL SYNDICATE</div>
+                        <div class="apex-icon">◬</div>
+                    </div>
                 </div>
                 
-                <div onclick="renderAscensionTower(3)" class="monolith-spire" style="--t-color: #ffd700;">
-                    <div class="spire-text">CELESTIAL VANGUARD</div>
-                    <div class="apex-icon">◬</div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ffd700;">
+                    <div class="monolith-spire"></div>
+                    <div class="tower-content">
+                        <div class="spire-text">CELESTIAL VANGUARD</div>
+                        <div class="apex-icon">◬</div>
+                    </div>
                 </div>
 
             </div>
 
             <div class="fg-stellar-nursery"></div>
 
-            <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20; pointer-events: none;">
+            <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
             </div>
