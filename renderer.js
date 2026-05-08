@@ -109,6 +109,18 @@ function render() {
     
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
+        // [ UPGRADED ] Dynamic Global Navigation Bar
+    if (footer && [1, 5, 6, 7].includes(state.level)) {
+        footer.style.display = 'flex';
+        footer.innerHTML = `
+            <button class="zoom-btn" onclick="state.level = 1; render();" style="flex:1; border-color: var(--accent); color: var(--accent); opacity: ${state.level === 1 ? '1' : '0.5'};">[ MAP ]</button>
+            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: ${state.level === 5 ? '1' : '0.5'};">[ HANGAR ]</button>
+            <button class="zoom-btn" onclick="state.level = 6; render();" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: ${state.level === 6 ? '1' : '0.5'};">[ NEXUS ]</button>
+            <button class="zoom-btn" onclick="state.level = 7; render();" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: ${state.level === 7 ? '1' : '0.5'};">[ OUTERWORLDS ]</button>
+        `;
+    }
+
+    
     switch(state.level) {
         case 1: renderLevel1(container, footer); break;
         case 2: renderLevel2(container, footer, activeSector); break;
@@ -178,17 +190,7 @@ function renderMainMenuFooter(footer) {
 // --- SECTOR MAP (L1) ---
 
 function renderLevel1(container, footer) {
-    if(footer) { 
-        footer.style.display = 'flex'; 
-        footer.innerHTML = `
-            <button class="zoom-btn" onclick="state.level = 1; render();" style="flex:1; border-color: var(--accent); color: var(--accent);">[ MAP ]</button>
-            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: 0.5;">[ HANGAR ]</button>
-            <button class="zoom-btn" onclick="state.level = 6; render();" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.5;">[ NEXUS ]</button>
-            <button class="zoom-btn" onclick="state.level = 7; render();" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.5;">[ OUTERWORLDS ]</button>
-        `; 
-    }
 
-    
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
     svg.id = "voronoi-map"; 
     container.appendChild(svg);
