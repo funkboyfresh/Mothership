@@ -1135,10 +1135,10 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] Translated exactly 0.75x UP from its previous position (-50% to -125%) */
+            /* [ UPDATED ] Shifted down by 5% (from 18% to 23%) */
             .zenith-apex-void {
                 position: absolute;
-                top: 18%; 
+                top: 23%; 
                 left: 50%;
                 transform: translate(-50%, -125%); 
                 font-size: 8rem;
@@ -1158,12 +1158,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* [ RESTORED ] Anchored back to bottom: 0 to reset tower depth */
+            /* [ UPDATED ] Anchored to -5vh to sink it 5% deeper, adding 5vh to height so it doesn't shrink */
             .monolith-spire {
                 position: absolute;
-                bottom: 0; left: 0; 
+                bottom: -5vh; left: 0; 
                 width: 100%; 
-                height: 82%; 
+                height: calc(82% + 5vh); 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1178,7 +1178,7 @@ function renderVoidPantheon() {
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
             }
 
-            /* [ RESTORED ] Text and icon wrapper position restored (translation removed) */
+            /* [ UPDATED ] Pushed text and icons down by 5vh to match the new floor drop */
             .tower-content {
                 position: relative;
                 z-index: 20; 
@@ -1187,6 +1187,7 @@ function renderVoidPantheon() {
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
+                transform: translateY(5vh);
             }
 
             .spire-text {
@@ -1211,7 +1212,6 @@ function renderVoidPantheon() {
                 margin-top: 15px;
             }
 
-            /* [ RESTORED ] Icon positioning reset to center-alignment */
             .tower-icon {
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
