@@ -1060,10 +1060,9 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Stable, High-Fidelity Gas Clouds & Grounded Architecture
+    // [ GRAND OVERHAUL ] Stable Gas Clouds & High-Fidelity Solid Monolith Architecture (Based on Image Reference)
     const atmosStyles = `
         <style>
-            /* The 400% Asymmetric Scaling for the Lights */
             @keyframes asymmetric-warp {
                 0% { transform: scale(1, 1) rotate(0deg); opacity: 0.6; }
                 25% { transform: scale(4, 1.5) rotate(45deg); opacity: 1; }
@@ -1071,15 +1070,12 @@ function renderVoidPantheon() {
                 75% { transform: scale(3, 3) rotate(60deg); opacity: 0.9; }
                 100% { transform: scale(1, 2) rotate(10deg); opacity: 0.5; }
             }
-            
-            /* Gentle breathing for the main dense fog */
             @keyframes fog-breathe {
                 0% { opacity: 0.6; transform: scale(1); }
                 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); }
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. DENSE FOG BASE (Doubled quantity, layered radial clouds) */
             .dense-fog-layer {
                 position: absolute;
                 top: -10%; left: -10%; width: 120%; height: 75%;
@@ -1089,17 +1085,16 @@ function renderVoidPantheon() {
                     radial-gradient(ellipse at 80% 30%, rgba(255,215,0,0.4) 0%, transparent 50%),
                     radial-gradient(circle at 35% 45%, rgba(0,212,255,0.3) 0%, transparent 40%),
                     radial-gradient(circle at 65% 45%, rgba(255,215,0,0.3) 0%, transparent 40%);
-                filter: blur(25px); /* Soften the composite without breaking the browser */
+                filter: blur(25px); 
                 animation: fog-breathe 15s infinite alternate ease-in-out;
                 mix-blend-mode: screen;
                 pointer-events: none;
                 z-index: 0;
             }
 
-            /* 2. THE 6 ASYMMETRIC LIGHT CLOUDS */
             .fog-light-pocket {
                 position: absolute;
-                width: 8%; height: 8%; /* Reduced base size, allowing the 400% scale to do the work */
+                width: 8%; height: 8%; 
                 background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, var(--l-color) 40%, transparent 80%);
                 border-radius: 50%;
                 filter: blur(8px);
@@ -1109,18 +1104,22 @@ function renderVoidPantheon() {
                 pointer-events: none;
             }
 
-            /* TOWER ARCHITECTURE */
+            /* [ ARCHITECTURAL OVERHAUL ] TOWER GEOMETRY to match image_0.png */
             .monolith-spire {
                 flex: 1;
                 position: relative;
-                /* Removed top border, kept sides */
                 border-style: solid;
-                border-width: 0 1px 0 1px;
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.02) 5%, rgba(255,255,255,0.15) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
-                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 80%, transparent 100%);
+                border-width: 0 1px 0 1px; /* Removed top border, kept sides */
+                /* High-fidelity glowing edge border */
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 5%, rgba(255,255,255,0.4) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
                 
-                /* Capturing light from above: The Inner Glow */
-                box-shadow: inset 0 80px 80px -40px var(--t-color);
+                /* [ FIXED ] NEW SOLID BODY FILL (Replaces stripe/black background)
+                   Fades transparent at top to blend into nebula, grounding to solid color at floor (matches image_0.png) */
+                background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.05) 15%, var(--t-color) 80%, var(--t-color) 100%);
+                mix-blend-mode: hard-light; /* Makes body color pop against background clouds */
+
+                /* Outer Glow from Image */
+                box-shadow: 0 0 20px -5px var(--t-color);
                 
                 cursor: pointer;
                 display: flex;
@@ -1133,16 +1132,7 @@ function renderVoidPantheon() {
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
 
-            /* Capturing light from above: The Vertical Ray */
-            .monolith-spire::before {
-                content: '';
-                position: absolute;
-                top: 0; left: 15%; width: 70%; height: 50%;
-                background: linear-gradient(to bottom, var(--t-color) 0%, transparent 100%);
-                opacity: 0.5;
-                mix-blend-mode: screen;
-                pointer-events: none;
-            }
+            /* [ STRIPE DELETED ] ::before pseudo-element has been erased to kill the weird center stripe artifact */
 
             .apex-icon {
                 position: absolute;
