@@ -1096,3 +1096,48 @@ function renderOuterworlds(container) {
         </div>
     `;
 }
+
+function renderVoidPantheon() {
+    const container = document.getElementById('render-area');
+    container.innerHTML = `
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
+            <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
+            
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px;">THE VOID PANTHEON</div>
+            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6;">OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold;">${state.offerings}</span></div>
+
+            <div class="terminal-console" style="width: 90%; border-color: #00d4ff; margin-bottom: 20px; background: rgba(0, 212, 255, 0.03);">
+                <div style="color: #00d4ff; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION I: THE GENESIS SPHERE ]</div>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    ${renderDeityNode('Kaelen-Tor', 'The Star-Forge', 'kaelenTor', '#00d4ff')}
+                    ${renderDeityNode('Aethelgard', 'The Weaver', 'aethelgard', '#00d4ff')}
+                    ${renderDeityNode('Valerium', 'The Aegis Warden', 'valerium', '#00d4ff')}
+                </div>
+            </div>
+
+            <p style="font-size: 0.6rem; opacity: 0.4; width: 80%; text-align: center;">Spend 5 Offerings on a Deity to unlock their Major Keystone. Unlock all 3 in a Sphere to trigger Ascension.</p>
+        </div>
+    `;
+}
+
+function renderDeityNode(name, title, key, color) {
+    const level = state.pantheon[key];
+    const isMax = level >= 5;
+    return `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+            <div style="text-align: left;">
+                <div style="color: ${color}; font-size: 0.9rem; font-weight: bold;">${name}</div>
+                <div style="font-size: 0.6rem; opacity: 0.7; font-style: italic;">${title}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; gap: 3px;">
+                    ${[1, 2, 3, 4, 5].map(i => `<div style="width: 8px; height: 8px; border: 1px solid ${color}; background: ${level >= i ? color : 'transparent'}; border-radius: 50%;"></div>`).join('')}
+                </div>
+                <button class="subtask-btn" style="padding: 2px 10px; font-size: 0.6rem; border-color: ${color}; color: ${color};" 
+                        onclick="investOffering('${key}')" ${state.offerings <= 0 || isMax ? 'disabled style="opacity:0.3"' : ''}>
+                    ${isMax ? 'MAXED' : 'OFFER'}
+                </button>
+            </div>
+        </div>
+    `;
+}
