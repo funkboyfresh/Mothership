@@ -52,6 +52,28 @@ function updateHUD() {
     }
 }
 
+function openPilotDossier() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.innerHTML = `
+        <div class="modal-content" style="border-color: var(--accent); background: rgba(0,0,5,0.95);">
+            <div class="view-level-title" style="color: var(--accent);">PILOT IDENTIFICATION // DOSSIER</div>
+            <h2 class="view-main-title">${getFleetTitle(state.playerLevel).toUpperCase()}</h2>
+            
+            <div class="terminal-console" style="text-align: left; margin: 20px 0;">
+                <p> > PILOT LEVEL: <span style="color: var(--accent);">${state.playerLevel}</span></p>
+                <p> > VOID OFFERINGS: <span style="color: #a200ff; text-shadow: 0 0 10px #a200ff;">${state.offerings}</span></p>
+                <p> > SHIP CLASS: <span style="color: var(--captured);">DREADNOUGHT</span></p>
+                <hr style="border: 0; border-top: 1px dotted var(--accent); opacity: 0.3;">
+                <p style="font-size: 0.7rem; opacity: 0.6;">TRAVEL TO THE [ OUTERWORLDS ] TO PRESENT YOUR OFFERINGS AT THE VOID PANTHEON.</p>
+            </div>
+            
+            <button class="action-btn" onclick="this.parentElement.parentElement.remove()" style="width: 100%;">[ RETURN TO BRIDGE ]</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 function triggerHyperDrive() {
     const overlay = document.getElementById('level-up-overlay');
     if(!overlay) return;
