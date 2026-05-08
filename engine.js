@@ -72,6 +72,24 @@ function addEnergy(baseAmount) {
 
     
      }
+    
+    function investOffering(deityKey) {
+    if (state.offerings > 0 && state.pantheon[deityKey] < 5) {
+        state.offerings--;
+        state.pantheon[deityKey]++;
+        
+        // Trigger visual feedback
+        triggerHaptic(50);
+        
+        if (state.pantheon[deityKey] === 5) {
+            showSoftWarning(`DIVINE CONNECTION ESTABLISHED: ${deityKey.toUpperCase()}\nKEYSTONE READY FOR ACTIVATION`);
+        }
+        
+        save();
+        renderVoidPantheon(); // Re-render the specific pantheon view
+    }
+}
+
     save(); 
     updateHUD();
 }
