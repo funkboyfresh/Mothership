@@ -1063,7 +1063,7 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] Removed top mask gap, allowing fog to slam directly into the HUD glass.
+    // [ UPGRADED ] 75% slower animations, 3-Layer Silver Fog injection
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1079,7 +1079,7 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. MASTER WRAPPER (Mask now starts at solid black at 0%, perfectly hitting the top line) */
+            /* MASTER WRAPPER */
             .fog-master-wrapper {
                 position: absolute;
                 top: 0; left: 0; width: 100%; height: 100%;
@@ -1089,21 +1089,53 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 85%);
             }
 
-            /* 2. DENSE FOG LAYER */
+            /* LAYER 1: DEEP SILVER (Behind everything) */
+            .silver-fog-bg {
+                position: absolute; top: 0; left: -10%; width: 120%; height: 100%;
+                background: radial-gradient(ellipse 100% 60% at 50% -5%, rgba(200, 215, 255, 0.35) 0%, transparent 65%);
+                filter: blur(30px);
+                animation: fog-breathe 72s infinite alternate ease-in-out; /* Slowed */
+                mix-blend-mode: screen;
+            }
+
+            /* LAYER 2: MIXED FOG (Colors + Silver edges/between) */
             .dense-fog-layer {
                 position: absolute;
                 top: 0; left: -10%; width: 120%; height: 100%;
                 background: 
+                    /* Existing Colors */
                     radial-gradient(ellipse 80% 50% at 20% -5%, rgba(0,212,255,0.55) 0%, transparent 60%),
                     radial-gradient(ellipse 100% 60% at 50% -10%, rgba(162,0,255,0.65) 0%, transparent 60%),
                     radial-gradient(ellipse 80% 50% at 80% -5%, rgba(255,215,0,0.55) 0%, transparent 60%),
-                    radial-gradient(ellipse 120% 40% at 50% 10%, rgba(162,0,255,0.4) 0%, transparent 50%);
+                    radial-gradient(ellipse 120% 40% at 50% 10%, rgba(162,0,255,0.4) 0%, transparent 50%),
+                    /* Silver mixed on the extreme edges */
+                    radial-gradient(ellipse 60% 40% at 5% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 95% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
+                    /* Silver mixed between the towers */
+                    radial-gradient(ellipse 60% 50% at 35% 0%, rgba(255,255,255,0.3) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 50% at 65% 0%, rgba(255,255,255,0.3) 0%, transparent 60%);
                 filter: blur(25px); 
-                animation: fog-breathe 15s infinite alternate ease-in-out;
+                /* Slowed down 75% (15s -> 60s) */
+                animation: fog-breathe 60s infinite alternate ease-in-out; 
                 mix-blend-mode: screen;
             }
 
-            /* 3. THE ASYMMETRIC LIGHT CLOUDS */
+            /* LAYER 3: FOREGROUND SILVER (Floats over the towers) */
+            .silver-fog-fg {
+                position: absolute;
+                top: 5%; left: -10%; width: 120%; height: 80%;
+                background: 
+                    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 60%),
+                    radial-gradient(ellipse 80% 40% at 50% 25%, rgba(255,255,255,0.12) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 60%);
+                filter: blur(20px);
+                z-index: 15; /* Key placement: above towers (10), below UI (20) */
+                pointer-events: none;
+                animation: fog-breathe 68s infinite alternate-reverse ease-in-out; /* Slowed */
+                mix-blend-mode: screen;
+            }
+
+            /* THE ASYMMETRIC LIGHT CLOUDS */
             .fog-light-pocket {
                 position: absolute;
                 width: 8%; height: 8%; 
@@ -1111,10 +1143,11 @@ function renderVoidPantheon() {
                 border-radius: 50%;
                 filter: blur(8px);
                 mix-blend-mode: color-dodge;
-                animation: asymmetric-warp 12s infinite alternate ease-in-out;
+                /* Slowed down 75% (12s -> 48s) */
+                animation: asymmetric-warp 48s infinite alternate ease-in-out; 
             }
 
-            /* 4. TOWER GEOMETRY */
+            /* TOWER GEOMETRY */
             .monolith-spire {
                 flex: 1;
                 position: relative;
@@ -1155,14 +1188,16 @@ function renderVoidPantheon() {
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
             <div class="fog-master-wrapper">
+                <div class="silver-fog-bg"></div>
+
                 <div class="dense-fog-layer"></div>
                 
                 <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -2s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -4s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -6s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -3s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -7s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -8s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -16s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -24s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -12s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -28s;"></div>
             </div>
 
             <div style="position: relative; color: #fff; font-size: 0.8rem; margin-bottom: 30px; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20;">
@@ -1188,13 +1223,12 @@ function renderVoidPantheon() {
                 </div>
 
             </div>
+
+            <div class="silver-fog-fg"></div>
+
         </div>
     `;
 }
-
-// [ UPGRADED ] The Void Pantheon Lore Dictionary
-
-
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
