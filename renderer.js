@@ -33,7 +33,23 @@ function updateHUD() {
         levelEl.innerText = `${title} // LEVEL ${state.playerLevel}`;
     }
     if(energyEl) energyEl.innerText = `CAPACITOR ${state.energy} / ${maxEnergy}`;
-    if(barEl) barEl.style.width = `${(state.energy / maxEnergy) * 100}%`;
+    if(barEl) barEl.style.width = `${(state.energy / maxEnergy) * 100}%`; 
+    
+    if(levelEl) {
+        let title = typeof getFleetTitle === 'function' ? getFleetTitle(state.playerLevel).toUpperCase() : 'PILOT';
+        levelEl.innerText = `${title} // LEVEL ${state.playerLevel}`;
+        levelEl.style.cursor = 'pointer'; // Make it look clickable
+        levelEl.onclick = openPilotDossier; // Link to the new UI
+        
+        // Add a pulsing glow if you have unspent Offerings
+        if (state.offerings > 0) {
+            levelEl.style.textShadow = '0 0 15px var(--accent), 0 0 5px #fff';
+            levelEl.classList.add('pulse-animation');
+        } else {
+            levelEl.style.textShadow = 'none';
+            levelEl.classList.remove('pulse-animation');
+        }
+    }
 }
 
 function triggerHyperDrive() {
