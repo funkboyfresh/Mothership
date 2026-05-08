@@ -1058,7 +1058,7 @@ function renderOuterworlds(container) {
 }
 
 function renderVoidPantheon() {
-    const container = document.getElementById('render-area');
+    const container = document.getElementById('view-container');
     container.innerHTML = `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
             <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
