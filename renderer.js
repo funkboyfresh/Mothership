@@ -1060,7 +1060,7 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Master Atmospheric Wrapper with a soft-ceiling mask to kill the clipping line
+    // [ UPGRADED ] Removed top mask gap, allowing fog to slam directly into the HUD glass.
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1076,18 +1076,17 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. MASTER WRAPPER (Applies the fade-out to ALL lights and gas to prevent top/bottom clipping) */
+            /* 1. MASTER WRAPPER (Mask now starts at solid black at 0%, perfectly hitting the top line) */
             .fog-master-wrapper {
                 position: absolute;
                 top: 0; left: 0; width: 100%; height: 100%;
                 z-index: 0;
                 pointer-events: none;
-                /* The magic is here: Transparent at 0%, fully solid at 4%. This softly erases the clipping line. */
-                -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 35%, transparent 75%);
-                mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 35%, transparent 75%);
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 85%);
+                mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 85%);
             }
 
-            /* 2. DENSE FOG LAYER (Anchored to 0, cores pushed up via negative radial-gradient positions) */
+            /* 2. DENSE FOG LAYER */
             .dense-fog-layer {
                 position: absolute;
                 top: 0; left: -10%; width: 120%; height: 100%;
@@ -1163,10 +1162,7 @@ function renderVoidPantheon() {
                 <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -7s;"></div>
             </div>
 
-            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 20;" onclick="state.level = 7; render();">×</button>
-
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px; margin-top: 20px; z-index: 20;">THE VOID PANTHEON</div>
-            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20;">
+            <div style="position: relative; color: #fff; font-size: 0.8rem; margin-bottom: 30px; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
@@ -1192,6 +1188,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
