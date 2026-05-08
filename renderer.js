@@ -1080,15 +1080,19 @@ function renderNexus(container) {
 function renderOuterworlds(container) {
     container.innerHTML = `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
-            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: #a200ff; text-shadow: 0 0 10px rgba(162, 0, 255, 0.5);" onclick="state.level = 1; render();">×</button>
-            <div class="view-level-title" style="margin-top:0; color: #a200ff; text-shadow: 0 0 8px rgba(162, 0, 255, 0.5);">EXTERNAL HUB // FRINGE</div>
+            <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: #a200ff;" onclick="state.level = 1; render();">×</button>
+            <div class="view-level-title" style="color: #a200ff;">EXTERNAL HUB // THE FRINGE</div>
             <h1 class="view-main-title">The Outerworlds</h1>
             
-            <div class="terminal-console" style="width: 95%; max-width: 500px; padding: 30px 10px; text-align: center; border-color: #a200ff; box-shadow: inset 0 0 15px rgba(162, 0, 255, 0.05);">
-                <div style="color: #a200ff; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">[ UPLINK OFFLINE ]</div>
-                <div style="font-size: 0.7rem; opacity: 0.7; line-height: 1.5;">The Black Market, The Forge, and the Underworld Cantina will be accessible once the signal is established.</div>
+            <div class="terminal-console" style="width: 90%; margin-bottom: 15px; border-color: #a200ff; cursor: pointer;" onclick="showSoftWarning('THE GODS ARE WATCHING...')">
+                <div style="color: #a200ff; font-weight: bold; letter-spacing: 3px;">[ THE VOID PANTHEON ]</div>
+                <div style="font-size: 0.6rem; opacity: 0.7;">TOTAL GNOSIS REQUIRED TO ENTER</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%;">
+                <div class="terminal-console" style="opacity: 0.5; border-color: #777;">[ BLACK MARKET ]</div>
+                <div class="terminal-console" style="opacity: 0.5; border-color: #777;">[ THE FORGE ]</div>
             </div>
         </div>
     `;
 }
-
