@@ -1060,19 +1060,18 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] Gravity-Weighted Star Distribution
+    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
             
-            // [ THE MAGIC ] Applies a power curve to force stars to cluster at the bottom (100%)
-            // A curve of 0.35 pulls the vast majority of generated coordinates downward.
+            // Power curve clusters stars at the bottom, thinning out at the top
             let verticalBias = Math.pow(Math.random(), 0.35); 
             let top = verticalBias * 100 + '%';
             
-            // Links opacity to vertical position: bright at the bottom, dim at the top
+            // Dynamic opacity: bright at the bottom, dim near the clouds
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             
             let dur = (Math.random() * 5 + 3) + 's';
@@ -1080,11 +1079,12 @@ function renderVoidPantheon() {
             
             return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del};"></div>`;
         };
-        bgStars += getStar(0.7); // Deep background (smaller)
-        midStars += getStar(1.1); // Suspended in gas (medium)
-        fgStars += getStar(1.6); // Foreground (largest)
+        bgStars += getStar(0.7); 
+        midStars += getStar(1.1); 
+        fgStars += getStar(1.6); 
     }
 
+    // [ UPGRADED ] Perfectly balanced tower colors + Stardust filling the gaps
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1122,14 +1122,20 @@ function renderVoidPantheon() {
                 width: 120%; 
                 height: 105%; 
                 background: 
-                    radial-gradient(circle at 20% 30%, rgba(0,212,255,0.85) 0%, rgba(0,212,255,0.3) 30%, transparent 50%),
-                    radial-gradient(circle at 50% 25%, rgba(162,0,255,0.95) 0%, rgba(162,0,255,0.4) 35%, transparent 60%),
-                    radial-gradient(circle at 80% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 50%, transparent 60%),
-                    radial-gradient(circle at 35% 45%, rgba(0,212,255,0.5) 0%, transparent 40%),
-                    radial-gradient(circle at 65% 45%, rgba(255,215,0,0.5) 0%, transparent 40%),
-                    radial-gradient(circle at 35% 35%, rgba(0,0,0,0.9) 0%, transparent 40%),
-                    radial-gradient(circle at 65% 30%, rgba(0,0,0,0.9) 0%, transparent 40%),
-                    radial-gradient(circle at 50% 10%, rgba(0,0,0,0.8) 0%, transparent 50%);
+                    /* 1. EQUAL WEIGHT TOWER CORES (Blue, Purple, Gold aligned to 17%, 50%, 83%) */
+                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.7) 0%, rgba(0,212,255,0.2) 35%, transparent 55%),
+                    radial-gradient(circle at 50% 35%, rgba(162,0,255,0.7) 0%, rgba(162,0,255,0.2) 35%, transparent 55%),
+                    radial-gradient(circle at 83% 35%, rgba(255,215,0,0.7) 0%, rgba(255,215,0,0.2) 35%, transparent 55%),
+                    
+                    /* 2. STARDUST BRIDGES (White/Silver filling the gaps perfectly between the colors) */
+                    radial-gradient(circle at 33% 40%, rgba(220,230,255,0.55) 0%, transparent 45%),
+                    radial-gradient(circle at 67% 40%, rgba(255,240,200,0.55) 0%, transparent 45%),
+                    radial-gradient(circle at 50% 45%, rgba(255,255,255,0.3) 0%, transparent 50%),
+                    
+                    /* 3. PITCH BLACK OCCLUSION CLOUDS (For stormy, volumetric depth) */
+                    radial-gradient(circle at 33% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
+                    radial-gradient(circle at 67% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 15%, rgba(0,0,0,0.9) 0%, transparent 50%);
                 filter: blur(25px); 
                 mix-blend-mode: hard-light; 
                 z-index: 15;
@@ -1253,7 +1259,6 @@ function renderVoidPantheon() {
         </div>
     `;
 }
-
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
