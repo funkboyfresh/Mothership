@@ -1079,7 +1079,6 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Translated Apex, Dropped Tower Icons
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1133,12 +1132,12 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] The Zenith Apex now shifts upwards so its bottom perfectly aligns with the 8% line */
+            /* [ UPGRADED ] Dropped the Apex triangle to sit cleanly in the clouds */
             .zenith-apex-void {
                 position: absolute;
-                top: 8%;
+                top: 18%; /* Dropped significantly from 8% */
                 left: 50%;
-                transform: translate(-50%, -100%); 
+                transform: translateX(-50%); /* Removed the negative Y translation to pull it down further */
                 font-size: 8rem;
                 color: #000; 
                 z-index: 16; 
@@ -1156,11 +1155,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
+            /* [ UPGRADED ] Towers stretch deeper into the floor */
             .monolith-spire {
                 position: absolute;
                 bottom: 0; left: 0; 
                 width: 100%; 
-                height: 75%; 
+                height: 82%; /* Increased height slightly to compensate for the floor drop */
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1193,13 +1193,12 @@ function renderVoidPantheon() {
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
             }
-            /* [ UPGRADED ] translateY(50%) physically drops the icons down by half their height */
+            /* [ UPGRADED ] Shifted icons up by 25% */
             .tower-icon {
-                font-size: 4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
                 margin-top: 15px; 
-                transform: translateY(50%);
+                transform: translateY(25%); /* Moved UP from 50% */
             }
         </style>
     `;
@@ -1215,13 +1214,13 @@ function renderVoidPantheon() {
 
             <div class="zenith-apex-void">◬</div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 50px;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 10px;">
                 
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;">
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE GENESIS SPHERE</div>
-                        <div class="tower-icon">۞</div> 
+                        <div class="tower-icon" style="font-size: 3rem;">۞</div> 
                     </div>
                 </div>
                 
@@ -1229,7 +1228,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE ABYSSAL SYNDICATE</div>
-                        <div class="tower-icon">⎊</div>
+                        <div class="tower-icon" style="font-size: 6rem;">⎊</div>
                     </div>
                 </div>
                 
@@ -1237,7 +1236,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">CELESTIAL VANGUARD</div>
-                        <div class="tower-icon">❖</div>
+                        <div class="tower-icon" style="font-size: 3rem;">❖</div>
                     </div>
                 </div>
 
@@ -1267,41 +1266,44 @@ const PANTHEON_DATA = {
     1: { 
         name: "THE GENESIS SPHERE", color: "#00d4ff", 
         deities: [
-            {k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', 
+            // Deconstructed Verdant Matrix (۞)
+            {k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉', 
              minor: "CELESTIAL MAGNETISM: Increases base Scrap and Energy yields by +2% per Offering.", 
              major: "THE MIDAS DRIVE: Securing a Level 4 Target converts 10% of your total lifetime Energy into a massive, one-time Scrap payout." },
-            {k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', 
+            {k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷', 
              minor: "TEMPORAL VELOCITY: Grants +5% bonus Scrap for targets secured before their 24h warning per Offering.", 
              major: "CHRONOS SHIFT: Once per week, instantly advance your Pilot Level by 1 without filling the Capacitor." },
-            {k:'valerium', n:'Valerium', title: 'The Aegis Warden', 
+            {k:'valerium', n:'Valerium', title: 'The Aegis Warden', icon: '⎔', 
              minor: "AEGIS PLATING: Reduces the Energy penalty of Overdue tasks by 1 point per Offering.", 
              major: "WARDEN'S GRACE: Automatically generates a Sub-Routine Shield on Decaying tasks, restoring lost penalty Energy upon first action." }
         ] 
     },
     2: { 
-        name: "THE ABYSSAL SYNDICATE", color: "#a200ff", 
+        name: "THE ABYSSAL SYNDICATE", color: "#ffd700", // Updated to Gold/Yellow
         deities: [
-            {k:'syraxis', n:'Syraxis', title: 'The Shadow-Walker', 
+            // Deconstructed Aetherial Eye (⎊)
+            {k:'syraxis', n:'Syraxis', title: 'The Shadow-Walker', icon: '◯', 
              minor: "UNDERWORLD CONNECTIONS: Black Market exchange rates improve by 4% per Offering.", 
              major: "THE SMUGGLER'S TOLL: Hires a permanent, phantom-operative that slowly generates a drip-feed of Scrap while offline." },
-            {k:'ignisKor', n:'Ignis-Kor', title: 'The Reality Shaper', 
+            {k:'ignisKor', n:'Ignis-Kor', title: 'The Reality Shaper', icon: '▵', 
              minor: "EXTENDED VOLATILITY: Temporary Forge buffs last 1 hour longer per Offering.", 
              major: "QUANTUM LOOP: 33% chance the universe loops when crafting, refunding the entire Scrap cost immediately." },
-            {k:'morvath', n:'Morvath', title: 'The Void Hunter', 
+            {k:'morvath', n:'Morvath', title: 'The Void Hunter', icon: '◈', 
              minor: "BLOOD MONEY: Daily Bounty payouts increased by +5% per Offering.", 
              major: "THE APEX CONTRACT: Completing a Daily Bounty guarantees an 'Obliteration Token' to wipe one Critical task without penalty." }
         ] 
     },
     3: { 
-        name: "THE CELESTIAL VANGUARD", color: "#ffd700", 
+        name: "THE CELESTIAL VANGUARD", color: "#ff00ff", // Updated to Magenta
         deities: [
-            {k:'ragnarath', n:'Ragnarath', title: 'The Dread-Caller', 
+            // Deconstructed Oblivion Cascade (❖)
+            {k:'ragnarath', n:'Ragnarath', title: 'The Dread-Caller', icon: '◇', 
              minor: "KINETIC PIERCING: Increases kinetic damage to Boss Target shields per Offering.", 
              major: "THE ORBITAL STRIKE: Once a week, instantly obliterate a Boss Target without completing its sub-routines." },
-            {k:'luminara', n:'Luminara', title: 'The Cosmic Veil', 
+            {k:'luminara', n:'Luminara', title: 'The Cosmic Veil', icon: '✕', 
              minor: "ION RESISTANCE: Reduces Energy drain from hostile Encounters per Offering.", 
              major: "THE VEIL OF LIGHT: Taking damage from an Encounter has a 33% chance to be absorbed and converted into Bonus Energy." },
-            {k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', 
+            {k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', icon: '⸬', 
              minor: "ANOMALY DETECTION: Rare encounters spawn more frequently per Offering.", 
              major: "THE SUN-EATER: Fully clearing a Sector permanently boosts that Sector's baseline rewards by 25%." }
         ] 
