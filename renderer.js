@@ -1132,12 +1132,12 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] Y-Translation changed from -100% to -50% to drop it by exactly 0.5x its height */
+            /* [ UPGRADED ] Translated exactly 0.75x UP from its previous position (-50% to -125%) */
             .zenith-apex-void {
                 position: absolute;
                 top: 18%; 
                 left: 50%;
-                transform: translate(-50%, -50%); 
+                transform: translate(-50%, -125%); 
                 font-size: 8rem;
                 color: #000; 
                 z-index: 16; 
@@ -1155,12 +1155,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* [ UPGRADED ] Pushed the bottom 15vh deeper into the floor */
+            /* [ RESTORED ] Anchored back to bottom: 0 to reset tower depth */
             .monolith-spire {
                 position: absolute;
-                bottom: -15vh; left: 0; 
+                bottom: 0; left: 0; 
                 width: 100%; 
-                height: calc(82% + 15vh); 
+                height: 82%; 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1175,7 +1175,7 @@ function renderVoidPantheon() {
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
             }
 
-            /* [ UPGRADED ] Text and icons moved down 15vh to match the new extended floor */
+            /* [ RESTORED ] Text and icon wrapper position restored (translation removed) */
             .tower-content {
                 position: relative;
                 z-index: 20; 
@@ -1184,7 +1184,6 @@ function renderVoidPantheon() {
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
-                transform: translateY(15vh);
             }
 
             .spire-text {
@@ -1209,11 +1208,10 @@ function renderVoidPantheon() {
                 margin-top: 15px;
             }
 
-            /* [ UPGRADED ] translateY(50%) forces the top of the new position to perfectly align with the old center */
+            /* [ RESTORED ] Icon positioning reset to center-alignment */
             .tower-icon {
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-                transform: translateY(50%);
             }
         </style>
     `;
@@ -1281,7 +1279,6 @@ function renderVoidPantheon() {
         </div>
     `;
 }
-
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
