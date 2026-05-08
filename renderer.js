@@ -1060,7 +1060,7 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Seamless Ceiling Fog, Wispy Decay, and Solid Color-to-Black Monoliths
+    // [ UPGRADED ] Pushed Fog Cores to -10% to bleed aggressively against the top HUD line
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1076,23 +1076,26 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. DENSE FOG LAYER (Anchored to top:0 to hit the HUD line, with a wispy mask decay) */
+            /* 1. DENSE FOG LAYER (Forced through the ceiling to guarantee no gaps) */
             .dense-fog-layer {
                 position: absolute;
-                top: 0; left: -10%; width: 120%; height: 100%;
+                top: -10%; /* Bleeds off the top edge */
+                left: -10%; 
+                width: 120%; 
+                height: 115%; /* Compensate for the top shift */
                 background: 
-                    radial-gradient(ellipse 80% 40% at 20% 10%, rgba(0,212,255,0.45) 0%, transparent 60%),
-                    radial-gradient(ellipse 100% 50% at 50% 5%, rgba(162,0,255,0.55) 0%, transparent 60%),
-                    radial-gradient(ellipse 80% 40% at 80% 10%, rgba(255,215,0,0.45) 0%, transparent 60%),
-                    radial-gradient(ellipse 120% 30% at 50% 20%, rgba(162,0,255,0.3) 0%, transparent 50%);
+                    radial-gradient(ellipse 80% 50% at 20% 5%, rgba(0,212,255,0.5) 0%, transparent 60%),
+                    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(162,0,255,0.6) 0%, transparent 60%),
+                    radial-gradient(ellipse 80% 50% at 80% 5%, rgba(255,215,0,0.5) 0%, transparent 60%),
+                    radial-gradient(ellipse 120% 40% at 50% 15%, rgba(162,0,255,0.4) 0%, transparent 50%);
                 filter: blur(25px); 
                 animation: fog-breathe 15s infinite alternate ease-in-out;
                 mix-blend-mode: screen;
                 pointer-events: none;
                 z-index: 0;
-                /* This mask creates the "wispy" thinning out effect as the gas descends */
-                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0) 55%);
-                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0) 55%);
+                /* Mask pushed down slightly to ensure the top stays 100% thick against the HUD */
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 65%);
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0) 65%);
             }
 
             /* 2. THE ASYMMETRIC LIGHT CLOUDS */
@@ -1108,21 +1111,16 @@ function renderVoidPantheon() {
                 pointer-events: none;
             }
 
-            /* [ TOWER GEOMETRY ] Solid bodies, gradient glow from top to pitch black */
+            /* 3. TOWER GEOMETRY */
             .monolith-spire {
                 flex: 1;
                 position: relative;
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
-                /* Glowing edge at the top, fading to black at the floor */
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
-                
-                /* [ FIXED ] Solid Color at top fading smoothly to absolute Black at bottom */
                 background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
-                mix-blend-mode: normal; /* Restored normal blend so the black body blocks out the background */
-                
-                box-shadow: 0 0 25px -5px var(--t-color); /* Outer ambient glow */
-                
+                mix-blend-mode: normal; 
+                box-shadow: 0 0 25px -5px var(--t-color); 
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
@@ -1156,7 +1154,7 @@ function renderVoidPantheon() {
             <div class="dense-fog-layer"></div>
             
             <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 15%; left: 45%; animation-delay: -2s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -2s;"></div>
             <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -4s;"></div>
             <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -6s;"></div>
             <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -3s;"></div>
@@ -1191,6 +1189,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
