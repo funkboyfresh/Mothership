@@ -1060,14 +1060,14 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] Power curve adjusted to 0.45, lifting ~15% more stars into the cloud layer
+    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
             
-            // Adjusted curve: 0.45 lets more stars escape the floor gravity
+            // Power curve clusters stars at the bottom, thinning out at the top
             let verticalBias = Math.pow(Math.random(), 0.45); 
             let top = verticalBias * 100 + '%';
             
@@ -1083,13 +1083,13 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Expanded height, nerfed Blue, swapped Yellow/Magenta, reinforced Silver buffers
+    // [ UPGRADED ] Softer multi-stop masks, 25% faster animations, reduced intensity
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
-                0% { opacity: 0.7; transform: scale(1) translateY(0); }
-                50% { opacity: 1; transform: scale(1.05) translateY(-2%); }
-                100% { opacity: 0.7; transform: scale(1) translateY(0); }
+                0% { opacity: 0.6; transform: scale(1) translateY(0); }
+                50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); }
+                100% { opacity: 0.6; transform: scale(1) translateY(0); }
             }
             @keyframes slow-drift {
                 0% { transform: translateX(-5%); }
@@ -1101,46 +1101,51 @@ function renderVoidPantheon() {
                 pointer-events: none; overflow: hidden;
             }
 
-            /* LAYER 2: DEEP BACKGROUND CLOUDS (Expanded up) */
+            /* LAYER 2: DEEP BACKGROUND CLOUDS */
             .bg-stellar-nursery {
                 position: absolute; top: -20%; left: -10%; width: 120%; height: 110%;
                 background: 
-                    radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.6) 0%, transparent 70%),
-                    radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.5) 0%, transparent 60%),
-                    radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.5) 0%, transparent 60%);
+                    radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%),
+                    radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%);
                 filter: blur(30px);
                 z-index: 1;
-                animation: fog-breathe 31s infinite alternate ease-in-out;
+                /* Speed increased 25%: 31s -> 23s */
+                animation: fog-breathe 23s infinite alternate ease-in-out;
             }
 
-            /* LAYER 4: THICK FOREGROUND CLOUDS (Expanded up to -25%) */
+            /* LAYER 4: THICK FOREGROUND CLOUDS */
             .fg-stellar-nursery {
                 position: absolute;
                 top: -25%; left: -10%; 
                 width: 120%; 
                 height: 115%; 
+                opacity: 0.9; /* Slightly reduced intensity for fluffier look */
                 background: 
-                    /* 1. TOWER CORES (Blue reduced, Yellow Center, Magenta Right) */
-                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.6) 0%, rgba(0,212,255,0.15) 35%, transparent 55%),
-                    radial-gradient(circle at 50% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 35%, transparent 60%),
-                    radial-gradient(circle at 83% 35%, rgba(255,0,255,0.8) 0%, rgba(255,0,255,0.25) 35%, transparent 55%),
+                    /* TOWER CORES */
+                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%),
+                    radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%),
+                    radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%),
                     
-                    /* 2. ENHANCED SILVER/WHITE BUFFERS (Stronger opacity between towers) */
-                    radial-gradient(circle at 33% 35%, rgba(255,255,255,0.65) 0%, transparent 50%),
-                    radial-gradient(circle at 67% 35%, rgba(255,255,255,0.65) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 40%, rgba(255,255,255,0.4) 0%, transparent 60%),
+                    /* ENHANCED SILVER/WHITE BUFFERS */
+                    radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
+                    radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%),
                     
-                    /* 3. PITCH BLACK OCCLUSION CLOUDS */
-                    radial-gradient(circle at 33% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
-                    radial-gradient(circle at 67% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
-                    radial-gradient(circle at 50% 15%, rgba(0,0,0,0.9) 0%, transparent 50%);
-                filter: blur(25px); 
+                    /* PITCH BLACK OCCLUSION CLOUDS */
+                    radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
+                    radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
+                    radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%);
+                filter: blur(30px); /* Increased blur for fluffiness */
                 mix-blend-mode: hard-light; 
                 z-index: 15;
                 pointer-events: none;
-                animation: slow-drift 46s infinite alternate ease-in-out;
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 85%);
-                mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 85%);
+                /* Speed increased 25%: 46s -> 34s */
+                animation: slow-drift 34s infinite alternate ease-in-out;
+                
+                /* [ UPGRADED ] Multi-stop variable mask for organic, fluffy dissipation */
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
             .tower-wrapper {
