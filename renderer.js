@@ -1274,9 +1274,9 @@ function renderVoidPantheon() {
                 ${fgStars}
             </div>
 
-            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
-                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
-                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
+          <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+                OFFERINGS REMAINING: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
             </div>
 
         </div>
