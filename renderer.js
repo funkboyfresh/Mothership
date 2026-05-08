@@ -1060,14 +1060,13 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
+    // Gravity-Weighted Starfield (375 Stars)
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
             
-            // Power curve clusters stars at the bottom, thinning out at the top
             let verticalBias = Math.pow(Math.random(), 0.45); 
             let top = verticalBias * 100 + '%';
             
@@ -1083,7 +1082,7 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Softer multi-stop masks, 25% faster animations, reduced intensity
+    // [ UPGRADED ] Black Zenith Apex, Unique Tower Icons, Bottom HUD
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1110,42 +1109,48 @@ function renderVoidPantheon() {
                     radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%);
                 filter: blur(30px);
                 z-index: 1;
-                /* Speed increased 25%: 31s -> 23s */
                 animation: fog-breathe 23s infinite alternate ease-in-out;
             }
 
-            /* LAYER 4: THICK FOREGROUND CLOUDS */
+            /* LAYER 4: THICK FOREGROUND CLOUDS (z-index: 15) */
             .fg-stellar-nursery {
                 position: absolute;
                 top: -25%; left: -10%; 
                 width: 120%; 
                 height: 115%; 
-                opacity: 0.9; /* Slightly reduced intensity for fluffier look */
+                opacity: 0.9; 
                 background: 
-                    /* TOWER CORES */
                     radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%),
                     radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%),
                     radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%),
-                    
-                    /* ENHANCED SILVER/WHITE BUFFERS */
                     radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
                     radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
                     radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%),
-                    
-                    /* PITCH BLACK OCCLUSION CLOUDS */
                     radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
                     radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
                     radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%);
-                filter: blur(30px); /* Increased blur for fluffiness */
+                filter: blur(30px); 
                 mix-blend-mode: hard-light; 
                 z-index: 15;
                 pointer-events: none;
-                /* Speed increased 25%: 46s -> 34s */
                 animation: slow-drift 34s infinite alternate ease-in-out;
-                
-                /* [ UPGRADED ] Multi-stop variable mask for organic, fluffy dissipation */
                 -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
+            }
+
+            /* [ NEW ] THE ZENITH APEX (The Black Void Triangle) */
+            /* Z-index 16 perfectly blocks the clouds (15) but lets the FG stars (22) drift in front of it */
+            .zenith-apex-void {
+                position: absolute;
+                top: 8%;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 8rem;
+                color: #000; /* Pure black */
+                z-index: 16; 
+                pointer-events: none;
+                /* Subtle glow to separate the black shape from the black floor behind the gas */
+                text-shadow: 0 0 30px rgba(255,255,255,0.1);
             }
 
             .tower-wrapper {
@@ -1195,8 +1200,9 @@ function renderVoidPantheon() {
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
             }
-            .apex-icon {
-                font-size: 4.4rem; 
+            /* [ UPGRADED ] Unique Sacred Geometry Icons */
+            .tower-icon {
+                font-size: 4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
                 margin-top: 15px; 
@@ -1213,13 +1219,15 @@ function renderVoidPantheon() {
 
             <div class="bg-stellar-nursery"></div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0;">
+            <div class="zenith-apex-void">◬</div>
+
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 50px;">
                 
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;">
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE GENESIS SPHERE</div>
-                        <div class="apex-icon">◬</div>
+                        <div class="tower-icon">⬡</div>
                     </div>
                 </div>
                 
@@ -1227,7 +1235,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE ABYSSAL SYNDICATE</div>
-                        <div class="apex-icon">◬</div>
+                        <div class="tower-icon">◈</div>
                     </div>
                 </div>
                 
@@ -1235,7 +1243,7 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">CELESTIAL VANGUARD</div>
-                        <div class="apex-icon">◬</div>
+                        <div class="tower-icon">⟡</div>
                     </div>
                 </div>
 
@@ -1251,7 +1259,7 @@ function renderVoidPantheon() {
                 ${fgStars}
             </div>
 
-            <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
             </div>
