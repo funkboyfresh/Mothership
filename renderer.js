@@ -1059,91 +1059,62 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ NEW ] Kill the secondary "GALAXY" nav bar to let the fog stretch to the ceiling
+    // Kill the secondary "GALAXY" nav bar to let the view stretch to the ceiling
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] True Z-Index Layering: Background Silver -> Towers -> Foreground Colored Gas -> UI
+    // [ UPGRADED ] Thick Volumetric Clouds, Dissolving Towers, and Grounded Typography
     const atmosStyles = `
         <style>
-            @keyframes asymmetric-warp {
-                0% { transform: scale(1, 1) rotate(0deg); opacity: 0.6; }
-                25% { transform: scale(4, 1.5) rotate(45deg); opacity: 1; }
-                50% { transform: scale(1.5, 4) rotate(-30deg); opacity: 0.8; }
-                75% { transform: scale(3, 3) rotate(60deg); opacity: 0.9; }
-                100% { transform: scale(1, 2) rotate(10deg); opacity: 0.5; }
-            }
             @keyframes fog-breathe {
-                0% { opacity: 0.6; transform: scale(1); }
-                50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); }
-                100% { opacity: 0.6; transform: scale(1); }
+                0% { opacity: 0.7; transform: scale(1) translateY(0); }
+                50% { opacity: 1; transform: scale(1.05) translateY(-2%); }
+                100% { opacity: 0.7; transform: scale(1) translateY(0); }
+            }
+            @keyframes slow-drift {
+                0% { transform: translateX(-5%); }
+                100% { transform: translateX(5%); }
             }
 
-            /* LAYER 1: DEEP SILVER (Strictly in the background, behind towers) */
-            .silver-fog-bg {
-                position: absolute; top: 0; left: -10%; width: 120%; height: 100%;
-                background: radial-gradient(ellipse 100% 60% at 50% -5%, rgba(200, 215, 255, 0.35) 0%, transparent 65%);
+            /* LAYER 1: DEEP BACKGROUND CLOUDS (z-index: 0, sits behind towers) */
+            .bg-stellar-nursery {
+                position: absolute; top: -10%; left: -10%; width: 120%; height: 100%;
+                background: 
+                    radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.6) 0%, transparent 70%),
+                    radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.5) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.5) 0%, transparent 60%);
                 filter: blur(30px);
-                animation: fog-breathe 72s infinite alternate ease-in-out;
-                mix-blend-mode: screen;
                 z-index: 0;
-                pointer-events: none;
+                animation: fog-breathe 40s infinite alternate ease-in-out;
             }
 
-            /* LAYER 3: MASTER FOREGROUND WRAPPER (Sits IN FRONT of towers) */
-            .fog-master-wrapper {
+            /* LAYER 3: THICK FOREGROUND CLOUDS (z-index: 15, sits in front of towers) */
+            .fg-stellar-nursery {
                 position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 15; /* [ FIXED ] Pushed in front of towers */
-                pointer-events: none;
-                /* Fades the gas out at the bottom so the tower bases stay clear */
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
-                mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
-            }
-
-            /* COLORED GAS (Inside the Foreground Wrapper) */
-            .dense-fog-layer {
-                position: absolute;
-                top: 0; left: -10%; width: 120%; height: 100%;
+                top: -15%; left: -10%; width: 120%; height: 80%; /* Dominates the top half */
                 background: 
-                    radial-gradient(ellipse 80% 50% at 20% -5%, rgba(0,212,255,0.55) 0%, transparent 60%),
-                    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(162,0,255,0.65) 0%, transparent 60%),
-                    radial-gradient(ellipse 80% 50% at 80% -5%, rgba(255,215,0,0.55) 0%, transparent 60%),
-                    radial-gradient(ellipse 120% 40% at 50% 10%, rgba(162,0,255,0.4) 0%, transparent 50%),
-                    radial-gradient(ellipse 60% 40% at 5% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 40% at 95% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 50% at 35% 0%, rgba(255,255,255,0.3) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 50% at 65% 0%, rgba(255,255,255,0.3) 0%, transparent 60%);
+                    /* Intense glowing gas clusters matched to tower colors */
+                    radial-gradient(circle at 20% 30%, rgba(0,212,255,0.85) 0%, rgba(0,212,255,0.3) 30%, transparent 50%),
+                    radial-gradient(circle at 50% 25%, rgba(162,0,255,0.95) 0%, rgba(162,0,255,0.4) 35%, transparent 60%),
+                    radial-gradient(circle at 80% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 30%, transparent 50%),
+                    /* Secondary ambient light blooms */
+                    radial-gradient(circle at 35% 45%, rgba(0,212,255,0.5) 0%, transparent 40%),
+                    radial-gradient(circle at 65% 45%, rgba(255,215,0,0.5) 0%, transparent 40%),
+                    /* Pitch Black occlusion clouds to create structural depth and thick shadows */
+                    radial-gradient(circle at 35% 35%, rgba(0,0,0,0.9) 0%, transparent 40%),
+                    radial-gradient(circle at 65% 30%, rgba(0,0,0,0.9) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 10%, rgba(0,0,0,0.8) 0%, transparent 50%);
                 filter: blur(25px); 
-                animation: fog-breathe 60s infinite alternate ease-in-out; 
-                mix-blend-mode: screen;
+                mix-blend-mode: hard-light; /* Makes the colors intensely vivid and the shadows pitch black */
+                z-index: 15;
+                pointer-events: none;
+                animation: slow-drift 60s infinite alternate ease-in-out;
+                /* Fades out at the bottom so it doesn't cover the floor */
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
             }
 
-            /* FOREGROUND SILVER MIST (Inside the Foreground Wrapper) */
-            .silver-fog-fg {
-                position: absolute;
-                top: 5%; left: -10%; width: 120%; height: 80%;
-                background: 
-                    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 60%),
-                    radial-gradient(ellipse 80% 40% at 50% 25%, rgba(255,255,255,0.12) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 60%);
-                filter: blur(20px);
-                animation: fog-breathe 68s infinite alternate-reverse ease-in-out; 
-                mix-blend-mode: screen;
-            }
-
-            /* ASYMMETRIC LIGHT CLOUDS */
-            .fog-light-pocket {
-                position: absolute;
-                width: 8%; height: 8%; 
-                background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, var(--l-color) 40%, transparent 80%);
-                border-radius: 50%;
-                filter: blur(8px);
-                mix-blend-mode: color-dodge;
-                animation: asymmetric-warp 48s infinite alternate ease-in-out; 
-            }
-
-            /* LAYER 2: TOWER GEOMETRY (Sandwiched between background and foreground fog) */
+            /* LAYER 2: TOWER GEOMETRY (z-index: 5) */
             .monolith-spire {
                 flex: 1;
                 position: relative;
@@ -1151,30 +1122,42 @@ function renderVoidPantheon() {
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
                 background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
-                mix-blend-mode: normal; 
                 box-shadow: 0 0 25px -5px var(--t-color); 
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: flex-end;
-                padding-bottom: 20px;
+                /* Pushes content to the bottom */
+                justify-content: flex-end; 
+                padding-bottom: 25px; /* Base padding */
                 transition: filter 0.3s;
+                z-index: 5; /* Sandwiched between background and foreground clouds */
+                
+                /* [ THE MAGIC ] Dissolves the actual HTML element at the top into the clouds */
+                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
+                mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
 
+            /* TYPOGRAPHY & ICONS (Grounded to the bottom via flexbox) */
             .apex-icon {
-                position: absolute;
-                top: 5%; left: 50%; transform: translateX(-50%);
+                /* Removed position:absolute so it sits naturally in the flex column */
                 font-size: 4.4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-                z-index: 10; pointer-events: none;
+                margin-bottom: 10px; /* Space between icon and text */
+                pointer-events: none;
             }
             .spire-text {
-                color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg);
-                letter-spacing: 4px; font-weight: bold; font-size: 0.85rem;
-                text-shadow: 0 0 15px var(--t-color); z-index: 10; pointer-events: none;
+                color: var(--t-color); 
+                writing-mode: vertical-rl; 
+                transform: rotate(180deg);
+                letter-spacing: 4px; 
+                font-weight: bold; 
+                /* Scaled up 25% from 0.85rem */
+                font-size: 1.1rem; 
+                text-shadow: 0 0 15px var(--t-color); 
+                pointer-events: none;
             }
         </style>
     `;
@@ -1182,7 +1165,7 @@ function renderVoidPantheon() {
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="silver-fog-bg"></div>
+            <div class="bg-stellar-nursery"></div>
 
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 5;">
                 
@@ -1203,17 +1186,7 @@ function renderVoidPantheon() {
 
             </div>
 
-            <div class="fog-master-wrapper">
-                <div class="dense-fog-layer"></div>
-                <div class="silver-fog-fg"></div>
-                
-                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -8s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -16s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -24s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -12s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -28s;"></div>
-            </div>
+            <div class="fg-stellar-nursery"></div>
 
             <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20; pointer-events: none;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
