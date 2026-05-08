@@ -1135,10 +1135,10 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] Dropped from top: 18% to top: 28% */
+            /* [ UPGRADED ] Lifted exactly 5% (from 28% to 23%) */
             .zenith-apex-void {
                 position: absolute;
-                top: 28%; 
+                top: 23%; 
                 left: 50%;
                 transform: translate(-50%, -50%); 
                 font-size: 8rem;
@@ -1158,12 +1158,12 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* [ UPGRADED ] Extended the base from -15vh to -25vh to accommodate the new drop */
+            /* [ UPGRADED ] Lifted 5vh up (from -25vh to -20vh) */
             .monolith-spire {
                 position: absolute;
-                bottom: -25vh; left: 0; 
+                bottom: -20vh; left: 0; 
                 width: 100%; 
-                height: calc(82% + 25vh); 
+                height: calc(82% + 20vh); 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1178,7 +1178,7 @@ function renderVoidPantheon() {
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
             }
 
-            /* [ UPGRADED ] Pushed down an additional 10vh (from 15vh to 25vh) */
+            /* [ UPGRADED ] Lifted 5vh up (from 25vh to 20vh) */
             .tower-content {
                 position: relative;
                 z-index: 20; 
@@ -1187,7 +1187,7 @@ function renderVoidPantheon() {
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
-                transform: translateY(25vh);
+                transform: translateY(20vh);
             }
 
             .spire-text {
@@ -1283,7 +1283,6 @@ function renderVoidPantheon() {
         </div>
     `;
 }
-
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
