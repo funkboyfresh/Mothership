@@ -1063,7 +1063,7 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] 75% slower animations, 3-Layer Silver Fog injection
+    // [ UPGRADED ] True Z-Index Layering: Background Silver -> Towers -> Foreground Colored Gas -> UI
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1079,48 +1079,47 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* MASTER WRAPPER */
-            .fog-master-wrapper {
-                position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 0;
-                pointer-events: none;
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 85%);
-                mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 85%);
-            }
-
-            /* LAYER 1: DEEP SILVER (Behind everything) */
+            /* LAYER 1: DEEP SILVER (Strictly in the background, behind towers) */
             .silver-fog-bg {
                 position: absolute; top: 0; left: -10%; width: 120%; height: 100%;
                 background: radial-gradient(ellipse 100% 60% at 50% -5%, rgba(200, 215, 255, 0.35) 0%, transparent 65%);
                 filter: blur(30px);
-                animation: fog-breathe 72s infinite alternate ease-in-out; /* Slowed */
+                animation: fog-breathe 72s infinite alternate ease-in-out;
                 mix-blend-mode: screen;
+                z-index: 0;
+                pointer-events: none;
             }
 
-            /* LAYER 2: MIXED FOG (Colors + Silver edges/between) */
+            /* LAYER 3: MASTER FOREGROUND WRAPPER (Sits IN FRONT of towers) */
+            .fog-master-wrapper {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                z-index: 15; /* [ FIXED ] Pushed in front of towers */
+                pointer-events: none;
+                /* Fades the gas out at the bottom so the tower bases stay clear */
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
+                mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
+            }
+
+            /* COLORED GAS (Inside the Foreground Wrapper) */
             .dense-fog-layer {
                 position: absolute;
                 top: 0; left: -10%; width: 120%; height: 100%;
                 background: 
-                    /* Existing Colors */
                     radial-gradient(ellipse 80% 50% at 20% -5%, rgba(0,212,255,0.55) 0%, transparent 60%),
                     radial-gradient(ellipse 100% 60% at 50% -10%, rgba(162,0,255,0.65) 0%, transparent 60%),
                     radial-gradient(ellipse 80% 50% at 80% -5%, rgba(255,215,0,0.55) 0%, transparent 60%),
                     radial-gradient(ellipse 120% 40% at 50% 10%, rgba(162,0,255,0.4) 0%, transparent 50%),
-                    /* Silver mixed on the extreme edges */
                     radial-gradient(ellipse 60% 40% at 5% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
                     radial-gradient(ellipse 60% 40% at 95% 10%, rgba(255,255,255,0.25) 0%, transparent 60%),
-                    /* Silver mixed between the towers */
                     radial-gradient(ellipse 60% 50% at 35% 0%, rgba(255,255,255,0.3) 0%, transparent 60%),
                     radial-gradient(ellipse 60% 50% at 65% 0%, rgba(255,255,255,0.3) 0%, transparent 60%);
                 filter: blur(25px); 
-                /* Slowed down 75% (15s -> 60s) */
                 animation: fog-breathe 60s infinite alternate ease-in-out; 
                 mix-blend-mode: screen;
             }
 
-            /* LAYER 3: FOREGROUND SILVER (Floats over the towers) */
+            /* FOREGROUND SILVER MIST (Inside the Foreground Wrapper) */
             .silver-fog-fg {
                 position: absolute;
                 top: 5%; left: -10%; width: 120%; height: 80%;
@@ -1129,13 +1128,11 @@ function renderVoidPantheon() {
                     radial-gradient(ellipse 80% 40% at 50% 25%, rgba(255,255,255,0.12) 0%, transparent 60%),
                     radial-gradient(ellipse 60% 40% at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 60%);
                 filter: blur(20px);
-                z-index: 15; /* Key placement: above towers (10), below UI (20) */
-                pointer-events: none;
-                animation: fog-breathe 68s infinite alternate-reverse ease-in-out; /* Slowed */
+                animation: fog-breathe 68s infinite alternate-reverse ease-in-out; 
                 mix-blend-mode: screen;
             }
 
-            /* THE ASYMMETRIC LIGHT CLOUDS */
+            /* ASYMMETRIC LIGHT CLOUDS */
             .fog-light-pocket {
                 position: absolute;
                 width: 8%; height: 8%; 
@@ -1143,11 +1140,10 @@ function renderVoidPantheon() {
                 border-radius: 50%;
                 filter: blur(8px);
                 mix-blend-mode: color-dodge;
-                /* Slowed down 75% (12s -> 48s) */
                 animation: asymmetric-warp 48s infinite alternate ease-in-out; 
             }
 
-            /* TOWER GEOMETRY */
+            /* LAYER 2: TOWER GEOMETRY (Sandwiched between background and foreground fog) */
             .monolith-spire {
                 flex: 1;
                 position: relative;
@@ -1164,7 +1160,6 @@ function renderVoidPantheon() {
                 justify-content: flex-end;
                 padding-bottom: 20px;
                 transition: filter 0.3s;
-                z-index: 10;
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
 
@@ -1187,25 +1182,9 @@ function renderVoidPantheon() {
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="fog-master-wrapper">
-                <div class="silver-fog-bg"></div>
+            <div class="silver-fog-bg"></div>
 
-                <div class="dense-fog-layer"></div>
-                
-                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -8s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -16s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -24s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -12s;"></div>
-                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -28s;"></div>
-            </div>
-
-            <div style="position: relative; color: #fff; font-size: 0.8rem; margin-bottom: 30px; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20;">
-                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
-                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
-            </div>
-
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 10;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 5;">
                 
                 <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
                     <div class="apex-icon">◬</div>
@@ -1224,11 +1203,27 @@ function renderVoidPantheon() {
 
             </div>
 
-            <div class="silver-fog-fg"></div>
+            <div class="fog-master-wrapper">
+                <div class="dense-fog-layer"></div>
+                <div class="silver-fog-fg"></div>
+                
+                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 10%; left: 45%; animation-delay: -8s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -16s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -24s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -12s;"></div>
+                <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -28s;"></div>
+            </div>
+
+            <div style="position: absolute; top: 0; width: 100%; color: #fff; font-size: 0.8rem; margin-top: 25px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20; pointer-events: none;">
+                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
+            </div>
 
         </div>
     `;
 }
+
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
