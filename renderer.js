@@ -1286,33 +1286,34 @@ function renderVoidPantheon() {
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
-        name: "THE GENESIS SPHERE", color: "#00d4ff", 
+        name: "GENESIS SPHERE", color: "#00d4ff", 
         deities: [
-            // Deconstructed Verdant Matrix (۞)
-deities: [
             {
                 k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉',
                 sectors: [
                     { 
-                        id: 1, name: "Ignition Core", cost: 10,
-                        // 5 Nodes forming a Square-Forge shape
+                        id: 1, name: "Ignition Core", 
+                        // A Square-Forge constellation
                         coords: [{x:30,y:30}, {x:70,y:30}, {x:70,y:70}, {x:30,y:70}, {x:50,y:50}],
                         perk: "MAGNETISM: +2% Base Yields"
                     },
                     { 
-                        id: 2, name: "Pulsar Hammer", cost: 10,
-                        // Forming a T-shape
+                        id: 2, name: "Pulsar Hammer", 
+                        // A T-shape anvil constellation
                         coords: [{x:20,y:20}, {x:50,y:20}, {x:80,y:20}, {x:50,y:50}, {x:50,y:80}],
                         perk: "TEMPERING: Forge failure rate -5%"
                     },
                     { 
-                        id: 3, name: "The Great Split", cost: 10, isBranch: true,
-                        // Branching choice: Efficiency vs. Power
+                        id: 3, name: "The Great Split", isBranch: true,
+                        // Branching paths: Alpha (Efficiency) or Omega (Power)
                         paths: [
-                            { n: "Alpha: Cold-Forging", perk: "Offerings cost -10% Scrap", coords: [{x:20,y:50}, {x:40,y:40}, {x:60,y:40}, {x:80,y:50}, {x:50,y:20}] },
-                            { n: "Omega: Over-Heating", perk: "Bonus Yields +10%", coords: [{x:20,y:50}, {x:40,y:60}, {x:60,y:60}, {x:80,y:50}, {x:50,y:80}] }
+                            { id: 1, n: "Alpha: Cold-Forging", perk: "Offerings cost -10% Scrap", coords: [{x:20,y:50}, {x:40,y:40}, {x:60,y:40}, {x:80,y:50}, {x:50,y:20}] },
+                            { id: 2, n: "Omega: Over-Heating", perk: "Bonus Yields +10%", coords: [{x:20,y:50}, {x:40,y:60}, {x:60,y:60}, {x:80,y:50}, {x:50,y:80}] }
                         ]
-                    },
+                    }
+                ],
+                major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Convert 10% of lifetime Energy into a one-time Scrap payout." }
+            }
             {k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷', 
              minor: "TEMPORAL VELOCITY: Grants +5% bonus Scrap for targets secured before their 24h warning per Offering.", 
              major: "CHRONOS SHIFT: Once per week, instantly advance your Pilot Level by 1 without filling the Capacitor." },
@@ -1496,4 +1497,32 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+function renderSectorConstellation(svg, deityKey, sectorIndex, sectorProgress) {
+    const deity = PANTHEON_DATA[1].deities.find(d => d.k === deityKey); // Test logic for Kaelen-Tor
+    const sector = deity.sectors[sectorIndex];
+    const towerColor = PANTHEON_DATA[1].color;
+    
+    // Determine which coordinates to use (handle branching)
+    let coords = sector.isBranch ? sector.paths[state.pantheon.choices[deityKey] - 1]?.coords : sector.coords;
+    if (!coords) coords = sector.isBranch ? sector.paths[0].coords : sector.coords; // Fallback
+
+    coords.forEach((coord, i) => {
+        // Draw the bridge line ONLY if the player has connected these two points
+        if (i < coords.length - 1 && sectorProgress > i + 1) {
+            const next = coords[i + 1];
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", `${coord.x}%`); 
+            line.setAttribute("y1", `${coord.y}%`);
+            line.setAttribute("x2", `${next.x}%`); 
+            line.setAttribute("y2", `${next.y}%`);
+            line.setAttribute("stroke", towerColor);
+            line.setAttribute("stroke-width", "1.5");
+            line.style.opacity = "0.8";
+            // Add a pulsing ignite animation
+            line.style.filter = `drop-shadow(0 0 5px ${towerColor})`;
+            svg.appendChild(line);
+        }
+    });
 }
