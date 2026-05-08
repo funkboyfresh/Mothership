@@ -13,6 +13,7 @@ let state = {
     horizon: null, 
     activeMissionId: null,
     playerLevel: parseInt(localStorage.getItem('playerLevel')) || 1,
+        offerings: 0, // [ NEW ] The currency for the Void Pantheon
     energy: parseInt(localStorage.getItem('energy')) || 0,
     hapticsEnabled: localStorage.getItem('hapticsEnabled') !== 'false',
     sectors: JSON.parse(localStorage.getItem('sectors')) || [...defaultSectors],
