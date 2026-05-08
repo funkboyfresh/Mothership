@@ -1060,96 +1060,88 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Dense Volumetric Fog, Asymmetric Cores, and Grounded Towers
+    // [ UPGRADED ] Stable, High-Fidelity Gas Clouds & Grounded Architecture
     const atmosStyles = `
         <style>
-            @keyframes aurora-wave {
-                0% { transform: rotate(-5deg) scaleY(1) translateY(0); opacity: 0.4; }
-                50% { transform: rotate(2deg) scaleY(1.5) translateY(-40px); opacity: 0.9; }
-                100% { transform: rotate(-2deg) scaleY(0.9) translateY(15px); opacity: 0.3; }
+            /* The 400% Asymmetric Scaling for the Lights */
+            @keyframes asymmetric-warp {
+                0% { transform: scale(1, 1) rotate(0deg); opacity: 0.6; }
+                25% { transform: scale(4, 1.5) rotate(45deg); opacity: 1; }
+                50% { transform: scale(1.5, 4) rotate(-30deg); opacity: 0.8; }
+                75% { transform: scale(3, 3) rotate(60deg); opacity: 0.9; }
+                100% { transform: scale(1, 2) rotate(10deg); opacity: 0.5; }
             }
-            @keyframes dark-gas-drift {
-                0% { transform: translateX(-15%) translateY(0) scale(1); }
-                100% { transform: translateX(15%) translateY(-10%) scale(1.3); }
-            }
-            @keyframes core-shift {
-                0% { transform: scale(1, 1) rotate(0deg); opacity: 0.5; }
-                33% { transform: scale(2.5, 4) rotate(45deg); opacity: 1; filter: blur(6px) brightness(1.5); }
-                66% { transform: scale(4, 1.5) rotate(-30deg); opacity: 0.8; }
-                100% { transform: scale(1.5, 3) rotate(20deg); opacity: 0.4; filter: blur(4px) brightness(1); }
+            
+            /* Gentle breathing for the main dense fog */
+            @keyframes fog-breathe {
+                0% { opacity: 0.6; transform: scale(1); }
+                50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); }
+                100% { opacity: 0.6; transform: scale(1); }
             }
 
-            /* 1. THE FOG TANK (Extreme Blur, smooth fade down to remove the black box) */
-            .gas-tank {
+            /* 1. DENSE FOG BASE (Doubled quantity, layered radial clouds) */
+            .dense-fog-layer {
                 position: absolute;
-                top: -15%; left: -20%; width: 140%; height: 95%;
-                z-index: 0;
+                top: -10%; left: -10%; width: 120%; height: 75%;
+                background: 
+                    radial-gradient(ellipse at 20% 30%, rgba(0,212,255,0.4) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 20%, rgba(162,0,255,0.5) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 30%, rgba(255,215,0,0.4) 0%, transparent 50%),
+                    radial-gradient(circle at 35% 45%, rgba(0,212,255,0.3) 0%, transparent 40%),
+                    radial-gradient(circle at 65% 45%, rgba(255,215,0,0.3) 0%, transparent 40%);
+                filter: blur(25px); /* Soften the composite without breaking the browser */
+                animation: fog-breathe 15s infinite alternate ease-in-out;
+                mix-blend-mode: screen;
                 pointer-events: none;
-                overflow: hidden;
-                filter: blur(45px); 
-                mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-                -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+                z-index: 0;
             }
 
-            /* 2. AURORA RIBBONS (DOUBLED QUANTITY & DENSITY) */
-            .aurora-ribbon { position: absolute; border-radius: 50%; mix-blend-mode: screen; }
-            .aurora-1 { top: 10%; left: 0%; width: 120%; height: 30%; background: radial-gradient(ellipse, rgba(0, 212, 255, 0.9) 0%, transparent 70%); animation: aurora-wave 12s infinite alternate ease-in-out; }
-            .aurora-2 { top: 20%; left: -10%; width: 140%; height: 25%; background: radial-gradient(ellipse, rgba(162, 0, 255, 0.8) 0%, transparent 70%); animation: aurora-wave 16s infinite alternate-reverse ease-in-out; }
-            .aurora-3 { top: 5%; left: 15%; width: 100%; height: 35%; background: radial-gradient(ellipse, rgba(255, 215, 0, 0.7) 0%, transparent 70%); animation: aurora-wave 20s infinite alternate ease-in-out; }
-            .aurora-4 { top: 15%; left: 30%; width: 130%; height: 20%; background: radial-gradient(ellipse, rgba(0, 212, 255, 0.6) 0%, transparent 70%); animation: aurora-wave 14s infinite alternate-reverse; }
-            .aurora-5 { top: -5%; left: 40%; width: 110%; height: 40%; background: radial-gradient(ellipse, rgba(162, 0, 255, 0.9) 0%, transparent 70%); animation: aurora-wave 18s infinite alternate; }
-            .aurora-6 { top: 25%; left: 5%; width: 120%; height: 30%; background: radial-gradient(ellipse, rgba(255, 215, 0, 0.6) 0%, transparent 70%); animation: aurora-wave 22s infinite alternate-reverse; }
+            /* 2. THE 6 ASYMMETRIC LIGHT CLOUDS */
+            .fog-light-pocket {
+                position: absolute;
+                width: 8%; height: 8%; /* Reduced base size, allowing the 400% scale to do the work */
+                background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, var(--l-color) 40%, transparent 80%);
+                border-radius: 50%;
+                filter: blur(8px);
+                mix-blend-mode: color-dodge;
+                animation: asymmetric-warp 12s infinite alternate ease-in-out;
+                z-index: 1;
+                pointer-events: none;
+            }
 
-            /* 3. OCCLUSION CLOUDS (DOUBLED) */
-            .dark-gas { position: absolute; border-radius: 50%; background: #000; mix-blend-mode: multiply; opacity: 0.95; }
-            .dg-1 { top: 5%; left: 10%; width: 45%; height: 50%; animation: dark-gas-drift 22s infinite alternate ease-in-out; }
-            .dg-2 { top: 20%; left: 50%; width: 55%; height: 45%; animation: dark-gas-drift 28s infinite alternate-reverse ease-in-out; }
-            .dg-3 { top: 15%; left: -10%; width: 50%; height: 60%; animation: dark-gas-drift 25s infinite alternate ease-in-out; }
-            .dg-4 { top: 5%; left: 60%; width: 60%; height: 50%; animation: dark-gas-drift 32s infinite alternate-reverse; }
-
-            /* 4. STAR HALOS (6 TOTAL inside the blur) */
-            .star-halo { position: absolute; border-radius: 50%; mix-blend-mode: color-dodge; }
-            .halo-1 { top: 25%; left: 20%; width: 30%; height: 30%; background: radial-gradient(circle, rgba(0, 212, 255, 1) 0%, transparent 50%); animation: aurora-wave 4s infinite alternate; }
-            .halo-2 { top: 35%; left: 50%; width: 35%; height: 35%; background: radial-gradient(circle, rgba(162, 0, 255, 1) 0%, transparent 50%); animation: aurora-wave 5s infinite alternate-reverse; }
-            .halo-3 { top: 20%; left: 80%; width: 30%; height: 30%; background: radial-gradient(circle, rgba(255, 215, 0, 1) 0%, transparent 50%); animation: aurora-wave 6s infinite alternate; }
-            .halo-4 { top: 10%; left: 35%; width: 25%; height: 25%; background: radial-gradient(circle, rgba(0, 212, 255, 0.8) 0%, transparent 50%); animation: aurora-wave 7s infinite alternate-reverse; }
-            .halo-5 { top: 15%; left: 65%; width: 40%; height: 40%; background: radial-gradient(circle, rgba(162, 0, 255, 0.9) 0%, transparent 50%); animation: aurora-wave 5s infinite alternate; }
-            .halo-6 { top: 30%; left: 10%; width: 25%; height: 25%; background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 50%); animation: aurora-wave 6s infinite alternate-reverse; }
-            
-            /* 5. ASYMMETRIC FOG CORES (6 TOTAL, scaling up to 400%) */
-            .dense-cores-container { position: absolute; top: -5%; left: 0; width: 100%; height: 70%; z-index: 1; pointer-events: none; overflow: hidden; }
-            .fog-core { position: absolute; background: #ffffff; border-radius: 50%; filter: blur(5px); mix-blend-mode: screen; transform-origin: center; box-shadow: 0 0 20px #fff; animation: core-shift 8s infinite alternate ease-in-out; }
-            .fc-1 { top: 28%; left: 20%; width: 12px; height: 20px; animation-delay: 0s; }
-            .fc-2 { top: 38%; left: 50%; width: 15px; height: 10px; animation-delay: 1.5s; }
-            .fc-3 { top: 23%; left: 80%; width: 10px; height: 25px; animation-delay: 0.5s; }
-            .fc-4 { top: 13%; left: 35%; width: 18px; height: 12px; animation-delay: 2s; }
-            .fc-5 { top: 18%; left: 65%; width: 8px; height: 18px; animation-delay: 1s; }
-            .fc-6 { top: 33%; left: 10%; width: 14px; height: 14px; animation-delay: 2.5s; }
-            
             /* TOWER ARCHITECTURE */
             .monolith-spire {
                 flex: 1;
                 position: relative;
+                /* Removed top border, kept sides */
                 border-style: solid;
-                border-width: 0 1px 0 1px; /* Top horizontal line removed */
+                border-width: 0 1px 0 1px;
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.02) 5%, rgba(255,255,255,0.15) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
-                background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.5) 70%, transparent 100%);
-                box-shadow: inset 0 50px 60px -30px var(--t-color); /* Permanent inner glow */
+                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 80%, transparent 100%);
+                
+                /* Capturing light from above: The Inner Glow */
+                box-shadow: inset 0 80px 80px -40px var(--t-color);
+                
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
+                padding-bottom: 20px;
                 transition: filter 0.3s;
                 z-index: 10;
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
-            
-            /* Capturing light ray from above */
+
+            /* Capturing light from above: The Vertical Ray */
             .monolith-spire::before {
-                content: ''; position: absolute; top: 0; left: 20%; width: 60%; height: 70%;
+                content: '';
+                position: absolute;
+                top: 0; left: 15%; width: 70%; height: 50%;
                 background: linear-gradient(to bottom, var(--t-color) 0%, transparent 100%);
-                opacity: 0.3; mix-blend-mode: color-dodge; pointer-events: none;
+                opacity: 0.5;
+                mix-blend-mode: screen;
+                pointer-events: none;
             }
 
             .apex-icon {
@@ -1164,43 +1156,21 @@ function renderVoidPantheon() {
                 color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg);
                 letter-spacing: 4px; font-weight: bold; font-size: 0.85rem;
                 text-shadow: 0 0 15px var(--t-color); z-index: 10; pointer-events: none;
-                margin-bottom: 20px;
             }
         </style>
     `;
 
     container.innerHTML = atmosStyles + `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0 0 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative;">
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0 0 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="gas-tank">
-                <div class="aurora-ribbon aurora-1"></div>
-                <div class="aurora-ribbon aurora-2"></div>
-                <div class="aurora-ribbon aurora-3"></div>
-                <div class="aurora-ribbon aurora-4"></div>
-                <div class="aurora-ribbon aurora-5"></div>
-                <div class="aurora-ribbon aurora-6"></div>
-                
-                <div class="dark-gas dg-1"></div>
-                <div class="dark-gas dg-2"></div>
-                <div class="dark-gas dg-3"></div>
-                <div class="dark-gas dg-4"></div>
-
-                <div class="star-halo halo-1"></div>
-                <div class="star-halo halo-2"></div>
-                <div class="star-halo halo-3"></div>
-                <div class="star-halo halo-4"></div>
-                <div class="star-halo halo-5"></div>
-                <div class="star-halo halo-6"></div>
-            </div>
-
-            <div class="dense-cores-container">
-                <div class="fog-core fc-1"></div>
-                <div class="fog-core fc-2"></div>
-                <div class="fog-core fc-3"></div>
-                <div class="fog-core fc-4"></div>
-                <div class="fog-core fc-5"></div>
-                <div class="fog-core fc-6"></div>
-            </div>
+            <div class="dense-fog-layer"></div>
+            
+            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 15%; left: 15%; animation-delay: 0s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 25%; left: 45%; animation-delay: -2s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 10%; left: 75%; animation-delay: -4s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 35%; left: 25%; animation-delay: -6s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 15%; left: 55%; animation-delay: -3s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 30%; left: 85%; animation-delay: -7s;"></div>
 
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 20;" onclick="state.level = 7; render();">×</button>
 
@@ -1231,8 +1201,6 @@ function renderVoidPantheon() {
         </div>
     `;
 }
-
-
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
