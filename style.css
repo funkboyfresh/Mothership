@@ -67,7 +67,7 @@ body, html { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 /* Main Views */
 .view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 0; flex-direction: column; z-index: 10; }
 
-.grid-bg { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+.grid-bg { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px); }
 .dense-starfield { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 1; pointer-events: none; }
 .void-particle { position: absolute; border-radius: 50%; background: #fff; opacity: 0.5; animation: void-drift linear infinite alternate; }
 @keyframes void-drift { 0% { transform: translate(0, 0) scale(0.8); opacity: 0.2; } 100% { transform: translate(15px, -15px) scale(1.2); opacity: 0.7; } }
