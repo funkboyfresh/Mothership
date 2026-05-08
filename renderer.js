@@ -186,9 +186,9 @@ function renderLevel1(container, footer) {
         footer.style.display = 'flex'; 
         footer.innerHTML = `
             <button class="zoom-btn" onclick="state.level = 1; render();" style="flex:1; border-color: var(--accent); color: var(--accent);">[ MAP ]</button>
-            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: 0.5;">[ HANGAR ]</button>
-            <button class="zoom-btn" onclick="showSoftWarning('OUTPOST UNDER CONSTRUCTION');" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.5;">[ OUTPOST ]</button>
-            <button class="zoom-btn" onclick="showSoftWarning('UPLINK OFFLINE');" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.5;">[ OUTERWORLDS ]</button>
+            <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured); opacity: 0.35;">[ HANGAR ]</button>
+            <button class="zoom-btn" onclick="showSoftWarning('OUTPOST UNDER CONSTRUCTION');" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.35;">[ OUTPOST ]</button>
+            <button class="zoom-btn" onclick="showSoftWarning('UPLINK OFFLINE');" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.35;">[ OUTERWORLDS ]</button>
         `; 
     }
     
