@@ -974,9 +974,6 @@ function renderCellsComponent(level) {
 }
 
 // --- SHIPYARD HANGAR UI ---
-
-// --- SHIPYARD HANGAR UI ---
-
 function renderHangar(container) {
     container.innerHTML = `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
@@ -1056,6 +1053,7 @@ function renderOuterworlds(container) {
     `;
 }
 
+// The Void Pantheon
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
@@ -1063,7 +1061,7 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] Thick Volumetric Clouds, Dissolving Towers, and Grounded Typography
+    // [ UPGRADED ] Expanded Cloud Coverage (105% height + deeper mask) & Inverted Typography
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1091,27 +1089,26 @@ function renderVoidPantheon() {
             /* LAYER 3: THICK FOREGROUND CLOUDS (z-index: 15, sits in front of towers) */
             .fg-stellar-nursery {
                 position: absolute;
-                top: -15%; left: -10%; width: 120%; height: 80%; /* Dominates the top half */
+                top: -15%; left: -10%; 
+                width: 120%; 
+                height: 105%; /* [ INCREASED ] Expanded size to cover 25% more screen */
                 background: 
-                    /* Intense glowing gas clusters matched to tower colors */
                     radial-gradient(circle at 20% 30%, rgba(0,212,255,0.85) 0%, rgba(0,212,255,0.3) 30%, transparent 50%),
                     radial-gradient(circle at 50% 25%, rgba(162,0,255,0.95) 0%, rgba(162,0,255,0.4) 35%, transparent 60%),
-                    radial-gradient(circle at 80% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 30%, transparent 50%),
-                    /* Secondary ambient light blooms */
+                    radial-gradient(circle at 80% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 50%, transparent 60%),
                     radial-gradient(circle at 35% 45%, rgba(0,212,255,0.5) 0%, transparent 40%),
                     radial-gradient(circle at 65% 45%, rgba(255,215,0,0.5) 0%, transparent 40%),
-                    /* Pitch Black occlusion clouds to create structural depth and thick shadows */
                     radial-gradient(circle at 35% 35%, rgba(0,0,0,0.9) 0%, transparent 40%),
                     radial-gradient(circle at 65% 30%, rgba(0,0,0,0.9) 0%, transparent 40%),
                     radial-gradient(circle at 50% 10%, rgba(0,0,0,0.8) 0%, transparent 50%);
                 filter: blur(25px); 
-                mix-blend-mode: hard-light; /* Makes the colors intensely vivid and the shadows pitch black */
+                mix-blend-mode: hard-light; 
                 z-index: 15;
                 pointer-events: none;
                 animation: slow-drift 60s infinite alternate ease-in-out;
-                /* Fades out at the bottom so it doesn't cover the floor */
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
-                mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+                /* [ INCREASED ] Mask remains solid black until 75%, pushing the fog further down */
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
             }
 
             /* LAYER 2: TOWER GEOMETRY (z-index: 5) */
@@ -1127,36 +1124,31 @@ function renderVoidPantheon() {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                /* Pushes content to the bottom */
                 justify-content: flex-end; 
-                padding-bottom: 25px; /* Base padding */
+                padding-bottom: 25px; 
                 transition: filter 0.3s;
-                z-index: 5; /* Sandwiched between background and foreground clouds */
-                
-                /* [ THE MAGIC ] Dissolves the actual HTML element at the top into the clouds */
+                z-index: 5; 
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
 
-            /* TYPOGRAPHY & ICONS (Grounded to the bottom via flexbox) */
-            .apex-icon {
-                /* Removed position:absolute so it sits naturally in the flex column */
-                font-size: 4.4rem; 
-                color: #fff;
-                text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-                margin-bottom: 10px; /* Space between icon and text */
-                pointer-events: none;
-            }
+            /* TYPOGRAPHY & ICONS */
             .spire-text {
                 color: var(--t-color); 
                 writing-mode: vertical-rl; 
                 transform: rotate(180deg);
                 letter-spacing: 4px; 
                 font-weight: bold; 
-                /* Scaled up 25% from 0.85rem */
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
+                pointer-events: none;
+            }
+            .apex-icon {
+                font-size: 4.4rem; 
+                color: #fff;
+                text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
+                margin-top: 15px; /* [ ADJUSTED ] Margin moved to the top to separate from the text above */
                 pointer-events: none;
             }
         </style>
@@ -1170,18 +1162,18 @@ function renderVoidPantheon() {
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 5;">
                 
                 <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
-                    <div class="apex-icon">◬</div>
                     <div class="spire-text">THE GENESIS SPHERE</div>
+                    <div class="apex-icon">◬</div>
                 </div>
                 
                 <div onclick="renderAscensionTower(2)" class="monolith-spire" style="--t-color: #a200ff;">
-                    <div class="apex-icon">◬</div>
                     <div class="spire-text">THE ABYSSAL SYNDICATE</div>
+                    <div class="apex-icon">◬</div>
                 </div>
                 
                 <div onclick="renderAscensionTower(3)" class="monolith-spire" style="--t-color: #ffd700;">
-                    <div class="apex-icon">◬</div>
                     <div class="spire-text">CELESTIAL VANGUARD</div>
+                    <div class="apex-icon">◬</div>
                 </div>
 
             </div>
