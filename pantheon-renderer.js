@@ -230,92 +230,61 @@ function renderVoidPantheon() {
 
 // Renders the Ascension tower - each individual skill tree sector.
 
+// pantheon-renderer.js
+
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // Check if all 3 deities in this tower are maxed (Level 5)
-    const isAscended = data.deities.every(d => state.pantheon[d.k] >= 5);
-
     let html = `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
             <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100;" onclick="renderVoidPantheon()">×</button>
             <div class="view-level-title" style="color: ${data.color}; letter-spacing: 5px; margin-bottom: 20px;">${data.name}</div>
             
-            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; gap: 10px; align-items: center; justify-content: center;">
-                OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
-                <button onclick="state.offerings += 5; save(); renderAscensionTower(${towerId});" style="background: transparent; border: 1px solid ${data.color}; color: ${data.color}; font-size: 0.5rem; padding: 2px 6px; cursor: pointer;">[+5 DEV]</button>
-            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 30px; margin-top: 20px;">
     `;
 
-    // THE ASCENSION APEX (Top Node)
-    html += `
-        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; position: relative; z-index: 10;">
-            <div style="width: 50px; height: 50px; border: 2px solid ${data.color}; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; background: ${isAscended ? data.color : 'rgba(0,0,0,0.8)'}; box-shadow: 0 0 20px ${isAscended ? data.color : 'transparent'};">
-                <div style="transform: rotate(-45deg); font-size: 1.2rem; color: ${isAscended ? '#000' : data.color}; text-shadow: none;">◬</div>
-            </div>
-            <div style="font-size: 0.6rem; color: ${data.color}; margin-top: 15px; letter-spacing: 2px; font-weight: bold; background: #000; padding: 2px 5px;">ASCENSION APEX</div>
-        </div>
-    `;
-
-    // THE 3 BRANCHING TRACKS
-    html += `<div style="display: flex; justify-content: space-around; width: 95%; margin: 0 auto; position: relative;">`;
-    
-    // Background connecting lines
-    html += `
-        <svg style="position: absolute; top: -65px; left: 0; width: 100%; height: calc(100% + 65px); pointer-events: none; z-index: 0;">
-            <line x1="50%" y1="25" x2="16.6%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
-            <line x1="50%" y1="25" x2="50%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
-            <line x1="50%" y1="25" x2="83.3%" y2="80" stroke="${data.color}" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
-        </svg>
-    `;
-
-    // Render each Deity's path
+    // Render the 3 Deity Hubs in this Tower
     data.deities.forEach(d => {
-        const level = state.pantheon[d.k];
-        const isKeystoneUnlocked = level >= 5;
+        const totalProgress = state.pantheon[d.k];
+        const currentSectorIndex = Math.floor(totalProgress / 6); // 0 to 4
         
-        html += `<div style="display: flex; flex-direction: column; align-items: center; width: 30%; z-index: 1;">`;
-        
-        // [ UPGRADED ] The Keystone Node now dynamically pulls \${d.icon} instead of the hardcoded ◈
         html += `
-            <div onclick="openOfferingModal('${d.k}', ${towerId}, 6, false)" style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px; cursor: pointer;">
-                <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1.2rem;">${d.icon}</span>
-            </div>
-            <div style="font-size: 0.55rem; color: ${data.color}; margin-bottom: 15px; font-weight: bold; text-align: center; height: 15px;">${d.n.toUpperCase()}</div>
-        `;
-
-        // 2. The 5 Minor Nodes
-        html += `<div style="display: flex; flex-direction: column-reverse; gap: 15px; align-items: center; position: relative; padding-bottom: 20px;">`;
-        
-        // Vertical track line connecting the nodes
-        html += `<div style="position: absolute; width: 2px; height: 100%; background: ${data.color}; opacity: 0.2; z-index: -1;"></div>`;
-
-        for(let i = 1; i <= 5; i++) {
-            const isActive = level >= i;
-            const isNext = level === (i - 1);
-            
-            let bg = isActive ? data.color : '#000';
-            let cursor = (isActive || isNext) ? 'cursor: pointer;' : 'cursor: default;';
-            let pulse = (isNext && state.offerings > 0) ? `animation: pulse-glow 1.5s infinite; box-shadow: 0 0 10px ${data.color};` : '';
-            let opacity = (isActive || isNext) ? '1' : '0.3';
-            
-            let clickAction = (isActive || isNext) ? `openOfferingModal('${d.k}', ${towerId}, ${i}, ${isNext})` : '';
-            
-            html += `
-                <div onclick="${clickAction}" 
-                     style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${data.color}; background: ${bg}; ${cursor} ${pulse} opacity: ${opacity}; display: flex; align-items: center; justify-content: center; z-index: 1; transition: all 0.3s;">
+            <div class="deity-sector-track" style="width: 90%; background: rgba(255,255,255,0.02); border: 1px solid ${data.color}33; padding: 15px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="color: ${data.color}; font-weight: bold; letter-spacing: 2px;">${d.icon} ${d.n.toUpperCase()}</div>
+                    <div style="font-size: 0.6rem; opacity: 0.6;">SECTOR ${currentSectorIndex + 1} / 5</div>
                 </div>
-            `;
-        }
-        
-        html += `</div>`; // Close node column
-        html += `</div>`; // Close deity track
+                
+                <div style="display: flex; justify-content: space-between; position: relative; padding: 10px 0;">
+                    <svg id="svg-${d.k}" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;"></svg>
+                    
+                    ${[0,1,2,3,4].map(i => {
+                        const isLocked = i > currentSectorIndex;
+                        const isComplete = i < currentSectorIndex;
+                        const isActive = i === currentSectorIndex;
+                        
+                        return `
+                            <div onclick="${!isLocked ? `openConstellation('${d.k}', ${towerId}, ${i})` : ''}" 
+                                 style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid ${isActive ? data.color : (isComplete ? data.color : '#333')}; 
+                                        background: ${isComplete ? data.color : '#000'}; 
+                                        display: flex; align-items: center; justify-content: center; 
+                                        cursor: ${isLocked ? 'default' : 'pointer'}; opacity: ${isLocked ? '0.3' : '1'};
+                                        box-shadow: ${isActive ? `0 0 15px ${data.color}` : 'none'}; z-index: 1;">
+                                <span style="font-size: 0.8rem; color: ${isComplete ? '#000' : '#fff'};">${i + 1}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                    
+                    <div style="width: 45px; height: 45px; border: 2px solid ${totalProgress >= 30 ? data.color : '#333'}; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; opacity: ${totalProgress >= 30 ? '1' : '0.3'};">
+                        <div style="transform: rotate(-45deg); font-size: 1rem;">◈</div>
+                    </div>
+                </div>
+            </div>
+        `;
     });
 
-    html += `</div>`; // Close the 3-track flex container
-    html += `</div>`; // Close main container
-    
+    html += `</div></div>`;
     container.innerHTML = html;
 }
 
@@ -371,4 +340,43 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+//Allows the pantheon tower constellation to be opened//
+
+function openConstellation(deityKey, towerId, sectorIndex) {
+    const tower = PANTHEON_DATA[towerId];
+    const deity = tower.deities.find(d => d.k === deityKey);
+    const sector = deity.sectors[sectorIndex];
+    const totalLevel = state.pantheon[deityKey];
+    const sectorProgress = totalLevel % 6; // 0 to 5 (6 is the keystone)
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-box" style="width: 95%; max-width: 500px; height: 80vh; border-color: ${tower.color};">
+            <div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div>
+            
+            <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
+                <svg id="constellation-svg" viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    </svg>
+                
+                ${sector.coords.map((c, i) => `
+                    <div class="star-node" style="left: ${c.x}%; top: ${c.y}%; border-color: ${sectorProgress > i ? tower.color : '#444'}; background: ${sectorProgress > i ? tower.color : 'transparent'}; width: 20px; height: 20px; pointer-events: auto; cursor: pointer;"
+                         onclick="investOffering('${deityKey}', ${towerId})">
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="modal-actions">
+                <button class="mod-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove()">[ DISENGAGE ]</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Call your connecting line logic
+    const svg = document.getElementById('constellation-svg');
+    renderSectorConstellation(svg, deityKey, sectorIndex, sectorProgress);
 }
