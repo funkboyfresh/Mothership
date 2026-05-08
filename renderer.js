@@ -1060,16 +1060,25 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // [ UPGRADED ] 1,125 Stars split into 3 Parallax Layers (Deep, Mid, Foreground)
+    // [ UPGRADED ] Gravity-Weighted Star Distribution
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
-            let top = Math.random() * 100 + '%';
+            
+            // [ THE MAGIC ] Applies a power curve to force stars to cluster at the bottom (100%)
+            // A curve of 0.35 pulls the vast majority of generated coordinates downward.
+            let verticalBias = Math.pow(Math.random(), 0.35); 
+            let top = verticalBias * 100 + '%';
+            
+            // Links opacity to vertical position: bright at the bottom, dim at the top
+            let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
+            
             let dur = (Math.random() * 5 + 3) + 's';
             let del = (Math.random() * 5) + 's';
-            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; animation-duration:${dur}; animation-delay:${del};"></div>`;
+            
+            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del};"></div>`;
         };
         bgStars += getStar(0.7); // Deep background (smaller)
         midStars += getStar(1.1); // Suspended in gas (medium)
