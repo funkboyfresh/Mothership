@@ -66,24 +66,25 @@ function addEnergy(baseAmount) {
 }
 
 function investOffering(deityKey, towerId) {
-    if (state.offerings > 0 && state.pantheon[deityKey] < 5) {
-        state.offerings--;
+    const currentLevel = state.pantheon[deityKey];
+    const isKeystoneNode = (currentLevel + 1) % 6 === 0;
+    const isMajorNode = currentLevel === 30;
+    
+    let cost = 1;
+    if (isMajorNode) cost = 50;
+    else if (isKeystoneNode) cost = 10;
+
+    if (state.offerings >= cost && currentLevel < 31) {
+        state.offerings -= cost;
         state.pantheon[deityKey]++;
         
         triggerHaptic(50);
-        
-        if (state.pantheon[deityKey] === 5) {
-            showSoftWarning(`DIVINE CONNECTION ESTABLISHED: ${deityKey.toUpperCase()}\nKEYSTONE READY FOR ACTIVATION`);
-        }
-        
         save();
         
-        // [ UPGRADED ] Re-renders the specific tower you are currently inside
-        if (towerId) {
-            renderAscensionTower(towerId);
-        } else {
-            renderVoidPantheon(); 
-        }
+        // Re-render the UI
+        renderAscensionTower(towerId);
+    } else {
+        showSoftWarning("THE VOID DEMANDS MORE OFFERINGS");
     }
 }
 
