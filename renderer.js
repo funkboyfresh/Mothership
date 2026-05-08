@@ -1084,10 +1084,10 @@ function renderOuterworlds(container) {
             <div class="view-level-title" style="color: #a200ff;">EXTERNAL HUB // THE FRINGE</div>
             <h1 class="view-main-title">The Outerworlds</h1>
             
-            <div class="terminal-console" style="width: 90%; margin-bottom: 15px; border-color: #a200ff; cursor: pointer;" onclick="showSoftWarning('THE GODS ARE WATCHING...')">
-                <div style="color: #a200ff; font-weight: bold; letter-spacing: 3px;">[ THE VOID PANTHEON ]</div>
-                <div style="font-size: 0.6rem; opacity: 0.7;">TOTAL GNOSIS REQUIRED TO ENTER</div>
-            </div>
+    <div class="terminal-console" style="width: 90%; margin-bottom: 15px; border-color: #a200ff; cursor: pointer;" onclick="renderVoidPantheon()">
+    <div style="color: #a200ff; font-weight: bold; letter-spacing: 3px;">[ THE VOID PANTHEON ]</div>
+    <div style="font-size: 0.6rem; opacity: 0.7;">ENTER THE SACRED VOID</div>
+</div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%;">
                 <div class="terminal-console" style="opacity: 0.5; border-color: #777;">[ BLACK MARKET ]</div>
