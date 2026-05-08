@@ -870,46 +870,6 @@ function renderLevel4(container, footer) {
     container.appendChild(bridge);
 }
 
-// [ FIXED ] Added name and proper render() call!
-function renderHangar(container) {
-    container.innerHTML = `
-        <div class="target-lock warp-transition">
-            <div class="view-level-title">DRY DOCK // SHIPYARD</div>
-            <h1 class="view-main-title">Hangar Bay</h1>
-            
-            <div class="ship-view-stage" style="height: 150px; margin-bottom: 20px;">
-                <div id="hangar-ship-preview"></div>
-            </div>
-
-            <div class="terminal-console" style="max-height: 300px; overflow-y: auto;">
-                <div style="display:flex; justify-content:space-between; font-size:0.5rem; opacity:0.5; margin-bottom:10px;">
-                    <span>MODULAR_FRIGATE_ASSEMBLY</span>
-                    <span>SCRAP: ${state.scrap}</span>
-                </div>
-                ${Object.keys(state.shipParts).map(part => {
-                    const level = state.shipParts[part];
-                    const cost = level * 15;
-                    return `
-                        <div class="system-node" onclick="upgradeShipPart('${part}')">
-                            <div class="node-status-light" style="background: var(--accent)"></div>
-                            <div style="flex:1; text-align:left;">
-                                <div style="font-size:0.7rem; font-weight:bold;">${part.toUpperCase()}</div>
-                                <div style="font-size:0.5rem; opacity:0.6;">LEVEL ${level} // UPGRADE: ${cost} SCRAP</div>
-                            </div>
-                            <span style="font-size:0.8rem;">+</span>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-
-            <button class="mod-btn" style="margin-top: 20px;" onclick="state.level = 1; render();">RETURN TO BRIDGE</button>
-        </div>
-    `;
-    
-    const preview = document.getElementById('hangar-ship-preview');
-    if (preview) drawModularShip(preview, state.shipParts);
-}
-
 // --- MODULAR SHIP CONSTRUCTION ---
 
 function drawModularShip(targetElement, parts) {
