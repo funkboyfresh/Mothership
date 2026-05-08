@@ -1378,15 +1378,15 @@ function renderAscensionTower(towerId) {
         
         html += `<div style="display: flex; flex-direction: column; align-items: center; width: 30%; z-index: 1;">`;
         
-        // 1. The Keystone Node (Fully assembled with click logic)
+        // [ UPGRADED ] The Keystone Node now dynamically pulls \${d.icon} instead of the hardcoded ◈
         html += `
             <div onclick="openOfferingModal('${d.k}', ${towerId}, 6, false)" style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px; cursor: pointer;">
-                <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1rem;">◈</span>
+                <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1.2rem;">${d.icon}</span>
             </div>
             <div style="font-size: 0.55rem; color: ${data.color}; margin-bottom: 15px; font-weight: bold; text-align: center; height: 15px;">${d.n.toUpperCase()}</div>
         `;
 
-        // 2. The 5 Minor Nodes (Fully assembled with click logic)
+        // 2. The 5 Minor Nodes
         html += `<div style="display: flex; flex-direction: column-reverse; gap: 15px; align-items: center; position: relative; padding-bottom: 20px;">`;
         
         // Vertical track line connecting the nodes
@@ -1419,8 +1419,6 @@ function renderAscensionTower(towerId) {
     
     container.innerHTML = html;
 }
-
-
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
