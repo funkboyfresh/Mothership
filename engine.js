@@ -58,7 +58,20 @@ function addEnergy(baseAmount) {
         
         triggerHyperDrive();
         triggerHaptic([100, 50, 100, 50, 200]);
-    }
+   
+        // ... inside the Level Up (if state.energy >= maxEnergy) block
+        state.playerLevel++;
+        state.offerings++; // [ NEW ] Grant 1 Void Offering
+        state.energy = Math.floor(excess * carryoverPct); 
+        
+        let stipend = state.playerLevel * 50;
+        state.scrap += stipend;
+        
+        showSoftWarning(`HYPER-DRIVE ENGAGED\nPROMOTED TO ${getFleetTitle(state.playerLevel).toUpperCase()}\nOFFERING GRANTED: +1 VOID OFFERING`);
+        // ...
+
+    
+     }
     save(); 
     updateHUD();
 }
