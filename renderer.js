@@ -83,7 +83,24 @@ function render() {
     if(!container) return; 
     container.innerHTML = ''; 
 // [ PATCHED ] Hides the Zoom Out button when in the Hangar (Level 5)
-    if(zoomBtn) zoomBtn.style.visibility = (state.level > 1 && state.level !== 5) ? 'visible' : 'hidden';    
+    if(!container) return; 
+    container.innerHTML = ''; 
+    
+    // [ UPGRADED ] Dynamic Top-Left Navigation
+    if(zoomBtn) {
+        if (state.level === 1) {
+            zoomBtn.style.visibility = 'visible';
+            zoomBtn.innerText = '[ CARTOGRAPHY ]';
+            zoomBtn.onclick = openSectorModal;
+        } else if (state.level > 1 && state.level < 5) {
+            zoomBtn.style.visibility = 'visible';
+            zoomBtn.innerText = '[ ZOOM OUT ]';
+            zoomBtn.onclick = zoomOut;
+        } else {
+            zoomBtn.style.visibility = 'hidden';
+        }
+    }
+
     const activeSector = state.sectors.find(s => s.id === state.sectorId);
     const currentAccent = activeSector ? activeSector.color : '#00e5ff';
     
