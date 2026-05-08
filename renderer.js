@@ -1065,7 +1065,7 @@ function renderVoidPantheon() {
 
             <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px;">THE VOID PANTHEON</div>
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                GNOSIS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
 
@@ -1106,7 +1106,7 @@ function renderAscensionTower(towerId) {
             <div class="view-level-title" style="color: ${data.color}; letter-spacing: 5px; margin-bottom: 20px;">${data.name}</div>
             
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; gap: 10px; align-items: center; justify-content: center;">
-                GNOSIS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
+OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderAscensionTower(${towerId});" style="background: transparent; border: 1px solid ${data.color}; color: ${data.color}; font-size: 0.5rem; padding: 2px 6px; cursor: pointer;">[+5 DEV]</button>
             </div>
     `;
