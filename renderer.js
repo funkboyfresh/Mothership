@@ -110,22 +110,23 @@ function relaxLloyds(seeds, iterations) {
 
 // --- MAIN RENDER LOOP ---
 
-// [ FIXED ] Added the function name back!
 function render() {
     document.getElementById('app').classList.remove('critical-mode'); 
     updateHUD(); 
     
-    processTimeMechanics(); 
-    checkDecayStatus();
+    // Safety checks in case these functions are in another file
+    if(typeof processTimeMechanics === 'function') processTimeMechanics(); 
+    if(typeof checkDecayStatus === 'function') checkDecayStatus();
     
     const container = document.getElementById('view-container');
     const zoomBtn = document.getElementById('zoom-out');
     const bread = document.getElementById('breadcrumb');
     const footer = document.getElementById('control-footer');
     
-    if(!container) return; 
-    container.innerHTML = ''; 
-// [ PATCHED ] Hides the Zoom Out button when in the Hangar (Level 5)
+    // [ NEW ] Target the secondary nav bar
+    const navBar = document.getElementById('nav-bar'); 
+    if(navBar) navBar.style.display = 'flex'; // Restore it on all normal screens
+    
     if(!container) return; 
     container.innerHTML = ''; 
     
@@ -152,7 +153,7 @@ function render() {
     
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
-        // [ UPGRADED ] Dynamic Global Navigation Bar
+    // [ UPGRADED ] Dynamic Global Navigation Bar
     if (footer && [1, 5, 6, 7].includes(state.level)) {
         footer.style.display = 'flex';
         footer.innerHTML = `
@@ -163,7 +164,6 @@ function render() {
         `;
     }
 
-    
     switch(state.level) {
         case 1: renderLevel1(container, footer); break;
         case 2: renderLevel2(container, footer, activeSector); break;
@@ -173,7 +173,6 @@ function render() {
         case 6: renderNexus(container); break;
         case 7: renderOuterworlds(container); break;
     }
-
 }
 
 // --- GLOBAL MAIN NAVIGATION ---
