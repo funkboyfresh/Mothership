@@ -1053,7 +1053,6 @@ function renderOuterworlds(container) {
     `;
 }
 
-// The Void Pantheon
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
@@ -1072,7 +1071,7 @@ function renderVoidPantheon() {
         pantheonStars += `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; animation-duration:${dur}; animation-delay:${del};"></div>`;
     }
 
-    // [ UPGRADED ] Structurally Decoupled Typography, 30% Faster Shimmer, 15% Lifted Cloud Base
+    // [ UPGRADED ] Lowered Monolith height by 25% for a deeper fade-out
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1100,7 +1099,6 @@ function renderVoidPantheon() {
                     radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.5) 0%, transparent 60%);
                 filter: blur(30px);
                 z-index: 1;
-                /* Speed increased 30%: 40s -> 31s */
                 animation: fog-breathe 31s infinite alternate ease-in-out;
             }
 
@@ -1123,10 +1121,7 @@ function renderVoidPantheon() {
                 mix-blend-mode: hard-light; 
                 z-index: 15;
                 pointer-events: none;
-                /* Speed increased 30%: 60s -> 46s */
                 animation: slow-drift 46s infinite alternate ease-in-out;
-                
-                /* [ ADJUSTED ] Lifted the bottom fade by 15% (75/100 -> 60/85) */
                 -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
                 mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
             }
@@ -1145,7 +1140,9 @@ function renderVoidPantheon() {
             /* LAYER 3: TOWER HULL (z-index: 5, stays behind clouds) */
             .monolith-spire {
                 position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
+                bottom: 0; left: 0; /* [ ADJUSTED ] Anchored to the bottom instead of the top */
+                width: 100%; 
+                height: 75%; /* [ ADJUSTED ] Height capped at 75% so it stops much lower */
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1153,8 +1150,9 @@ function renderVoidPantheon() {
                 box-shadow: 0 0 25px -5px var(--t-color); 
                 transition: filter 0.3s;
                 z-index: 5; 
-                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
-                mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%);
+                /* [ ADJUSTED ] Mask shifted to match the new compressed height */
+                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+                mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
             .tower-wrapper:hover .monolith-spire { 
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
