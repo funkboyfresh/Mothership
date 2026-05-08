@@ -25,6 +25,20 @@ let state = {
     shipParts: JSON.parse(localStorage.getItem('shipParts')) || {
         magnet: 1, reactor: 1, habitat: 1, hull: 1, shields: 1,
         comms: 1, thrusters: 1, sinks: 1, sensors: 1, cells: 1
+        offerings: 0,
+    pantheon: {
+        // Ascension I
+        kaelenTor: 0, aethelgard: 0, valerium: 0,
+        // Ascension II
+        syraxis: 0, ignisKor: 0, morvath: 0,
+        // Ascension III
+        ragnarath: 0, luminara: 0, xerxes: 0,
+        // Keystones (0 = locked, 1 = unlocked)
+        keystones: {
+            midasDrive: 0, chronosShift: 0, wardensGrace: 0,
+            smugglersToll: 0, quantumLoop: 0, apexContract: 0,
+            orbitalStrike: 0, veilOfLight: 0, sunEater: 0
+        }
     }
 };
 
