@@ -1087,10 +1087,50 @@ OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 
     `;
 }
 
+// [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
-    1: { name: "THE GENESIS SPHERE", color: "#00d4ff", deities: [{k:'kaelenTor', n:'Kaelen-Tor'}, {k:'aethelgard', n:'Aethelgard'}, {k:'valerium', n:'Valerium'}] },
-    2: { name: "THE ABYSSAL SYNDICATE", color: "#a200ff", deities: [{k:'syraxis', n:'Syraxis'}, {k:'ignisKor', n:'Ignis-Kor'}, {k:'morvath', n:'Morvath'}] },
-    3: { name: "THE CELESTIAL VANGUARD", color: "#ffd700", deities: [{k:'ragnarath', n:'Ragnarath'}, {k:'luminara', n:'Luminara'}, {k:'xerxes', n:'Xerxes'}] }
+    1: { 
+        name: "THE GENESIS SPHERE", color: "#00d4ff", 
+        deities: [
+            {k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', 
+             minor: "CELESTIAL MAGNETISM: Increases base Scrap and Energy yields by +2% per Offering.", 
+             major: "THE MIDAS DRIVE: Securing a Level 4 Target converts 10% of your total lifetime Energy into a massive, one-time Scrap payout." },
+            {k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', 
+             minor: "TEMPORAL VELOCITY: Grants +5% bonus Scrap for targets secured before their 24h warning per Offering.", 
+             major: "CHRONOS SHIFT: Once per week, instantly advance your Pilot Level by 1 without filling the Capacitor." },
+            {k:'valerium', n:'Valerium', title: 'The Aegis Warden', 
+             minor: "AEGIS PLATING: Reduces the Energy penalty of Overdue tasks by 1 point per Offering.", 
+             major: "WARDEN'S GRACE: Automatically generates a Sub-Routine Shield on Decaying tasks, restoring lost penalty Energy upon first action." }
+        ] 
+    },
+    2: { 
+        name: "THE ABYSSAL SYNDICATE", color: "#a200ff", 
+        deities: [
+            {k:'syraxis', n:'Syraxis', title: 'The Shadow-Walker', 
+             minor: "UNDERWORLD CONNECTIONS: Black Market exchange rates improve by 4% per Offering.", 
+             major: "THE SMUGGLER'S TOLL: Hires a permanent, phantom-operative that slowly generates a drip-feed of Scrap while offline." },
+            {k:'ignisKor', n:'Ignis-Kor', title: 'The Reality Shaper', 
+             minor: "EXTENDED VOLATILITY: Temporary Forge buffs last 1 hour longer per Offering.", 
+             major: "QUANTUM LOOP: 33% chance the universe loops when crafting, refunding the entire Scrap cost immediately." },
+            {k:'morvath', n:'Morvath', title: 'The Void Hunter', 
+             minor: "BLOOD MONEY: Daily Bounty payouts increased by +5% per Offering.", 
+             major: "THE APEX CONTRACT: Completing a Daily Bounty guarantees an 'Obliteration Token' to wipe one Critical task without penalty." }
+        ] 
+    },
+    3: { 
+        name: "THE CELESTIAL VANGUARD", color: "#ffd700", 
+        deities: [
+            {k:'ragnarath', n:'Ragnarath', title: 'The Dread-Caller', 
+             minor: "KINETIC PIERCING: Increases kinetic damage to Boss Target shields per Offering.", 
+             major: "THE ORBITAL STRIKE: Once a week, instantly obliterate a Boss Target without completing its sub-routines." },
+            {k:'luminara', n:'Luminara', title: 'The Cosmic Veil', 
+             minor: "ION RESISTANCE: Reduces Energy drain from hostile Encounters per Offering.", 
+             major: "THE VEIL OF LIGHT: Taking damage from an Encounter has a 33% chance to be absorbed and converted into Bonus Energy." },
+            {k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', 
+             minor: "ANOMALY DETECTION: Rare encounters spawn more frequently per Offering.", 
+             major: "THE SUN-EATER: Fully clearing a Sector permanently boosts that Sector's baseline rewards by 25%." }
+        ] 
+    }
 };
 
 function renderAscensionTower(towerId) {
@@ -1142,7 +1182,9 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
         
         // 1. The Keystone Node
         html += `
-            <div style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px;">
+            // 1. The Keystone Node
+        html += `
+            <div onclick="openOfferingModal('${d.k}', ${towerId}, 6, false)" style="width: 35px; height: 35px; border: 2px solid ${data.color}; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: ${isKeystoneUnlocked ? data.color : '#000'}; box-shadow: 0 0 10px ${isKeystoneUnlocked ? data.color : 'transparent'}; margin-bottom: 5px; cursor: pointer;">
                 <span style="color: ${isKeystoneUnlocked ? '#000' : data.color}; font-size: 1rem;">◈</span>
             </div>
             <div style="font-size: 0.55rem; color: ${data.color}; margin-bottom: 15px; font-weight: bold; text-align: center; height: 15px;">${d.n.toUpperCase()}</div>
@@ -1156,15 +1198,18 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
 
         for(let i = 1; i <= 5; i++) {
             const isActive = level >= i;
-            const isNext = level === (i - 1) && state.offerings > 0; // Only the next node is clickable
+            const isNext = level === (i - 1); 
             
             let bg = isActive ? data.color : '#000';
-            let cursor = isNext ? 'cursor: pointer;' : 'cursor: default;';
-            let pulse = isNext ? `animation: pulse-glow 1.5s infinite; box-shadow: 0 0 10px ${data.color};` : '';
-            let opacity = isActive || isNext ? '1' : '0.3';
+            let cursor = (isActive || isNext) ? 'cursor: pointer;' : 'cursor: default;';
+            let pulse = (isNext && state.offerings > 0) ? `animation: pulse-glow 1.5s infinite; box-shadow: 0 0 10px ${data.color};` : '';
+            let opacity = (isActive || isNext) ? '1' : '0.3';
+            
+            // [ UPGRADED ] Re-routed the click to open the Communion Modal
+            let clickAction = (isActive || isNext) ? `openOfferingModal('${d.k}', ${towerId}, ${i}, ${isNext})` : '';
             
             html += `
-                <div onclick="if(${isNext}) investOffering('${d.k}', ${towerId})" 
+                <div onclick="${clickAction}" 
                      style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${data.color}; background: ${bg}; ${cursor} ${pulse} opacity: ${opacity}; display: flex; align-items: center; justify-content: center; z-index: 1; transition: all 0.3s;">
                 </div>
             `;
@@ -1178,4 +1223,59 @@ OFFERINGS: <span style="color: ${data.color}; font-weight: bold;">${state.offeri
     html += `</div>`; // Close main container
     
     container.innerHTML = html;
+}
+
+
+function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
+    const tower = PANTHEON_DATA[towerId];
+    const deity = tower.deities.find(d => d.k === deityKey);
+    const isKeystone = nodeIndex === 6; 
+    
+    const title = isKeystone ? "MAJOR KEYSTONE" : `MINOR STAR // NODE 0${nodeIndex}`;
+    const buffDesc = isKeystone ? deity.major : deity.minor;
+    
+    let actionsHtml = '';
+    
+    if (isNext && state.offerings > 0) {
+        // Ready to level up
+        actionsHtml = `
+            <div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">THE VOID DEMANDS TRIBUTE. DO YOU PROCEED?</div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button>
+                <button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button>
+            </div>
+        `;
+    } else if (isNext && state.offerings <= 0) {
+        // Broke
+        actionsHtml = `
+            <div style="margin-top: 20px; font-size: 0.65rem; color: var(--thrust); text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px var(--thrust-glow);">INSUFFICIENT OFFERINGS. THE VOID REMAINS SILENT.</div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button>
+            </div>
+        `;
+    } else {
+        // Just reading unlocked lore
+         actionsHtml = `
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button>
+            </div>
+        `;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${deity.n.toUpperCase()} // ${deity.title.toUpperCase()}</div>
+            <h2 class="view-main-title" style="margin-bottom: 15px; font-size: 1.1rem;">${title}</h2>
+            
+            <div class="terminal-console" style="text-align: left; margin: 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
+            </div>
+            
+            ${actionsHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
