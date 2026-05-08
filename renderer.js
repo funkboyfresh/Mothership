@@ -1060,72 +1060,92 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Cosmic Atmosphere CSS injected directly into the view
+    // [ UPGRADED ] Singular, layered volumetric cloud & gradient outlines
     const atmosStyles = `
         <style>
-            @keyframes aurora-pulse {
-                0% { filter: brightness(1) contrast(1.1); transform: scale(1) translateY(0); }
-                100% { filter: brightness(1.4) contrast(1.4); transform: scale(1.05) translateY(-5px); }
+            @keyframes nebula-pulse {
+                0% { opacity: 0.5; filter: contrast(1.1) brightness(1); transform: scale(1); }
+                50% { opacity: 0.8; filter: contrast(1.4) brightness(1.2); transform: scale(1.02); }
+                100% { opacity: 0.4; filter: contrast(1.2) brightness(0.9); transform: scale(0.98); }
             }
-            @keyframes noxious-drift {
-                0% { background-position: 0% 0%; opacity: 0.3; }
-                50% { opacity: 0.6; }
-                100% { background-position: 100% 100%; opacity: 0.3; }
+            @keyframes gas-drift {
+                0% { background-position: 0% 0%; }
+                100% { background-position: 100% 100%; }
             }
+            .singular-nebula-container {
+                position: absolute;
+                top: -5%; left: 0; width: 100%; height: 60%;
+                z-index: 0;
+                pointer-events: none;
+                overflow: hidden;
+            }
+            .nebula-base-gas {
+                position: absolute;
+                top: 0; left: -10%; width: 120%; height: 100%;
+                background: 
+                    radial-gradient(circle at 20% 40%, rgba(0, 212, 255, 0.4) 0%, transparent 60%),
+                    radial-gradient(circle at 50% 30%, rgba(162, 0, 255, 0.5) 0%, transparent 60%),
+                    radial-gradient(circle at 80% 40%, rgba(255, 215, 0, 0.4) 0%, transparent 60%);
+                filter: blur(20px);
+                animation: nebula-pulse 10s infinite alternate ease-in-out;
+            }
+            .nebula-starlight-cores {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: 
+                    radial-gradient(ellipse at 50% 25%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.2) 15%, transparent 40%),
+                    radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.7) 0%, transparent 35%),
+                    radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.8) 0%, transparent 35%);
+                mix-blend-mode: color-dodge;
+                animation: nebula-pulse 6s infinite alternate-reverse ease-in-out;
+            }
+            .nebula-texture {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: repeating-linear-gradient(45deg, transparent, rgba(255,255,255,0.03) 5%, transparent 10%),
+                            repeating-linear-gradient(-45deg, transparent, rgba(162,0,255,0.05) 10%, transparent 20%);
+                background-size: 200% 200%;
+                mix-blend-mode: overlay;
+                animation: gas-drift 30s linear infinite;
+            }
+            
             .monolith-spire {
                 flex: 1;
                 position: relative;
-                border: 1px solid var(--t-color);
-                border-bottom: none;
-                background: #030005;
+                /* Gradient border: Ghostly white at top, solid color at base */
+                border-style: solid;
+                border-width: 1px 1px 0 1px;
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 5%, rgba(255,255,255,0.2) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
+                /* Transparent top to fade smoothly into the cloud */
+                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
                 padding-bottom: 20px;
-                overflow: hidden;
-                box-shadow: inset 0 -20px 30px rgba(0,0,0,0.8);
                 transition: filter 0.3s;
+                z-index: 2;
             }
             .monolith-spire:hover {
-                filter: brightness(1.3);
-            }
-            .aurora-core {
-                position: absolute;
-                top: -10%; left: -50%; width: 200%; height: 75%;
-                background: radial-gradient(ellipse at 50% 25%, #ffffff 0%, var(--t-color) 15%, rgba(0,0,0,0) 65%);
-                mix-blend-mode: screen;
-                animation: aurora-pulse 4s infinite alternate ease-in-out;
-                pointer-events: none;
-                z-index: 1;
-            }
-            .noxious-gas {
-                position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
-                background: repeating-linear-gradient(45deg, transparent, var(--t-color) 8%, transparent 16%);
-                mix-blend-mode: color-dodge;
-                animation: noxious-drift 12s linear infinite;
-                pointer-events: none;
-                z-index: 2;
+                filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color));
             }
             .tower-beam {
                 position: absolute;
-                bottom: 0; left: 30%; width: 40%; height: 100%;
-                background: linear-gradient(to top, rgba(0,0,0,0) 0%, var(--t-color) 70%, #ffffff 100%);
+                bottom: 0; left: 25%; width: 50%; height: 80%;
+                background: linear-gradient(to top, var(--t-color) 0%, transparent 100%);
                 opacity: 0.15;
-                mix-blend-mode: screen;
                 pointer-events: none;
                 z-index: 1;
             }
             .apex-icon {
                 position: absolute;
-                top: 10%;
+                top: 15%;
                 left: 50%;
                 transform: translateX(-50%);
-                font-size: 2rem;
+                font-size: 2.2rem;
                 color: #fff;
-                text-shadow: 0 0 10px #fff, 0 0 20px var(--t-color), 0 0 40px var(--t-color);
+                text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 50px var(--t-color);
                 z-index: 10;
                 pointer-events: none;
             }
@@ -1139,41 +1159,43 @@ function renderVoidPantheon() {
                 text-shadow: 0 0 15px var(--t-color);
                 z-index: 10;
                 pointer-events: none;
+                margin-bottom: 15px;
             }
         </style>
     `;
 
     container.innerHTML = atmosStyles + `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: #020005; height: 100%; display: flex; flex-direction: column; position: relative;">
+            
+            <div class="singular-nebula-container">
+                <div class="nebula-base-gas"></div>
+                <div class="nebula-starlight-cores"></div>
+                <div class="nebula-texture"></div>
+            </div>
+
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
 
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px;">THE VOID PANTHEON</div>
-            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px; z-index: 10;">THE VOID PANTHEON</div>
+            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 10;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 40px;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 40px; z-index: 10;">
                 
                 <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
-                    <div class="noxious-gas"></div>
-                    <div class="aurora-core"></div>
                     <div class="tower-beam"></div>
                     <div class="apex-icon">◬</div>
                     <div class="spire-text">THE GENESIS SPHERE</div>
                 </div>
                 
                 <div onclick="renderAscensionTower(2)" class="monolith-spire" style="--t-color: #a200ff;">
-                    <div class="noxious-gas"></div>
-                    <div class="aurora-core"></div>
                     <div class="tower-beam"></div>
                     <div class="apex-icon">◬</div>
                     <div class="spire-text">THE ABYSSAL SYNDICATE</div>
                 </div>
                 
                 <div onclick="renderAscensionTower(3)" class="monolith-spire" style="--t-color: #ffd700;">
-                    <div class="noxious-gas"></div>
-                    <div class="aurora-core"></div>
                     <div class="tower-beam"></div>
                     <div class="apex-icon">◬</div>
                     <div class="spire-text">CELESTIAL VANGUARD</div>
