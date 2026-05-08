@@ -109,14 +109,75 @@ function render() {
     
     if(bread) bread.innerText = `${activeSector ? activeSector.name : 'GALAXY'} ${state.horizon ? '> ' + state.horizon : ''}`;
     
-    switch(state.level) {
-        case 1: renderLevel1(container, footer); break;
-        case 2: renderLevel2(container, footer, activeSector); break;
-        case 3: renderLevel3(container, footer); break;
-        case 4: renderLevel4(container, footer); break;
-        case 5: renderHangar(container); break;
-    }
+         switch(state.level) {
+            case 1: 
+                renderMainMenuFooter(footer);
+                renderLevel1(container, null); // Pass null so L1 doesn't overwrite the global footer
+                break;
+            case 2: renderLevel2(container, footer, activeSector); break;
+            case 3: renderLevel3(container, footer); break;
+            case 4: renderLevel4(container, footer); break;
+            case 5: 
+                renderMainMenuFooter(footer);
+                renderHangar(container); 
+                break;
+        }
+
 }
+
+// --- GLOBAL MAIN NAVIGATION ---
+
+function renderMainMenuFooter(footer) {
+    if (!footer) return;
+    footer.style.display = 'flex';
+    footer.innerHTML = '';
+
+    // The 4 Core Hubs
+    const navs = [
+        { id: 'SECTORS', level: 1, color: 'var(--accent)' },
+        { id: 'HANGAR', level: 5, color: 'var(--captured)' },
+        { id: 'OUTPOST', level: 6, color: '#ff9900' },
+        { id: 'OUTERWORLDS', level: 7, color: '#a200ff' }
+    ];
+
+    navs.forEach(nav => {
+        const isActive = state.level === nav.level;
+        const btn = document.createElement('button');
+        btn.className = `zoom-btn`;
+        btn.innerText = `[ ${nav.id} ]`;
+        
+        // Base styling for all 4 buttons
+        btn.style.flex = '1';
+        btn.style.padding = '10px 0';
+        btn.style.fontSize = '0.65rem';
+        btn.style.borderColor = nav.color;
+        btn.style.color = nav.color;
+        btn.style.transition = 'all 0.3s';
+        
+        if (isActive) {
+            // Active State: 100% Brightness, Glow, Unclickable
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'none';
+            btn.style.background = `rgba(255, 255, 255, 0.05)`; // Slight tint
+            btn.style.boxShadow = `0 0 15px ${nav.color}66, inset 0 0 10px ${nav.color}33`; 
+        } else {
+            // Inactive State: 30% Less Bright (0.7 opacity), Clickable
+            btn.style.opacity = '0.7';
+            btn.style.cursor = 'pointer';
+            btn.onclick = () => { 
+                if (nav.level === 6 || nav.level === 7) {
+                    showSoftWarning(`[ ${nav.id} ] IS CURRENTLY UNDER CONSTRUCTION`);
+                } else {
+                    state.level = nav.level; 
+                    render(); 
+                }
+            };
+        }
+        
+        footer.appendChild(btn);
+    });
+}
+
 
 // --- SECTOR MAP (L1) ---
 
@@ -127,7 +188,7 @@ function renderLevel1(container, footer) {
             <button class="zoom-btn" onclick="state.level = 1; render();" style="flex:1; border-color: var(--accent); color: var(--accent);">[ MAP ]</button>
             <button class="zoom-btn" onclick="state.level = 5; render();" style="flex:1; border-color: var(--captured); color: var(--captured);">[ HANGAR ]</button>
             <button class="zoom-btn" onclick="showSoftWarning('OUTPOST UNDER CONSTRUCTION');" style="flex:1; border-color: #ff9900; color: #ff9900; opacity: 0.6;">[ OUTPOST ]</button>
-            <button class="zoom-btn" onclick="showSoftWarning('UPLINK OFFLINE');" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.6;">[ ??? ]</button>
+            <button class="zoom-btn" onclick="showSoftWarning('UPLINK OFFLINE');" style="flex:1; border-color: #a200ff; color: #a200ff; opacity: 0.6;">[ OUTERWORLDS ]</button>
         `; 
     }
     
