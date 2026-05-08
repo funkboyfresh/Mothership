@@ -1079,6 +1079,7 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
+    // [ UPGRADED ] Fixed Height Containers for Perfect Center Alignment
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1132,12 +1133,12 @@ function renderVoidPantheon() {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
             }
 
-            /* [ UPGRADED ] Dropped the Apex triangle to sit cleanly in the clouds */
+            /* [ UPGRADED ] Hoisted the apex void up to match the red marker */
             .zenith-apex-void {
                 position: absolute;
-                top: 18%; /* Dropped significantly from 8% */
+                top: 10%; 
                 left: 50%;
-                transform: translateX(-50%); /* Removed the negative Y translation to pull it down further */
+                transform: translateX(-50%);
                 font-size: 8rem;
                 color: #000; 
                 z-index: 16; 
@@ -1155,12 +1156,11 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* [ UPGRADED ] Towers stretch deeper into the floor */
             .monolith-spire {
                 position: absolute;
                 bottom: 0; left: 0; 
                 width: 100%; 
-                height: 82%; /* Increased height slightly to compensate for the floor drop */
+                height: 82%; 
                 border-style: solid;
                 border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
@@ -1178,13 +1178,18 @@ function renderVoidPantheon() {
             .tower-content {
                 position: relative;
                 z-index: 20; 
-                padding-bottom: 25px; 
+                padding-bottom: 10px; 
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
             }
+
+            /* [ UPGRADED ] Force text block to uniform height so icons don't bounce */
             .spire-text {
+                height: 280px; 
+                display: flex;
+                align-items: flex-end;
                 color: var(--t-color); 
                 writing-mode: vertical-rl; 
                 transform: rotate(180deg);
@@ -1193,12 +1198,19 @@ function renderVoidPantheon() {
                 font-size: 1.1rem; 
                 text-shadow: 0 0 15px var(--t-color); 
             }
-            /* [ UPGRADED ] Shifted icons up by 25% */
+
+            /* [ UPGRADED ] Container forces all 3 icons to perfect center alignment */
+            .tower-icon-wrapper {
+                height: 80px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-top: 15px;
+            }
+
             .tower-icon {
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-                margin-top: 15px; 
-                transform: translateY(25%); /* Moved UP from 50% */
             }
         </style>
     `;
@@ -1214,13 +1226,15 @@ function renderVoidPantheon() {
 
             <div class="zenith-apex-void">◬</div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 10px;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;">
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE GENESIS SPHERE</div>
-                        <div class="tower-icon" style="font-size: 3rem;">۞</div> 
+                        <div class="tower-icon-wrapper">
+                            <div class="tower-icon" style="font-size: 3rem;">۞</div> 
+                        </div>
                     </div>
                 </div>
                 
@@ -1228,7 +1242,9 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE ABYSSAL SYNDICATE</div>
-                        <div class="tower-icon" style="font-size: 6rem;">⎊</div>
+                        <div class="tower-icon-wrapper">
+                            <div class="tower-icon" style="font-size: 4.2rem;">⎊</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1236,7 +1252,9 @@ function renderVoidPantheon() {
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">CELESTIAL VANGUARD</div>
-                        <div class="tower-icon" style="font-size: 3rem;">❖</div>
+                        <div class="tower-icon-wrapper">
+                            <div class="tower-icon" style="font-size: 3rem;">❖</div>
+                        </div>
                     </div>
                 </div>
 
