@@ -1060,127 +1060,103 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ UPGRADED ] Volumetric Aurora Borealis & Fog Physics
+    // [ UPGRADED ] Dense Volumetric Fog, Asymmetric Cores, and Grounded Towers
     const atmosStyles = `
         <style>
             @keyframes aurora-wave {
                 0% { transform: rotate(-5deg) scaleY(1) translateY(0); opacity: 0.4; }
-                50% { transform: rotate(2deg) scaleY(1.3) translateY(-30px); opacity: 0.8; }
-                100% { transform: rotate(-2deg) scaleY(0.9) translateY(10px); opacity: 0.3; }
+                50% { transform: rotate(2deg) scaleY(1.5) translateY(-40px); opacity: 0.9; }
+                100% { transform: rotate(-2deg) scaleY(0.9) translateY(15px); opacity: 0.3; }
             }
             @keyframes dark-gas-drift {
-                0% { transform: translateX(-10%) translateY(0) scale(1); }
-                100% { transform: translateX(10%) translateY(-5%) scale(1.2); }
+                0% { transform: translateX(-15%) translateY(0) scale(1); }
+                100% { transform: translateX(15%) translateY(-10%) scale(1.3); }
             }
-            @keyframes star-pierce {
-                0% { opacity: 0.5; filter: brightness(1); transform: scale(0.9); }
-                100% { opacity: 1; filter: brightness(1.5); transform: scale(1.1); box-shadow: 0 0 20px #fff; }
+            @keyframes core-shift {
+                0% { transform: scale(1, 1) rotate(0deg); opacity: 0.5; }
+                33% { transform: scale(2.5, 4) rotate(45deg); opacity: 1; filter: blur(6px) brightness(1.5); }
+                66% { transform: scale(4, 1.5) rotate(-30deg); opacity: 0.8; }
+                100% { transform: scale(1.5, 3) rotate(20deg); opacity: 0.4; filter: blur(4px) brightness(1); }
             }
 
-            /* 1. THE FOG TANK (Extreme Blur melts shapes into fluid gas) */
+            /* 1. THE FOG TANK (Extreme Blur, smooth fade down to remove the black box) */
             .gas-tank {
                 position: absolute;
-                top: -15%; left: -20%; width: 140%; height: 75%;
+                top: -15%; left: -20%; width: 140%; height: 95%;
                 z-index: 0;
                 pointer-events: none;
                 overflow: hidden;
-                filter: blur(40px); /* This is the magic that creates fluid gas */
+                filter: blur(45px); 
+                mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
             }
 
-            /* 2. THE DEEP FOG (Ambient dark matter) */
-            .fog-base {
-                position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
-                background: radial-gradient(ellipse at center, rgba(15, 5, 25, 0.95) 0%, transparent 80%);
-            }
+            /* 2. AURORA RIBBONS (DOUBLED QUANTITY & DENSITY) */
+            .aurora-ribbon { position: absolute; border-radius: 50%; mix-blend-mode: screen; }
+            .aurora-1 { top: 10%; left: 0%; width: 120%; height: 30%; background: radial-gradient(ellipse, rgba(0, 212, 255, 0.9) 0%, transparent 70%); animation: aurora-wave 12s infinite alternate ease-in-out; }
+            .aurora-2 { top: 20%; left: -10%; width: 140%; height: 25%; background: radial-gradient(ellipse, rgba(162, 0, 255, 0.8) 0%, transparent 70%); animation: aurora-wave 16s infinite alternate-reverse ease-in-out; }
+            .aurora-3 { top: 5%; left: 15%; width: 100%; height: 35%; background: radial-gradient(ellipse, rgba(255, 215, 0, 0.7) 0%, transparent 70%); animation: aurora-wave 20s infinite alternate ease-in-out; }
+            .aurora-4 { top: 15%; left: 30%; width: 130%; height: 20%; background: radial-gradient(ellipse, rgba(0, 212, 255, 0.6) 0%, transparent 70%); animation: aurora-wave 14s infinite alternate-reverse; }
+            .aurora-5 { top: -5%; left: 40%; width: 110%; height: 40%; background: radial-gradient(ellipse, rgba(162, 0, 255, 0.9) 0%, transparent 70%); animation: aurora-wave 18s infinite alternate; }
+            .aurora-6 { top: 25%; left: 5%; width: 120%; height: 30%; background: radial-gradient(ellipse, rgba(255, 215, 0, 0.6) 0%, transparent 70%); animation: aurora-wave 22s infinite alternate-reverse; }
 
-            /* 3. AURORA RIBBONS (Squashed ellipses acting as glowing gas arcs) */
-            .aurora-ribbon {
-                position: absolute;
-                border-radius: 50%;
-                mix-blend-mode: screen;
-            }
-            .aurora-1 {
-                top: 15%; left: 5%; width: 130%; height: 25%;
-                background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.7) 0%, transparent 70%);
-                animation: aurora-wave 14s infinite alternate ease-in-out;
-            }
-            .aurora-2 {
-                top: 25%; left: -10%; width: 150%; height: 20%;
-                background: radial-gradient(ellipse at center, rgba(162, 0, 255, 0.6) 0%, transparent 70%);
-                animation: aurora-wave 18s infinite alternate-reverse ease-in-out;
-            }
-            .aurora-3 {
-                top: 10%; left: 20%; width: 110%; height: 30%;
-                background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
-                animation: aurora-wave 22s infinite alternate ease-in-out;
-            }
+            /* 3. OCCLUSION CLOUDS (DOUBLED) */
+            .dark-gas { position: absolute; border-radius: 50%; background: #000; mix-blend-mode: multiply; opacity: 0.95; }
+            .dg-1 { top: 5%; left: 10%; width: 45%; height: 50%; animation: dark-gas-drift 22s infinite alternate ease-in-out; }
+            .dg-2 { top: 20%; left: 50%; width: 55%; height: 45%; animation: dark-gas-drift 28s infinite alternate-reverse ease-in-out; }
+            .dg-3 { top: 15%; left: -10%; width: 50%; height: 60%; animation: dark-gas-drift 25s infinite alternate ease-in-out; }
+            .dg-4 { top: 5%; left: 60%; width: 60%; height: 50%; animation: dark-gas-drift 32s infinite alternate-reverse; }
 
-            /* 4. OCCLUSION CLOUDS (Pitch black gas drifting in front of the aurora to create depth) */
-            .dark-gas {
-                position: absolute;
-                border-radius: 50%;
-                background: #000;
-                mix-blend-mode: multiply;
-                opacity: 0.85;
-            }
-            .dg-1 { top: 10%; left: 15%; width: 40%; height: 50%; animation: dark-gas-drift 25s infinite alternate ease-in-out; }
-            .dg-2 { top: 25%; left: 55%; width: 50%; height: 40%; animation: dark-gas-drift 30s infinite alternate-reverse ease-in-out; }
-
-            /* 5. STAR HALOS (Diffused glows burning inside the heavy fog) */
-            .star-halo {
-                position: absolute;
-                border-radius: 50%;
-                mix-blend-mode: color-dodge;
-            }
-            .halo-1 { top: 35%; left: 25%; width: 20%; height: 25%; background: radial-gradient(circle, rgba(0, 212, 255, 0.9) 0%, transparent 50%); animation: star-pierce 4s infinite alternate; }
-            .halo-2 { top: 40%; left: 50%; width: 25%; height: 30%; background: radial-gradient(circle, rgba(162, 0, 255, 0.9) 0%, transparent 50%); animation: star-pierce 5s infinite alternate-reverse; }
-            .halo-3 { top: 30%; left: 75%; width: 20%; height: 25%; background: radial-gradient(circle, rgba(255, 215, 0, 0.9) 0%, transparent 50%); animation: star-pierce 6s infinite alternate; }
+            /* 4. STAR HALOS (6 TOTAL inside the blur) */
+            .star-halo { position: absolute; border-radius: 50%; mix-blend-mode: color-dodge; }
+            .halo-1 { top: 25%; left: 20%; width: 30%; height: 30%; background: radial-gradient(circle, rgba(0, 212, 255, 1) 0%, transparent 50%); animation: aurora-wave 4s infinite alternate; }
+            .halo-2 { top: 35%; left: 50%; width: 35%; height: 35%; background: radial-gradient(circle, rgba(162, 0, 255, 1) 0%, transparent 50%); animation: aurora-wave 5s infinite alternate-reverse; }
+            .halo-3 { top: 20%; left: 80%; width: 30%; height: 30%; background: radial-gradient(circle, rgba(255, 215, 0, 1) 0%, transparent 50%); animation: aurora-wave 6s infinite alternate; }
+            .halo-4 { top: 10%; left: 35%; width: 25%; height: 25%; background: radial-gradient(circle, rgba(0, 212, 255, 0.8) 0%, transparent 50%); animation: aurora-wave 7s infinite alternate-reverse; }
+            .halo-5 { top: 15%; left: 65%; width: 40%; height: 40%; background: radial-gradient(circle, rgba(162, 0, 255, 0.9) 0%, transparent 50%); animation: aurora-wave 5s infinite alternate; }
+            .halo-6 { top: 30%; left: 10%; width: 25%; height: 25%; background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 50%); animation: aurora-wave 6s infinite alternate-reverse; }
             
-            /* 6. SHARP STARS (Tiny, unblurred 5% pinpricks sitting outside the fog tank) */
-            .sharp-stars-container {
-                position: absolute;
-                top: -5%; left: 0; width: 100%; height: 60%;
-                z-index: 1;
-                pointer-events: none;
-                overflow: hidden;
-            }
-            .tiny-star {
-                position: absolute;
-                background: #ffffff;
-                border-radius: 50%;
-                box-shadow: 0 0 15px #fff, 0 0 30px #fff;
-                animation: star-pierce 3s infinite alternate;
-                transform: translate(-50%, -50%);
-            }
-            .ts-1 { top: 38%; left: 25%; width: 4px; height: 4px; }
-            .ts-2 { top: 43%; left: 50%; width: 6px; height: 6px; animation-delay: 1s; }
-            .ts-3 { top: 33%; left: 75%; width: 4px; height: 4px; animation-delay: 2s; }
+            /* 5. ASYMMETRIC FOG CORES (6 TOTAL, scaling up to 400%) */
+            .dense-cores-container { position: absolute; top: -5%; left: 0; width: 100%; height: 70%; z-index: 1; pointer-events: none; overflow: hidden; }
+            .fog-core { position: absolute; background: #ffffff; border-radius: 50%; filter: blur(5px); mix-blend-mode: screen; transform-origin: center; box-shadow: 0 0 20px #fff; animation: core-shift 8s infinite alternate ease-in-out; }
+            .fc-1 { top: 28%; left: 20%; width: 12px; height: 20px; animation-delay: 0s; }
+            .fc-2 { top: 38%; left: 50%; width: 15px; height: 10px; animation-delay: 1.5s; }
+            .fc-3 { top: 23%; left: 80%; width: 10px; height: 25px; animation-delay: 0.5s; }
+            .fc-4 { top: 13%; left: 35%; width: 18px; height: 12px; animation-delay: 2s; }
+            .fc-5 { top: 18%; left: 65%; width: 8px; height: 18px; animation-delay: 1s; }
+            .fc-6 { top: 33%; left: 10%; width: 14px; height: 14px; animation-delay: 2.5s; }
             
             /* TOWER ARCHITECTURE */
             .monolith-spire {
                 flex: 1;
                 position: relative;
                 border-style: solid;
-                border-width: 1px 1px 0 1px;
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.02) 5%, rgba(255,255,255,0.1) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
+                border-width: 0 1px 0 1px; /* Top horizontal line removed */
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.02) 5%, rgba(255,255,255,0.15) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
                 background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.5) 70%, transparent 100%);
+                box-shadow: inset 0 50px 60px -30px var(--t-color); /* Permanent inner glow */
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
-                padding-bottom: 20px;
                 transition: filter 0.3s;
                 z-index: 10;
             }
-            .monolith-spire:hover {
-                filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color));
+            .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
+            
+            /* Capturing light ray from above */
+            .monolith-spire::before {
+                content: ''; position: absolute; top: 0; left: 20%; width: 60%; height: 70%;
+                background: linear-gradient(to bottom, var(--t-color) 0%, transparent 100%);
+                opacity: 0.3; mix-blend-mode: color-dodge; pointer-events: none;
             }
+
             .apex-icon {
                 position: absolute;
-                top: 10%; left: 50%; transform: translateX(-50%);
-                font-size: 2.2rem; color: #fff;
+                top: 5%; left: 50%; transform: translateX(-50%);
+                font-size: 4.4rem; /* Scaled up 100% */
+                color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
                 z-index: 10; pointer-events: none;
             }
@@ -1188,33 +1164,42 @@ function renderVoidPantheon() {
                 color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg);
                 letter-spacing: 4px; font-weight: bold; font-size: 0.85rem;
                 text-shadow: 0 0 15px var(--t-color); z-index: 10; pointer-events: none;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
             }
         </style>
     `;
 
     container.innerHTML = atmosStyles + `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative;">
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0 0 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative;">
             
             <div class="gas-tank">
-                <div class="fog-base"></div>
-                
                 <div class="aurora-ribbon aurora-1"></div>
                 <div class="aurora-ribbon aurora-2"></div>
                 <div class="aurora-ribbon aurora-3"></div>
+                <div class="aurora-ribbon aurora-4"></div>
+                <div class="aurora-ribbon aurora-5"></div>
+                <div class="aurora-ribbon aurora-6"></div>
                 
                 <div class="dark-gas dg-1"></div>
                 <div class="dark-gas dg-2"></div>
+                <div class="dark-gas dg-3"></div>
+                <div class="dark-gas dg-4"></div>
 
                 <div class="star-halo halo-1"></div>
                 <div class="star-halo halo-2"></div>
                 <div class="star-halo halo-3"></div>
+                <div class="star-halo halo-4"></div>
+                <div class="star-halo halo-5"></div>
+                <div class="star-halo halo-6"></div>
             </div>
 
-            <div class="sharp-stars-container">
-                <div class="tiny-star ts-1"></div>
-                <div class="tiny-star ts-2"></div>
-                <div class="tiny-star ts-3"></div>
+            <div class="dense-cores-container">
+                <div class="fog-core fc-1"></div>
+                <div class="fog-core fc-2"></div>
+                <div class="fog-core fc-3"></div>
+                <div class="fog-core fc-4"></div>
+                <div class="fog-core fc-5"></div>
+                <div class="fog-core fc-6"></div>
             </div>
 
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 20;" onclick="state.level = 7; render();">×</button>
@@ -1225,7 +1210,7 @@ function renderVoidPantheon() {
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
             </div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 40px; z-index: 10;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 0; z-index: 10;">
                 
                 <div onclick="renderAscensionTower(1)" class="monolith-spire" style="--t-color: #00d4ff;">
                     <div class="apex-icon">◬</div>
@@ -1246,6 +1231,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 
 
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
