@@ -1063,7 +1063,7 @@ function renderVoidPantheon() {
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
             <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
             
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px;">THE VOID PANTHEON</div>
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; cursor: pointer;" onclick="state.offerings += 5; save(); renderVoidPantheon();" title="[ DEV OVERRIDE: +5 OFFERINGS ]">THE VOID PANTHEON</div>
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6;">OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold;">${state.offerings}</span></div>
 
             <div class="terminal-console" style="width: 90%; border-color: #00d4ff; margin-bottom: 20px; background: rgba(0, 212, 255, 0.03);">
