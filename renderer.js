@@ -1060,18 +1060,17 @@ function renderVoidPantheon() {
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // Generate High-Density Starfield (375 Stars = 50% Higher Density)
+    // [ UPGRADED ] Power curve adjusted to 0.45, lifting ~15% more stars into the cloud layer
     let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
             
-            // Power curve clusters stars at the bottom, thinning out at the top
-            let verticalBias = Math.pow(Math.random(), 0.35); 
+            // Adjusted curve: 0.45 lets more stars escape the floor gravity
+            let verticalBias = Math.pow(Math.random(), 0.45); 
             let top = verticalBias * 100 + '%';
             
-            // Dynamic opacity: bright at the bottom, dim near the clouds
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             
             let dur = (Math.random() * 5 + 3) + 's';
@@ -1084,7 +1083,7 @@ function renderVoidPantheon() {
         fgStars += getStar(1.6); 
     }
 
-    // [ UPGRADED ] Perfectly balanced tower colors + Stardust filling the gaps
+    // [ UPGRADED ] Expanded height, nerfed Blue, swapped Yellow/Magenta, reinforced Silver buffers
     const atmosStyles = `
         <style>
             @keyframes fog-breathe {
@@ -1097,15 +1096,14 @@ function renderVoidPantheon() {
                 100% { transform: translateX(5%); }
             }
 
-            /* MULTI-LAYER STARFIELD CONTAINER */
             .pantheon-starfield-container {
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
                 pointer-events: none; overflow: hidden;
             }
 
-            /* LAYER 2: DEEP BACKGROUND CLOUDS (z-index: 1) */
+            /* LAYER 2: DEEP BACKGROUND CLOUDS (Expanded up) */
             .bg-stellar-nursery {
-                position: absolute; top: -10%; left: -10%; width: 120%; height: 100%;
+                position: absolute; top: -20%; left: -10%; width: 120%; height: 110%;
                 background: 
                     radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.6) 0%, transparent 70%),
                     radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.5) 0%, transparent 60%),
@@ -1115,24 +1113,24 @@ function renderVoidPantheon() {
                 animation: fog-breathe 31s infinite alternate ease-in-out;
             }
 
-            /* LAYER 4: THICK FOREGROUND CLOUDS (z-index: 15) */
+            /* LAYER 4: THICK FOREGROUND CLOUDS (Expanded up to -25%) */
             .fg-stellar-nursery {
                 position: absolute;
-                top: -15%; left: -10%; 
+                top: -25%; left: -10%; 
                 width: 120%; 
-                height: 105%; 
+                height: 115%; 
                 background: 
-                    /* 1. EQUAL WEIGHT TOWER CORES (Blue, Purple, Gold aligned to 17%, 50%, 83%) */
-                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.7) 0%, rgba(0,212,255,0.2) 35%, transparent 55%),
-                    radial-gradient(circle at 50% 35%, rgba(162,0,255,0.7) 0%, rgba(162,0,255,0.2) 35%, transparent 55%),
-                    radial-gradient(circle at 83% 35%, rgba(255,215,0,0.7) 0%, rgba(255,215,0,0.2) 35%, transparent 55%),
+                    /* 1. TOWER CORES (Blue reduced, Yellow Center, Magenta Right) */
+                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.6) 0%, rgba(0,212,255,0.15) 35%, transparent 55%),
+                    radial-gradient(circle at 50% 30%, rgba(255,215,0,0.85) 0%, rgba(255,215,0,0.3) 35%, transparent 60%),
+                    radial-gradient(circle at 83% 35%, rgba(255,0,255,0.8) 0%, rgba(255,0,255,0.25) 35%, transparent 55%),
                     
-                    /* 2. STARDUST BRIDGES (White/Silver filling the gaps perfectly between the colors) */
-                    radial-gradient(circle at 33% 40%, rgba(220,230,255,0.55) 0%, transparent 45%),
-                    radial-gradient(circle at 67% 40%, rgba(255,240,200,0.55) 0%, transparent 45%),
-                    radial-gradient(circle at 50% 45%, rgba(255,255,255,0.3) 0%, transparent 50%),
+                    /* 2. ENHANCED SILVER/WHITE BUFFERS (Stronger opacity between towers) */
+                    radial-gradient(circle at 33% 35%, rgba(255,255,255,0.65) 0%, transparent 50%),
+                    radial-gradient(circle at 67% 35%, rgba(255,255,255,0.65) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 40%, rgba(255,255,255,0.4) 0%, transparent 60%),
                     
-                    /* 3. PITCH BLACK OCCLUSION CLOUDS (For stormy, volumetric depth) */
+                    /* 3. PITCH BLACK OCCLUSION CLOUDS */
                     radial-gradient(circle at 33% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
                     radial-gradient(circle at 67% 35%, rgba(0,0,0,0.85) 0%, transparent 40%),
                     radial-gradient(circle at 50% 15%, rgba(0,0,0,0.9) 0%, transparent 50%);
@@ -1141,11 +1139,10 @@ function renderVoidPantheon() {
                 z-index: 15;
                 pointer-events: none;
                 animation: slow-drift 46s infinite alternate ease-in-out;
-                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
-                mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
+                -webkit-mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 85%);
+                mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 85%);
             }
 
-            /* STRUCTURAL DECOUPLING: THE WRAPPER */
             .tower-wrapper {
                 flex: 1;
                 position: relative;
@@ -1156,7 +1153,6 @@ function renderVoidPantheon() {
                 align-items: center;
             }
 
-            /* LAYER 3: TOWER HULL (z-index: 5, stays behind mid-stars and foreground clouds) */
             .monolith-spire {
                 position: absolute;
                 bottom: 0; left: 0; 
@@ -1176,7 +1172,6 @@ function renderVoidPantheon() {
                 filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
             }
 
-            /* LAYER 5: TOWER CONTENT (z-index: 20, completely above clouds) */
             .tower-content {
                 position: relative;
                 z-index: 20; 
@@ -1223,7 +1218,7 @@ function renderVoidPantheon() {
                     </div>
                 </div>
                 
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #a200ff;">
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;">
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">THE ABYSSAL SYNDICATE</div>
@@ -1231,7 +1226,7 @@ function renderVoidPantheon() {
                     </div>
                 </div>
                 
-                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ffd700;">
+                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;">
                     <div class="monolith-spire"></div>
                     <div class="tower-content">
                         <div class="spire-text">CELESTIAL VANGUARD</div>
@@ -1259,6 +1254,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 // [ UPGRADED ] The Void Pantheon Lore Dictionary
 const PANTHEON_DATA = {
     1: { 
