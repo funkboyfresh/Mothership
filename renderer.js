@@ -1060,7 +1060,7 @@ function renderOuterworlds(container) {
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
     
-    // [ GRAND OVERHAUL ] Stable Gas Clouds & High-Fidelity Solid Monolith Architecture (Based on Image Reference)
+    // [ UPGRADED ] Seamless Ceiling Fog, Wispy Decay, and Solid Color-to-Black Monoliths
     const atmosStyles = `
         <style>
             @keyframes asymmetric-warp {
@@ -1076,22 +1076,26 @@ function renderVoidPantheon() {
                 100% { opacity: 0.6; transform: scale(1); }
             }
 
+            /* 1. DENSE FOG LAYER (Anchored to top:0 to hit the HUD line, with a wispy mask decay) */
             .dense-fog-layer {
                 position: absolute;
-                top: -10%; left: -10%; width: 120%; height: 75%;
+                top: 0; left: -10%; width: 120%; height: 100%;
                 background: 
-                    radial-gradient(ellipse at 20% 30%, rgba(0,212,255,0.4) 0%, transparent 50%),
-                    radial-gradient(ellipse at 50% 20%, rgba(162,0,255,0.5) 0%, transparent 60%),
-                    radial-gradient(ellipse at 80% 30%, rgba(255,215,0,0.4) 0%, transparent 50%),
-                    radial-gradient(circle at 35% 45%, rgba(0,212,255,0.3) 0%, transparent 40%),
-                    radial-gradient(circle at 65% 45%, rgba(255,215,0,0.3) 0%, transparent 40%);
+                    radial-gradient(ellipse 80% 40% at 20% 10%, rgba(0,212,255,0.45) 0%, transparent 60%),
+                    radial-gradient(ellipse 100% 50% at 50% 5%, rgba(162,0,255,0.55) 0%, transparent 60%),
+                    radial-gradient(ellipse 80% 40% at 80% 10%, rgba(255,215,0,0.45) 0%, transparent 60%),
+                    radial-gradient(ellipse 120% 30% at 50% 20%, rgba(162,0,255,0.3) 0%, transparent 50%);
                 filter: blur(25px); 
                 animation: fog-breathe 15s infinite alternate ease-in-out;
                 mix-blend-mode: screen;
                 pointer-events: none;
                 z-index: 0;
+                /* This mask creates the "wispy" thinning out effect as the gas descends */
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0) 55%);
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0) 55%);
             }
 
+            /* 2. THE ASYMMETRIC LIGHT CLOUDS */
             .fog-light-pocket {
                 position: absolute;
                 width: 8%; height: 8%; 
@@ -1104,22 +1108,20 @@ function renderVoidPantheon() {
                 pointer-events: none;
             }
 
-            /* [ ARCHITECTURAL OVERHAUL ] TOWER GEOMETRY to match image_0.png */
+            /* [ TOWER GEOMETRY ] Solid bodies, gradient glow from top to pitch black */
             .monolith-spire {
                 flex: 1;
                 position: relative;
                 border-style: solid;
-                border-width: 0 1px 0 1px; /* Removed top border, kept sides */
-                /* High-fidelity glowing edge border */
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 5%, rgba(255,255,255,0.4) 30%, var(--t-color) 80%, var(--t-color) 100%) 1;
+                border-width: 0 1px 0 1px; 
+                /* Glowing edge at the top, fading to black at the floor */
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
                 
-                /* [ FIXED ] NEW SOLID BODY FILL (Replaces stripe/black background)
-                   Fades transparent at top to blend into nebula, grounding to solid color at floor (matches image_0.png) */
-                background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.05) 15%, var(--t-color) 80%, var(--t-color) 100%);
-                mix-blend-mode: hard-light; /* Makes body color pop against background clouds */
-
-                /* Outer Glow from Image */
-                box-shadow: 0 0 20px -5px var(--t-color);
+                /* [ FIXED ] Solid Color at top fading smoothly to absolute Black at bottom */
+                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
+                mix-blend-mode: normal; /* Restored normal blend so the black body blocks out the background */
+                
+                box-shadow: 0 0 25px -5px var(--t-color); /* Outer ambient glow */
                 
                 cursor: pointer;
                 display: flex;
@@ -1132,12 +1134,10 @@ function renderVoidPantheon() {
             }
             .monolith-spire:hover { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
 
-            /* [ STRIPE DELETED ] ::before pseudo-element has been erased to kill the weird center stripe artifact */
-
             .apex-icon {
                 position: absolute;
                 top: 5%; left: 50%; transform: translateX(-50%);
-                font-size: 4.4rem; /* Scaled up 100% */
+                font-size: 4.4rem; 
                 color: #fff;
                 text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
                 z-index: 10; pointer-events: none;
@@ -1151,20 +1151,20 @@ function renderVoidPantheon() {
     `;
 
     container.innerHTML = atmosStyles + `
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0 0 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
             <div class="dense-fog-layer"></div>
             
-            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 15%; left: 15%; animation-delay: 0s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 25%; left: 45%; animation-delay: -2s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 10%; left: 75%; animation-delay: -4s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 35%; left: 25%; animation-delay: -6s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 15%; left: 55%; animation-delay: -3s;"></div>
-            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 30%; left: 85%; animation-delay: -7s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.8); top: 5%; left: 15%; animation-delay: 0s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.8); top: 15%; left: 45%; animation-delay: -2s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.8); top: 2%; left: 75%; animation-delay: -4s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(0,212,255,0.6); top: 20%; left: 25%; animation-delay: -6s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(162,0,255,0.6); top: 5%; left: 55%; animation-delay: -3s;"></div>
+            <div class="fog-light-pocket" style="--l-color: rgba(255,215,0,0.6); top: 20%; left: 85%; animation-delay: -7s;"></div>
 
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 20;" onclick="state.level = 7; render();">×</button>
 
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px; z-index: 20;">THE VOID PANTHEON</div>
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; margin-bottom: 5px; margin-top: 20px; z-index: 20;">THE VOID PANTHEON</div>
             <div style="color: #fff; font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 20;">
                 OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
