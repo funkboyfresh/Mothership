@@ -24,13 +24,11 @@ let state = {
         magnet: 1, reactor: 1, habitat: 1, hull: 1, shields: 1,
         comms: 1, thrusters: 1, sinks: 1, sensors: 1, cells: 1
     },
-// state.js
-    pantheon: JSON.parse(localStorage.getItem('pantheon')) || {
-        // Tracks 0-30 progress for each
+
+   pantheon: JSON.parse(localStorage.getItem('pantheon')) || {
         kaelenTor: 0, aethelgard: 0, valerium: 0,
         syraxis: 0, ignisKor: 0, morvath: 0,
         ragnarath: 0, luminara: 0, xerxes: 0,
-        // Tracks Sector 3 choice (0: none, 1: Alpha, 2: Omega)
         choices: {
             kaelenTor: 0, aethelgard: 0, valerium: 0,
             syraxis: 0, ignisKor: 0, morvath: 0,
