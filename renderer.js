@@ -1063,8 +1063,12 @@ function renderVoidPantheon() {
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 20px 0; background: radial-gradient(circle at center, #0a0015 0%, #000 100%); overflow-y: auto;">
             <button class="subtask-remove-minimal" style="position: fixed; top: 10px; right: 20px; font-size: 2rem; color: #a200ff; z-index: 100;" onclick="state.level = 7; render();">×</button>
             
-            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px; cursor: pointer;" onclick="state.offerings += 5; save(); renderVoidPantheon();" title="[ DEV OVERRIDE: +5 OFFERINGS ]">THE VOID PANTHEON</div>
-            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6;">OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold;">${state.offerings}</span></div>
+            <div class="view-level-title" style="color: #a200ff; letter-spacing: 5px;">THE VOID PANTHEON</div>
+            
+            <div style="color: #fff; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                OFFERINGS REMAINING: <span style="color: #a200ff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(162, 0, 255, 0.2); border: 1px solid #a200ff; color: #a200ff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
+            </div>
 
             <div class="terminal-console" style="width: 90%; border-color: #00d4ff; margin-bottom: 20px; background: rgba(0, 212, 255, 0.03);">
                 <div style="color: #00d4ff; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION I: THE GENESIS SPHERE ]</div>
@@ -1075,7 +1079,25 @@ function renderVoidPantheon() {
                 </div>
             </div>
 
-            <p style="font-size: 0.6rem; opacity: 0.4; width: 80%; text-align: center;">Spend 5 Offerings on a Deity to unlock their Major Keystone. Unlock all 3 in a Sphere to trigger Ascension.</p>
+            <div class="terminal-console" style="width: 90%; border-color: #a200ff; margin-bottom: 20px; background: rgba(162, 0, 255, 0.03);">
+                <div style="color: #a200ff; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION II: THE ABYSSAL SYNDICATE ]</div>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    ${renderDeityNode('Syraxis', 'The Shadow-Walker', 'syraxis', '#a200ff')}
+                    ${renderDeityNode('Ignis-Kor', 'The Reality Shaper', 'ignisKor', '#a200ff')}
+                    ${renderDeityNode('Morvath', 'The Void Hunter', 'morvath', '#a200ff')}
+                </div>
+            </div>
+
+            <div class="terminal-console" style="width: 90%; border-color: #ffd700; margin-bottom: 20px; background: rgba(255, 215, 0, 0.03);">
+                <div style="color: #ffd700; font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">[ ASCENSION III: THE CELESTIAL VANGUARD ]</div>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    ${renderDeityNode('Ragnarath', 'The Dread-Caller', 'ragnarath', '#ffd700')}
+                    ${renderDeityNode('Luminara', 'The Cosmic Veil', 'luminara', '#ffd700')}
+                    ${renderDeityNode('Xerxes', 'The Harvester of Suns', 'xerxes', '#ffd700')}
+                </div>
+            </div>
+
+            <p style="font-size: 0.6rem; opacity: 0.4; width: 80%; text-align: center; margin-bottom: 40px;">Spend 5 Offerings on a Deity to unlock their Major Keystone. Unlock all 3 in a Sphere to trigger Ascension.</p>
         </div>
     `;
 }
