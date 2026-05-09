@@ -252,17 +252,26 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
                     const isLit = nodesLit > i;
                     const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
+                    
+                    // [ ADDED ] Detects if this is the 6th coordinate in the array
+                    const isKeystone = i === coordsArray.length - 1; 
+                    
                     const nodeColor = isLit ? tower.color : '#444';
                     const bg = isLit ? tower.color : '#000';
-                    const shadow = isLit || isNext ? `box-shadow: 0 0 15px ${tower.color};` : '';
                     const cursor = isNext || isLit ? 'pointer' : 'not-allowed';
                     
-                    return `
+                    // [ ADDED ] Dynamic styling based on whether it's a normal star or the Keystone
+                    const size = isKeystone ? 28 : 18;
+                    const shadow = isLit || isNext ? \`box-shadow: 0 0 \${isKeystone ? '25px' : '15px'} \${tower.color};\` : '';
+                    const iconHtml = isKeystone ? \`<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: \${isLit ? '#000' : nodeColor};">\${deity.icon}</div>\` : '';
+                    
+                    return \`
                     <div class="star-node" 
-                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: 2px solid ${nodeColor}; background: ${bg}; width: 18px; height: 18px; border-radius: 50%; pointer-events: auto; cursor: ${cursor}; ${shadow} z-index: 10;"
-                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
+                         style="position: absolute; left: \${c.x}%; top: \${c.y}%; transform: translate(-50%, -50%); border: 2px solid \${nodeColor}; background: \${bg}; width: \${size}px; height: \${size}px; border-radius: 50%; pointer-events: auto; cursor: \${cursor}; \${shadow} z-index: \${isKeystone ? 15 : 10}; transition: all 0.3s ease;"
+                         onclick="openOfferingModal('\${deityKey}', \${towerId}, \${i+1}, \${isNext})">
+                         \${iconHtml}
                     </div>
-                    `;
+                    \`;
                 }).join('')).join('')}
             </div>
             
