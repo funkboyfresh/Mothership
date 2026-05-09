@@ -253,25 +253,26 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                     const isLit = nodesLit > i;
                     const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
                     
-                    // [ ADDED ] Detects if this is the 6th coordinate in the array
+                    // Detects if this is the 6th coordinate (Keystone) in the array
                     const isKeystone = i === coordsArray.length - 1; 
                     
                     const nodeColor = isLit ? tower.color : '#444';
                     const bg = isLit ? tower.color : '#000';
                     const cursor = isNext || isLit ? 'pointer' : 'not-allowed';
                     
-                    // [ ADDED ] Dynamic styling based on whether it's a normal star or the Keystone
+                    // Dynamic styling built with safe string concatenation to avoid syntax crashes
                     const size = isKeystone ? 28 : 18;
-                    const shadow = isLit || isNext ? \`box-shadow: 0 0 \${isKeystone ? '25px' : '15px'} \${tower.color};\` : '';
-                    const iconHtml = isKeystone ? \`<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: \${isLit ? '#000' : nodeColor};">\${deity.icon}</div>\` : '';
+                    const shadowStr = isLit || isNext ? "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";" : "";
+                    const iconColor = isLit ? '#000' : nodeColor;
+                    const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
                     
-                    return \`
+                    return `
                     <div class="star-node" 
-                         style="position: absolute; left: \${c.x}%; top: \${c.y}%; transform: translate(-50%, -50%); border: 2px solid \${nodeColor}; background: \${bg}; width: \${size}px; height: \${size}px; border-radius: 50%; pointer-events: auto; cursor: \${cursor}; \${shadow} z-index: \${isKeystone ? 15 : 10}; transition: all 0.3s ease;"
-                         onclick="openOfferingModal('\${deityKey}', \${towerId}, \${i+1}, \${isNext})">
-                         \${iconHtml}
+                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: 2px solid ${nodeColor}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; pointer-events: auto; cursor: ${cursor}; ${shadowStr} z-index: ${isKeystone ? 15 : 10}; transition: all 0.3s ease;"
+                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
+                         ${iconHtml}
                     </div>
-                    \`;
+                    `;
                 }).join('')).join('')}
             </div>
             
