@@ -234,10 +234,11 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
+    // Match the Pantheon symbols
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
 
-    // [ FIXED ] Corrected variable spelling and applied 15% reduction for Genesis icon
+    // Zenith scaling for the faction icon (15% reduction for Genesis)
     const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
 
     let html = `
@@ -276,7 +277,6 @@ function renderAscensionTower(towerId) {
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
-            /* [ FIXED ] Lowered to 32vh to reflect the total 10% descent */
             .tower-content-top {
                 position: relative;
                 z-index: 25; 
@@ -285,6 +285,33 @@ function renderAscensionTower(towerId) {
                 flex-direction: column;
                 align-items: center;
                 pointer-events: none;
+            }
+            /* [ NEW ] Bottom Aligned Readouts */
+            .tower-content-bottom {
+                position: absolute;
+                bottom: 65px; /* Sits just above the 20px footer */
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                pointer-events: none;
+                z-index: 25;
+            }
+            .spire-name-label {
+                color: ${data.color};
+                font-weight: bold;
+                letter-spacing: 2px;
+                font-size: 0.7rem;
+                text-shadow: 0 0 10px ${data.color};
+                margin-bottom: 4px;
+                text-align: center;
+            }
+            .spire-lvl-label {
+                color: #fff;
+                font-size: 0.6rem;
+                opacity: 0.6;
+                font-family: monospace;
+                letter-spacing: 1px;
             }
             .keystone-icon {
                 color: #fff;
@@ -313,16 +340,16 @@ function renderAscensionTower(towerId) {
                     return `
                         <div class="tower-wrapper" onclick="openConstellation('${d.k}', ${towerId}, ${currentSector})" style="--t-color: ${data.color};">
                             <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
+                            
                             <div class="tower-content-top">
                                 <div style="height: 100px; display: flex; align-items: center; justify-content: center;">
                                     <div class="keystone-icon">${d.icon}</div>
                                 </div>
-                                <div class="spire-text" style="height: auto; margin-top: 20px; writing-mode: vertical-rl; transform: rotate(180deg); color: ${data.color}; font-weight: bold; letter-spacing: 4px;">
-                                    ${d.n.toUpperCase()}
-                                </div>
-                                <div style="color: #fff; font-size: 0.6rem; margin-top: 10px; opacity: 0.6; font-family: monospace;">
-                                    LVL ${progress}
-                                </div>
+                            </div>
+
+                            <div class="tower-content-bottom">
+                                <div class="spire-name-label">${d.n.toUpperCase()}</div>
+                                <div class="spire-lvl-label">LVL ${progress}</div>
                             </div>
                         </div>
                     `;
