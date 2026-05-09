@@ -234,22 +234,22 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // Faction-specific icons for the Zenith position
+    // Match the Pantheon symbols
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
 
-    // Copying the high-fidelity atmosphere from renderVoidPantheon
     let html = `
         <style>
+            /* [ UPGRADED ] Radiance increased; multi-layered shadow for thicker glow */
             .zenith-apex-tower {
                 position: absolute;
-                top: 23%; left: 50%;
-                transform: translate(-50%, -50%); 
+                top: 26%; left: 50%;
+                transform: translate(-50%, -125%); 
                 font-size: 8rem;
                 color: #000; 
                 z-index: 16; 
                 pointer-events: none;
-                text-shadow: 0 0 30px ${data.color}33;
+                text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44;
             }
             .tower-wrapper {
                 flex: 1;
@@ -257,7 +257,7 @@ function renderAscensionTower(towerId) {
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-start; /* Moved content to top */
+                justify-content: flex-start;
                 align-items: center;
                 z-index: 20;
             }
@@ -278,7 +278,7 @@ function renderAscensionTower(towerId) {
             .tower-content-top {
                 position: relative;
                 z-index: 25; 
-                margin-top: 20vh; /* Positioned at the top of the spire area */
+                margin-top: 22vh; 
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -306,14 +306,15 @@ function renderAscensionTower(towerId) {
                 ${data.deities.map(d => {
                     const progress = state.pantheon[d.k];
                     const currentSector = Math.floor(progress / 6);
-                    // Spire height grows based on total progression (0-30)
                     const spireHeight = 60 + (progress / 30) * 22; 
 
                     return `
                         <div class="tower-wrapper" onclick="openConstellation('${d.k}', ${towerId}, ${currentSector})" style="--t-color: ${data.color};">
                             <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
                             <div class="tower-content-top">
-                                <div class="keystone-icon">${d.icon}</div>
+                                <div style="height: 100px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="keystone-icon">${d.icon}</div>
+                                </div>
                                 <div class="spire-text" style="height: auto; margin-top: 20px; writing-mode: vertical-rl; transform: rotate(180deg); color: ${data.color}; font-weight: bold; letter-spacing: 4px;">
                                     ${d.n.toUpperCase()}
                                 </div>
@@ -335,6 +336,7 @@ function renderAscensionTower(towerId) {
 
     container.innerHTML = html;
 }
+
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
