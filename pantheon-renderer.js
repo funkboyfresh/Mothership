@@ -12,7 +12,7 @@ function renderVoidPantheon() {
     if(navBar) navBar.style.display = 'none';
 
     // Gravity-Weighted Starfield
-   let bgStars = '', midStars = '', fgStars = '';
+    let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
@@ -22,11 +22,11 @@ function renderVoidPantheon() {
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             let dur = (Math.random() * 5 + 3) + 's';
             
-            // [ FIXED ] A NEGATIVE delay forces the animation to start immediately, 
-            // but at a random phase in its cycle so they don't all twinkle at once!
+            // Negative delay prevents the initial mass-vanishing
             let del = '-' + (Math.random() * 10) + 's'; 
             
-            return `<div class="void-particle" style="position: absolute; background: #fff; border-radius: 50%; width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation: pantheon-twinkle ${dur} infinite alternate ease-in-out ${del};"></div>`;
+            // [ RESTORED ] Uses your native void-particle movement, but forces it to loop infinitely
+            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del}; animation-iteration-count: infinite;"></div>`;
         };
         bgStars += getStar(0.7); 
         midStars += getStar(1.1); 
@@ -35,134 +35,22 @@ function renderVoidPantheon() {
 
     const atmosStyles = `
         <style>
-          @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
+            @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
             @keyframes slow-drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
             
-            /* [ FIXED ] Raised minimum opacity to 0.3 so they never truly vanish */
-            @keyframes pantheon-twinkle { 
-                0% { transform: scale(0.8); opacity: 0.3; } 
-                100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 5px #fff; } 
-            }
+            /* (Removed the heavy pantheon-twinkle box-shadow to restore 60 FPS) */
 
-            .pantheon-starfield-container {
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                pointer-events: none; overflow: hidden;
-            }
-
-            .bg-stellar-nursery {
-                position: absolute; top: -20%; left: -10%; width: 120%; height: 110%;
-                background: 
-                    radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%),
-                    radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%),
-                    radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%);
-                filter: blur(30px);
-                z-index: 1;
-                animation: fog-breathe 23s infinite alternate ease-in-out;
-            }
-
-            .fg-stellar-nursery {
-                position: absolute;
-                top: -25%; left: -10%; 
-                width: 120%; 
-                height: 115%; 
-                opacity: 0.9; 
-                background: 
-                    radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%),
-                    radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%),
-                    radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%),
-                    radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
-                    radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%),
-                    radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
-                    radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%),
-                    radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%);
-                filter: blur(30px); 
-                mix-blend-mode: hard-light; 
-                z-index: 15;
-                pointer-events: none;
-                animation: slow-drift 34s infinite alternate ease-in-out;
-                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
-                mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%);
-            }
-
-            .zenith-apex-void {
-                position: absolute;
-                top: 26%; 
-                left: 50%;
-                transform: translate(-50%, -125%); 
-                font-size: 8rem;
-                color: #000; 
-                z-index: 16; 
-                pointer-events: none;
-                text-shadow: 0 0 30px rgba(255,255,255,0.1);
-            }
-
-            .tower-wrapper {
-                flex: 1;
-                position: relative;
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                align-items: center;
-            }
-
-            .monolith-spire {
-                position: absolute;
-                bottom: -5vh; left: 0; 
-                width: 100%; 
-                height: calc(82% + 5vh); 
-                border-style: solid;
-                border-width: 0 1px 0 1px; 
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
-                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
-                box-shadow: 0 0 25px -5px var(--t-color); 
-                transition: filter 0.3s;
-                z-index: 5; 
-                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
-                mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
-            }
-            .tower-wrapper:hover .monolith-spire { 
-                filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); 
-            }
-
-            .tower-content {
-                position: relative;
-                z-index: 20; 
-                padding-bottom: 10px; 
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                pointer-events: none;
-                transform: translateY(5vh);
-            }
-
-            .spire-text {
-                height: 380px; 
-                display: flex;
-                align-items: flex-end;
-                color: var(--t-color); 
-                writing-mode: vertical-rl; 
-                transform: rotate(180deg);
-                letter-spacing: 4px; 
-                font-weight: bold; 
-                font-size: 1.1rem; 
-                text-shadow: 0 0 15px var(--t-color);
-                white-space: nowrap; 
-            }
-
-            .tower-icon-wrapper {
-                height: 80px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-top: 15px;
-            }
-
-            .tower-icon {
-                color: #fff;
-                text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
-            }
+            .pantheon-starfield-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+            .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; }
+            .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); }
+            .zenith-apex-void { position: absolute; top: 26%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
+            .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+            .monolith-spire { position: absolute; bottom: -5vh; left: 0; width: 100%; height: calc(82% + 5vh); border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
+            .tower-wrapper:hover .monolith-spire { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
+            .tower-content { position: relative; z-index: 20; padding-bottom: 10px; display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5vh); }
+            .spire-text { height: 380px; display: flex; align-items: flex-end; color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 15px var(--t-color); white-space: nowrap; }
+            .tower-icon-wrapper { height: 80px; display: flex; align-items: center; justify-content: center; margin-top: 15px; }
+            .tower-icon { color: #fff; text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color); }
         </style>
     `;
 
