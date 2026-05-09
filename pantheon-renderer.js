@@ -289,7 +289,7 @@ function renderAscensionTower(towerId) {
             /* [ RECALIBRATED ] Dropped text down to sit tight against the offerings footer */
             .tower-content-bottom {
                 position: absolute;
-                bottom: 24px; 
+                bottom: 15px; 
                 width: 100%;
                 display: flex;
                 flex-direction: column;
