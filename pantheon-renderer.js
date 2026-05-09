@@ -23,7 +23,9 @@ function renderVoidPantheon() {
             let dur = (Math.random() * 5 + 3) + 's';
             let del = (Math.random() * 5) + 's';
             
-            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del};"></div>`;
+            // [ FIXED ] Added inline 'infinite alternate' to force a continuous loop, 
+            // and forced absolute positioning and white backgrounds just in case!
+            return `<div class="void-particle" style="position: absolute; background: #fff; border-radius: 50%; width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation: pantheon-twinkle ${dur} infinite alternate ease-in-out ${del};"></div>`;
         };
         bgStars += getStar(0.7); 
         midStars += getStar(1.1); 
@@ -40,6 +42,11 @@ function renderVoidPantheon() {
             @keyframes slow-drift {
                 0% { transform: translateX(-5%); }
                 100% { transform: translateX(5%); }
+            }
+
+            @keyframes pantheon-twinkle {
+                0% { transform: scale(0.8); opacity: 0.1; }
+                100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 5px #fff; }
             }
 
             .pantheon-starfield-container {
