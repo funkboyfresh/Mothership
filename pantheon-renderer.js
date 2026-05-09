@@ -81,51 +81,132 @@ function renderVoidPantheon() {
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
+    
+    // Faction icons for the Zenith Apex
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
     const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
 
     let html = `
         <style>
-            .zenith-apex-tower { position: absolute; top: 31%; left: 50%; transform: translate(-50%, -125%); font-size: ${zenithSize}; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44; }
-            .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 20; }
-            .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
-            .tower-content-top { position: relative; z-index: 25; margin-top: 32vh; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-            
-            /* --- TEXT POSITIONING --- */
-            .tower-content-bottom {
+            .zenith-apex-tower {
                 position: absolute;
-                bottom: 24px; /* INCREASE to move UP, DECREASE to move DOWN */
-                width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 25;
+                top: 28%; left: 50%;
+                transform: translate(-50%, -125%); 
+                font-size: ${zenithSize}; 
+                color: #000; 
+                z-index: 16; 
+                pointer-events: none;
+                text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44;
             }
-            .spire-name-label { color: ${data.color}; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-shadow: 0 0 10px ${data.color}; margin-bottom: 2px; text-align: center; }
-            .spire-lvl-label { color: #fff; font-size: 0.6rem; opacity: 0.5; font-family: monospace; letter-spacing: 1px; }
-            .keystone-icon { color: #fff; font-size: 3.5rem; text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color); transition: transform 0.3s ease; }
-            .tower-wrapper:hover .keystone-icon { transform: scale(1.1) translateY(-5px); }
+            .tower-wrapper {
+                flex: 1;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                z-index: 20;
+                /* Pushes the content down below the Zenith icon */
+                padding-top: 30vh; 
+            }
+            .monolith-spire-internal {
+                position: absolute;
+                bottom: -20vh; left: 0; 
+                width: 100%; 
+                border-style: solid;
+                border-width: 0 1px 0 1px; 
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
+                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
+                box-shadow: 0 0 25px -5px var(--t-color); 
+                transition: height 0.5s ease, filter 0.3s;
+                z-index: 5; 
+                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+                mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+            }
+            .keystone-icon {
+                font-size: 3.5rem;
+                transition: all 0.5s ease;
+            }
+            .minor-keystone-node {
+                width: 14px; 
+                height: 14px; 
+                border-radius: 50%; 
+                z-index: 25; 
+                cursor: pointer; 
+                transition: all 0.3s ease;
+            }
+            .minor-keystone-node:hover {
+                transform: scale(1.3);
+            }
         </style>
 
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+            
             <button class="subtask-remove-minimal" style="position: absolute; top: 15px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100; cursor: pointer;" onclick="renderVoidPantheon()">×</button>
+
             <div class="zenith-apex-tower">${factionIcon}</div>
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
+
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
+                
                 ${data.deities.map(d => {
                     const progress = state.pantheon[d.k];
                     const currentSector = Math.floor(progress / 6);
                     const spireHeight = 60 + (progress / 30) * 22; 
+                    const isMaxed = progress >= 30;
+
                     return `
-                        <div class="tower-wrapper" onclick="openConstellation('${d.k}', ${towerId}, ${currentSector})" style="--t-color: ${data.color};">
+                        <div class="tower-wrapper" style="--t-color: ${data.color};">
                             <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
-                            <div class="tower-content-top"><div style="height: 100px; display: flex; align-items: center; justify-content: center;"><div class="keystone-icon">${d.icon}</div></div></div>
-                            <div class="tower-content-bottom"><div class="spire-name-label">${d.n.toUpperCase()}</div><div class="spire-lvl-label">LVL ${progress}</div></div>
+                            
+                            <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
+                                
+                                <div style="text-align: center; margin-bottom: 10px;">
+                                    <div class="keystone-icon" style="color: ${isMaxed ? data.color : '#fff'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : '0 0 10px #fff'};">${d.icon}</div>
+                                </div>
+
+                                <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
+                                    
+                                    <div style="position: absolute; width: 2px; height: 100%; background: #333; z-index: 1;"></div>
+                                    
+                                    <div style="position: absolute; bottom: 0; width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
+                                    
+                                    ${[0, 1, 2, 3, 4].map(i => {
+                                        const isCompleted = progress >= (i + 1) * 6;
+                                        const isActive = currentSector === i;
+                                        const nodeColor = isCompleted || isActive ? data.color : '#444';
+                                        const bg = isCompleted ? data.color : '#000';
+                                        const glow = isCompleted || isActive ? `box-shadow: 0 0 15px ${data.color};` : '';
+                                        
+                                        return `
+                                            <div class="minor-keystone-node" 
+                                                 onclick="openConstellation('${d.k}', ${towerId}, ${i})"
+                                                 style="border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+
+                                <div style="text-align: center; margin-top: 15px; margin-bottom: 50px;">
+                                    <div style="color: ${data.color}; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-shadow: 0 0 10px ${data.color}; margin-bottom: 4px;">
+                                        ${d.n.toUpperCase()}
+                                    </div>
+                                    <div style="color: #fff; font-size: 0.6rem; opacity: 0.5; font-family: monospace; letter-spacing: 1px;">
+                                        LVL ${progress}
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
                     `;
                 }).join('')}
+
             </div>
-            <div style="position: absolute; bottom: 10px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+
+            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
         </div>
     `;
+
     container.innerHTML = html;
 }
 
