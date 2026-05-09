@@ -342,6 +342,7 @@ function renderAscensionTower(towerId) {
 }
 
 
+
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
