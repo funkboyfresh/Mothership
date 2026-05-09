@@ -23,8 +23,6 @@ function renderVoidPantheon() {
             let dur = (Math.random() * 5 + 3) + 's';
             let del = (Math.random() * 5) + 's';
             
-            // [ FIXED ] Added inline 'infinite alternate' to force a continuous loop, 
-            // and forced absolute positioning and white backgrounds just in case!
             return `<div class="void-particle" style="position: absolute; background: #fff; border-radius: 50%; width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation: pantheon-twinkle ${dur} infinite alternate ease-in-out ${del};"></div>`;
         };
         bgStars += getStar(0.7); 
@@ -43,7 +41,6 @@ function renderVoidPantheon() {
                 0% { transform: translateX(-5%); }
                 100% { transform: translateX(5%); }
             }
-
             @keyframes pantheon-twinkle {
                 0% { transform: scale(0.8); opacity: 0.1; }
                 100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 5px #fff; }
@@ -258,7 +255,6 @@ function renderAscensionTower(towerId) {
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
                 
                 ${data.deities.map(d => {
-                    // [ FIXED ] Ensure new deities default to 0 to prevent NaN crashes
                     const progress = state.pantheon[d.k] || 0; 
                     const currentSector = Math.floor(progress / 6);
                     const spireHeight = 60 + (progress / 30) * 22; 
@@ -268,6 +264,7 @@ function renderAscensionTower(towerId) {
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
                             <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
+                                
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
                                          onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', ${progress === 30})" 
@@ -319,7 +316,7 @@ function renderAscensionTower(towerId) {
 }
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
-    const totalLevel = state.pantheon[deityKey] || 0; // [ FIXED ]
+    const totalLevel = state.pantheon[deityKey] || 0; 
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
     const sector = deity.sectors[Math.floor(totalLevel / 6)] || deity.sectors[4];
@@ -335,7 +332,7 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     if (isMajor) {
         cost = 50; typeText = "MAJOR KEYSTONE"; buffName = deity.major.n; buffDesc = deity.major.desc;
     } else if (isKeystone) {
-        cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk; // Will grab thermal expansion name for branch
+        cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk;
     }
 
     let actionsHtml = '';
@@ -364,31 +361,13 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     document.body.appendChild(modal);
 }
 
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay warp-transition';
-    modal.style.display = 'flex';
-    modal.innerHTML = `
-        <div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;">
-            <div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${typeText}</div>
-            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem;">${buffName.toUpperCase()}</h2>
-            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
-                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
-            </div>
-            ${actionsHtml}
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// --- CONSTELLATION MAP VISUALS ---
-
 function openConstellation(deityKey, towerId, sectorIndex) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
     const sector = deity.sectors[sectorIndex];
-    const totalLevel = state.pantheon[deityKey] || 0; // [ FIXED ]
+    const totalLevel = state.pantheon[deityKey] || 0; 
     
     let nodesLit = 0;
     if (totalLevel >= (sectorIndex + 1) * 6) nodesLit = 6; 
@@ -399,7 +378,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         completionHtml = `<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ${tower.color}; color: #000; font-weight: bold;" onclick="openOfferingModal('${deityKey}', ${towerId}, 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>`;
     }
 
-    // [ FIXED ] Branching Path Detector
     const pathsToRender = sector.isBranch ? [sector.paths[0].coords, sector.paths[1].coords] : [sector.coords];
 
     const modal = document.createElement('div');
@@ -441,7 +419,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     renderSectorConstellation(svg, pathsToRender, tower.color, nodesLit);
 }
 
-// [ FIXED ] Upgraded logic to handle drawing multiple paths at once
 function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
     if (!svg || !pathsToRender) return;
     svg.innerHTML = ''; 
@@ -472,34 +449,5 @@ function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
                 }
             }
         });
-    });
-}
-function renderSectorConstellation(svg, coords, color, nodesLit) {
-    if (!svg || !coords) return;
-    svg.innerHTML = ''; 
-    coords.forEach((coord, i) => {
-        if (i < coords.length - 1) {
-            const next = coords[i + 1];
-            const baseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            baseLine.setAttribute("x1", `${coord.x}%`); 
-            baseLine.setAttribute("y1", `${coord.y}%`); 
-            baseLine.setAttribute("x2", `${next.x}%`); 
-            baseLine.setAttribute("y2", `${next.y}%`); 
-            baseLine.setAttribute("stroke", "#333"); 
-            baseLine.setAttribute("stroke-width", "2");
-            svg.appendChild(baseLine);
-
-            if (nodesLit > i + 1) {
-                const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                activeLine.setAttribute("x1", `${coord.x}%`); 
-                activeLine.setAttribute("y1", `${coord.y}%`); 
-                activeLine.setAttribute("x2", `${next.x}%`); 
-                activeLine.setAttribute("y2", `${next.y}%`); 
-                activeLine.setAttribute("stroke", color); 
-                activeLine.setAttribute("stroke-width", "3"); 
-                activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
-                svg.appendChild(activeLine);
-            }
-        }
     });
 }
