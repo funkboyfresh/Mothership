@@ -238,13 +238,17 @@ function renderAscensionTower(towerId) {
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
 
+    // [ UPGRADED ] Dynamic scaling for the Genesis icon (15% reduction)
+    const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
+
     let html = `
         <style>
+            /* [ UPGRADED ] Lowered 5% (from 26% to 31%) and applied 15% shrink to Genesis */
             .zenith-apex-tower {
                 position: absolute;
-                top: 26%; left: 50%;
+                top: 31%; left: 50%;
                 transform: translate(-50%, -125%); 
-                font-size: 8rem;
+                font-size: ${zenitSize}; 
                 color: #000; 
                 z-index: 16; 
                 pointer-events: none;
@@ -274,11 +278,11 @@ function renderAscensionTower(towerId) {
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
-            /* [ UPGRADED ] Lowered 5vh (from 22vh to 27vh) */
+            /* [ UPGRADED ] Lowered another 5% (from 27vh to 32vh) */
             .tower-content-top {
                 position: relative;
                 z-index: 25; 
-                margin-top: 27vh; 
+                margin-top: 32vh; 
                 display: flex;
                 flex-direction: column;
                 align-items: center;
