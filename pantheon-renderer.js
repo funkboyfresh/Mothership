@@ -233,17 +233,101 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     document.body.appendChild(modal);
 }
 
+// --- CONSTELLATION MAP VISUALS ---
+
 function openConstellation(deityKey, towerId, sectorIndex) {
+    // Clear any existing modals to prevent stacking and glitches
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
     const sector = deity.sectors[sectorIndex];
     const totalLevel = state.pantheon[deityKey];
-    const sectorProgress = totalLevel % 6; 
+    
+    // [ FIXED ] Calculate progress specifically for THIS sector map (0 to 6 max)
+    let nodesLit = 0;
+    if (totalLevel >= (sectorIndex + 1) * 6) {
+        nodesLit = 6; // Completely mastered
+    } else if (totalLevel >= sectorIndex * 6) {
+        nodesLit = totalLevel % 6; // Currently working on it
+    }
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
     modal.style.display = 'flex';
-    modal.innerHTML = `<div class="modal-box" style="width: 95%; max-width: 500px; height: 80vh; border-color: ${tower.color};"><div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div><div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;"><svg id="constellation-svg" viewBox="0 0 100 100" style="width: 100%; height: 100%;"></svg>${sector.coords.map((c, i) => `<div class="star-node" style="left: ${c.x}%; top: ${c.y}%; border-color: ${sectorProgress > i ? tower.color : '#444'}; background: ${sectorProgress > i ? tower.color : 'transparent'}; width: 20px; height: 20px; pointer-events: auto; cursor: pointer;" onclick="investOffering('${deityKey}', ${towerId})"></div>`).join('')}</div><div class="modal-actions"><button class="mod-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove()">[ DISENGAGE ]</button></div></div>`;
+    modal.innerHTML = `
+        <div class="modal-box" style="width: 95%; max-width: 500px; height: 80vh; border-color: ${tower.color}; display: flex; flex-direction: column;">
+            <div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div>
+            
+            <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
+                
+                <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+                
+                ${sector.coords.map((c, i) => {
+                    const isLit = nodesLit > i;
+                    // Only allow clicking if it's the exact next node in the active sector
+                    const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
+                    
+                    const nodeColor = isLit ? tower.color : '#444';
+                    const bg = isLit ? tower.color : '#000';
+                    const shadow = isLit || isNext ? `box-shadow: 0 0 15px ${tower.color};` : '';
+                    const cursor = isNext || isLit ? 'pointer' : 'not-allowed';
+                    
+                    return `
+                    <div class="star-node" 
+                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; 
+                                transform: translate(-50%, -50%); /* [ FIXED ] Centers the node for perfect wire alignment */
+                                border: 2px solid ${nodeColor}; background: ${bg}; 
+                                width: 18px; height: 18px; border-radius: 50%; 
+                                pointer-events: auto; cursor: ${cursor}; ${shadow} z-index: 10;"
+                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <div class="modal-actions">
+                <button class="mod-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove()">[ DISENGAGE ]</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
-    const svg = document.getElementById('constellation-svg');
-    renderSectorConstellation(svg, deityKey, sectorIndex, sectorProgress);
+    
+    // Draw the connecting lines
+    const svg = document.getElementById(`constellation-svg-${deityKey}`);
+    renderSectorConstellation(svg, sector.coords, tower.color, nodesLit);
+}
+
+function renderSectorConstellation(svg, coords, color, nodesLit) {
+    if (!svg || !coords) return;
+    svg.innerHTML = ''; // Clear canvas
+
+    coords.forEach((coord, i) => {
+        if (i < coords.length - 1) {
+            const next = coords[i + 1];
+            
+            // [ UPGRADED ] Draw a faint ghost line for the un-lit path
+            const baseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            baseLine.setAttribute("x1", `${coord.x}%`); 
+            baseLine.setAttribute("y1", `${coord.y}%`);
+            baseLine.setAttribute("x2", `${next.x}%`); 
+            baseLine.setAttribute("y2", `${next.y}%`);
+            baseLine.setAttribute("stroke", "#333");
+            baseLine.setAttribute("stroke-width", "2");
+            svg.appendChild(baseLine);
+
+            // Draw the glowing ignited line ONLY if both connected nodes are lit
+            if (nodesLit > i + 1) {
+                const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                activeLine.setAttribute("x1", `${coord.x}%`); 
+                activeLine.setAttribute("y1", `${coord.y}%`);
+                activeLine.setAttribute("x2", `${next.x}%`); 
+                activeLine.setAttribute("y2", `${next.y}%`);
+                activeLine.setAttribute("stroke", color);
+                activeLine.setAttribute("stroke-width", "3");
+                activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
+                svg.appendChild(activeLine);
+            }
+        }
+    });
 }
