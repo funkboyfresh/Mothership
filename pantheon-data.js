@@ -7,8 +7,8 @@ const PANTHEON_DATA = {
                 k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉',
                 starBuff: "Micro-Forge: Permanently increases baseline Scrap yield by +0.5% per star activated.",
                 sectors: [
-                    { id: 1, name: "Ignition Core", keystone: "Spark of Genesis", coords: [{x:30,y:30}, {x:70,y:30}, {x:70,y:70}, {x:30,y:70}, {x:50,y:50}], perk: "MAGNETISM: Grants an instant 5% bonus to all newly created tasks." },
-                    { id: 2, name: "Pulsar Hammer", keystone: "Rhythmic Strike", coords: [{x:20,y:20}, {x:50,y:20}, {x:80,y:20}, {x:50,y:50}, {x:50,y:80}], perk: "TEMPERING: Mission failure / overdue penalties are reduced by 10%." },
+                    { id: 1, name: "Ignition Core", keystone: "Spark of Genesis", coords: [{x:30,y:30}, {x:70,y:30}, {x:70,y:70}, {x:30,y:70}, {x:50,y:50}], perk: "MAGNETISM: +2% Base Yields" },
+                    { id: 2, name: "Pulsar Hammer", keystone: "Rhythmic Strike", coords: [{x:20,y:20}, {x:50,y:20}, {x:80,y:20}, {x:50,y:50}, {x:50,y:80}], perk: "TEMPERING: Forge failure rate -5%" },
                     { id: 3, name: "The Great Split", keystone: "Thermal Expansion", isBranch: true,
                         paths: [
                             { id: 1, n: "Alpha: Cold-Forging", perk: "Offerings cost -10% Scrap", coords: [{x:20,y:50}, {x:40,y:40}, {x:60,y:40}, {x:80,y:50}, {x:50,y:20}] },
@@ -18,13 +18,14 @@ const PANTHEON_DATA = {
                     { id: 4, name: "Anvil Peak", keystone: "Structural Reinforcement", coords: [{x:20,y:80}, {x:40,y:60}, {x:60,y:60}, {x:80,y:80}, {x:50,y:40}], perk: "REINFORCEMENT: Scrap payout +5%" },
                     { id: 5, name: "Solar Crucible", keystone: "Heart of the Star", coords: [{x:50,y:10}, {x:20,y:40}, {x:80,y:40}, {x:30,y:80}, {x:70,y:80}], perk: "FORGE-MASTER: +1% Critical Craft chance" }
                 ],
-                major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Ultimate Forge: Convert 10% of lifetime Energy into a massive one-time Scrap payout instantly." }
+                major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Convert 10% of lifetime Energy into a massive one-time Scrap payout." }
             },
             {
                 k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷',
                 starBuff: "Temporal Shard: Mission warning alerts trigger 5 minutes earlier per star activated.",
                 sectors: [
-                    { id: 1, name: "Temporal Pulse", keystone: "First Breath", coords: [{x:50,y:20}, {x:80,y:50}, {x:50,y:80}, {x:20,y:50}, {x:50,y:20}], perk: "VELOCITY: +1% Scrap on fast clears" },
+                    // [ FIXED ] Coordinates reshaped into an EKG pulse to prevent start/end overlap
+                    { id: 1, name: "Temporal Pulse", keystone: "First Breath", coords: [{x:20,y:50}, {x:35,y:20}, {x:50,y:80}, {x:65,y:20}, {x:80,y:50}], perk: "VELOCITY: +1% Scrap on fast clears" },
                     { id: 2, name: "The Hourglass", keystone: "Falling Sands", coords: [{x:30,y:20}, {x:70,y:20}, {x:50,y:50}, {x:30,y:80}, {x:70,y:80}], perk: "SAND-SHIFT: Warning alerts +2h" },
                     { id: 3, name: "Timeline Fork", keystone: "The Choice", isBranch: true,
                         paths: [
@@ -39,7 +40,7 @@ const PANTHEON_DATA = {
             },
             {
                 k:'valerium', n:'Valerium', title: 'The Aegis Warden', icon: '⎔',
-                starBuff: "Plating Fragment: Reduces the Energy penalty of Overdue tasks by -0.2 points per star.",
+                starBuff: "Plating Fragment: Reduces the Energy penalty of Overdue tasks by 0.2 points per star.",
                 sectors: [
                     { id: 1, name: "Bulwark Base", keystone: "Iron Will", coords: [{x:20,y:30}, {x:50,y:30}, {x:80,y:30}, {x:65,y:70}, {x:35,y:70}], perk: "PLATING: -1 Overdue Penalty" },
                     { id: 2, name: "Aegis Wall", keystone: "Deflection Grid", coords: [{x:10,y:50}, {x:30,y:50}, {x:50,y:50}, {x:70,y:50}, {x:90,y:50}], perk: "DEFLECTION: 5% lower Energy loss" },
@@ -80,8 +81,10 @@ const PANTHEON_DATA = {
                 k:'ignisKor', n:'Ignis-Kor', title: 'The Reality Shaper', icon: '▵',
                 starBuff: "Quantum Fluctuation: Buff durations extended by +2 minutes per star.",
                 sectors: [
-                    { id: 1, name: "Primary Cube", keystone: "Base Reality", coords: [{x:30,y:30}, {x:70,y:30}, {x:70,y:70}, {x:30,y:70}, {x:30,y:30}], perk: "STABILITY: Buffs last +15m" },
-                    { id: 2, name: "Prism Lens", keystone: "Refraction Index", coords: [{x:50,y:20}, {x:20,y:80}, {x:80,y:80}, {x:50,y:50}, {x:50,y:20}], perk: "REFRACTION: Buff strength +2%" },
+                    // [ FIXED ] Coordinates reshaped into a Quincunx to prevent overlap
+                    { id: 1, name: "Primary Cube", keystone: "Base Reality", coords: [{x:20,y:20}, {x:80,y:20}, {x:50,y:50}, {x:20,y:80}, {x:80,y:80}], perk: "STABILITY: Buffs last +15m" },
+                    // [ FIXED ] Prism Lens reshaped to prevent overlap
+                    { id: 2, name: "Prism Lens", keystone: "Refraction Index", coords: [{x:50,y:10}, {x:20,y:40}, {x:80,y:40}, {x:35,y:80}, {x:65,y:80}], perk: "REFRACTION: Buff strength +2%" },
                     { id: 3, name: "Reality Matrix", keystone: "The Paradigm Shift", isBranch: true,
                         paths: [
                             { id: 1, n: "Alpha: Logic Loop", perk: "Buff cost -25% Energy", coords: [{x:10,y:10}, {x:90,y:10}, {x:90,y:90}, {x:10,y:90}, {x:50,y:50}] },
@@ -128,7 +131,8 @@ const PANTHEON_DATA = {
                         ]
                     },
                     { id: 4, name: "Spiked Maw", keystone: "Devouring Jaws", coords: [{x:30,y:30}, {x:40,y:20}, {x:50,y:30}, {x:60,y:20}, {x:70,y:30}], perk: "HARVEST: Boss kills grant +5 Offering" },
-                    { id: 5, name: "Apocalypse Gate", keystone: "The End Times", coords: [{x:50,y:10}, {x:10,y:50}, {x:90,y:50}, {x:50,y:90}, {x:50,y:10}], perk: "DREAD-LORD: Orbital Strike cooldown -24h" }
+                    // [ FIXED ] Reshaped Apocalypse Gate to prevent overlap
+                    { id: 5, name: "Apocalypse Gate", keystone: "The End Times", coords: [{x:20,y:80}, {x:20,y:20}, {x:50,y:10}, {x:80,y:20}, {x:80,y:80}], perk: "DREAD-LORD: Orbital Strike cooldown -24h" }
                 ],
                 major: { n: "THE ORBITAL STRIKE", cost: 50, desc: "Once a week, instantly obliterate a Boss Target." }
             },
@@ -136,7 +140,8 @@ const PANTHEON_DATA = {
                 k:'luminara', n:'Luminara', title: 'The Cosmic Veil', icon: '✕',
                 starBuff: "Ion Shielding: Hostile encounter energy drain reduced by 0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Soft Halo", keystone: "Gentle Light", coords: [{x:50,y:30}, {x:70,y:50}, {x:50,y:70}, {x:30,y:50}, {x:50,y:30}], perk: "RESISTANCE: Ion drain -2%" },
+                    // [ FIXED ] Reshaped Soft Halo to prevent overlap
+                    { id: 1, name: "Soft Halo", keystone: "Gentle Light", coords: [{x:20,y:60}, {x:30,y:30}, {x:50,y:15}, {x:70,y:30}, {x:80,y:60}], perk: "RESISTANCE: Ion drain -2%" },
                     { id: 2, name: "Solar Flare", keystone: "Blinding Flash", coords: [{x:50,y:50}, {x:50,y:10}, {x:90,y:50}, {x:50,y:90}, {x:10,y:50}], perk: "RADIANCE: Encounter rewards +5%" },
                     { id: 3, name: "Glow Prism", keystone: "Light Refraction", isBranch: true,
                         paths: [
