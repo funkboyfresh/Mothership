@@ -234,11 +234,11 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // Match the Pantheon symbols
+    // Faction icons for the Zenith Apex
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
 
-    // Zenith scaling for the faction icon (15% reduction for Genesis)
+    // [ RECALIBRATED ] Genesis icon size reduced by 15% (from 8rem to 6.8rem)
     const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
 
     let html = `
@@ -286,10 +286,12 @@ function renderAscensionTower(towerId) {
                 align-items: center;
                 pointer-events: none;
             }
-            /* [ RECALIBRATED ] Dropped text down to sit tight against the offerings footer */
+            
+            /* --- TEXT POSITIONING --- */
             .tower-content-bottom {
                 position: absolute;
-                bottom: 5px; 
+                /* [ ADJUST THIS LINE ] 42px places it just above the 20px Offerings footer */
+                bottom: 42px; 
                 width: 100%;
                 display: flex;
                 flex-direction: column;
@@ -358,13 +360,16 @@ function renderAscensionTower(towerId) {
             </div>
 
             <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
-                AVAILABLE OFFERINGS: <span style="color: ${data.color}; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+                AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
         </div>
     `;
 
     container.innerHTML = html;
 }
+
+
+
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
