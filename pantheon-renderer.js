@@ -286,10 +286,10 @@ function renderAscensionTower(towerId) {
                 align-items: center;
                 pointer-events: none;
             }
-            /* [ UPGRADED ] Lowered to sit exactly 30px above the 20px footer */
+            /* [ RECALIBRATED ] Dropped text down to sit tight against the offerings footer */
             .tower-content-bottom {
                 position: absolute;
-                bottom: 50px; 
+                bottom: 42px; 
                 width: 100%;
                 display: flex;
                 flex-direction: column;
