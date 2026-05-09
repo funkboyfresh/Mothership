@@ -231,73 +231,28 @@ function renderVoidPantheon() {
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
-    
-    // Faction icons for the Zenith Apex
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
     const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
 
     let html = `
         <style>
-            .zenith-apex-tower {
-                position: absolute;
-                top: 28%; left: 50%;
-                transform: translate(-50%, -125%); 
-                font-size: ${zenithSize}; 
-                color: #000; 
-                z-index: 16; 
-                pointer-events: none;
-                text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44;
-            }
-            .tower-wrapper {
-                flex: 1;
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                z-index: 20;
-                /* Pushes the content down below the Zenith icon */
-                padding-top: 30vh; 
-            }
-            .monolith-spire-internal {
-                position: absolute;
-                bottom: -20vh; left: 0; 
-                width: 100%; 
-                border-style: solid;
-                border-width: 0 1px 0 1px; 
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
-                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
-                box-shadow: 0 0 25px -5px var(--t-color); 
-                transition: height 0.5s ease, filter 0.3s;
-                z-index: 5; 
-                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
-                mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
-            }
-            .keystone-icon {
-                font-size: 3.5rem;
-                transition: all 0.5s ease;
-            }
-            .minor-keystone-node {
-                width: 14px; 
-                height: 14px; 
-                border-radius: 50%; 
-                cursor: pointer; 
-                transition: all 0.3s ease;
-            }
-            .minor-keystone-node:hover {
-                transform: scale(1.3);
-            }
+            .zenith-apex-tower { position: absolute; top: 28%; left: 50%; transform: translate(-50%, -125%); font-size: ${zenithSize}; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44; }
+            .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
+            .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
+            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
+            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
+            .minor-keystone-node:hover { transform: scale(1.3); }
         </style>
 
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
-            
             <button class="subtask-remove-minimal" style="position: absolute; top: 15px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100; cursor: pointer;" onclick="renderVoidPantheon()">×</button>
-
             <div class="zenith-apex-tower">${factionIcon}</div>
-
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
                 
                 ${data.deities.map(d => {
-                    const progress = state.pantheon[d.k];
+                    // [ FIXED ] Ensure new deities default to 0 to prevent NaN crashes
+                    const progress = state.pantheon[d.k] || 0; 
                     const currentSector = Math.floor(progress / 6);
                     const spireHeight = 60 + (progress / 30) * 22; 
                     const isMaxed = progress >= 30;
@@ -305,9 +260,7 @@ function renderAscensionTower(towerId) {
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
                             <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
-                            
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
-                                
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
                                          onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', ${progress === 30})" 
@@ -317,9 +270,7 @@ function renderAscensionTower(towerId) {
                                 </div>
 
                                 <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
-                                    
                                     <div style="position: absolute; width: 2px; height: 100%; background: #333; z-index: 1;"></div>
-                                    
                                     <div style="position: absolute; bottom: 0; width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
                                     
                                     ${[0, 1, 2, 3, 4].map(i => {
@@ -346,12 +297,10 @@ function renderAscensionTower(towerId) {
                                         LVL ${progress}
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     `;
                 }).join('')}
-
             </div>
 
             <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
@@ -359,14 +308,14 @@ function renderAscensionTower(towerId) {
             </div>
         </div>
     `;
-
     container.innerHTML = html;
 }
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
+    const totalLevel = state.pantheon[deityKey] || 0; // [ FIXED ]
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
-    const sector = deity.sectors[Math.floor(state.pantheon[deityKey] / 6)] || deity.sectors[4];
+    const sector = deity.sectors[Math.floor(totalLevel / 6)] || deity.sectors[4];
     
     const isKeystone = nodeIndex === 6; 
     const isMajor = nodeIndex === 'MAJOR';
@@ -377,41 +326,36 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     let buffDesc = deity.starBuff;
 
     if (isMajor) {
-        cost = 50; 
-        typeText = "MAJOR KEYSTONE"; 
-        buffName = deity.major.n; 
-        buffDesc = deity.major.desc;
+        cost = 50; typeText = "MAJOR KEYSTONE"; buffName = deity.major.n; buffDesc = deity.major.desc;
     } else if (isKeystone) {
-        cost = 5; 
-        typeText = "MINOR KEYSTONE"; 
-        buffName = sector.keystone; 
-        buffDesc = sector.perk;
+        cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk; // Will grab thermal expansion name for branch
     }
 
     let actionsHtml = '';
     
     if (isNext && state.offerings >= cost) {
-        actionsHtml = `
-            <div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button>
-                <button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button>
-            </div>
-        `;
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button></div>`;
     } else if (isNext && state.offerings < cost) {
-        actionsHtml = `
-            <div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div>
-            <div style="margin-top: 15px; text-align: center;">
-                <button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button>
-            </div>
-        `;
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
     } else {
-         actionsHtml = `
-            <div style="margin-top: 20px; text-align: center;">
-                <button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button>
-            </div>
-        `;
+         actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button></div>`;
     }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${typeText}</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem;">${buffName.toUpperCase()}</h2>
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
+            </div>
+            ${actionsHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
@@ -437,17 +381,19 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
     const sector = deity.sectors[sectorIndex];
-    const totalLevel = state.pantheon[deityKey];
+    const totalLevel = state.pantheon[deityKey] || 0; // [ FIXED ]
     
     let nodesLit = 0;
     if (totalLevel >= (sectorIndex + 1) * 6) nodesLit = 6; 
     else if (totalLevel >= sectorIndex * 6) nodesLit = totalLevel % 6; 
     
-    // Add completion button logic for the 6th level (Minor Keystone)
     let completionHtml = '';
     if (nodesLit === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
         completionHtml = `<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ${tower.color}; color: #000; font-weight: bold;" onclick="openOfferingModal('${deityKey}', ${towerId}, 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>`;
     }
+
+    // [ FIXED ] Branching Path Detector
+    const pathsToRender = sector.isBranch ? [sector.paths[0].coords, sector.paths[1].coords] : [sector.coords];
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
@@ -459,7 +405,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 
-                ${sector.coords.map((c, i) => {
+                ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
                     const isLit = nodesLit > i;
                     const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
                     const nodeColor = isLit ? tower.color : '#444';
@@ -473,7 +419,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                          onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
                     </div>
                     `;
-                }).join('')}
+                }).join('')).join('')}
             </div>
             
             <div class="modal-actions" style="flex-direction: column; gap: 0;">
@@ -485,9 +431,42 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     document.body.appendChild(modal);
     
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
-    renderSectorConstellation(svg, sector.coords, tower.color, nodesLit);
+    renderSectorConstellation(svg, pathsToRender, tower.color, nodesLit);
 }
 
+// [ FIXED ] Upgraded logic to handle drawing multiple paths at once
+function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
+    if (!svg || !pathsToRender) return;
+    svg.innerHTML = ''; 
+    
+    pathsToRender.forEach(coords => {
+        coords.forEach((coord, i) => {
+            if (i < coords.length - 1) {
+                const next = coords[i + 1];
+                const baseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                baseLine.setAttribute("x1", `${coord.x}%`); 
+                baseLine.setAttribute("y1", `${coord.y}%`); 
+                baseLine.setAttribute("x2", `${next.x}%`); 
+                baseLine.setAttribute("y2", `${next.y}%`); 
+                baseLine.setAttribute("stroke", "#333"); 
+                baseLine.setAttribute("stroke-width", "2");
+                svg.appendChild(baseLine);
+
+                if (nodesLit > i + 1) {
+                    const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    activeLine.setAttribute("x1", `${coord.x}%`); 
+                    activeLine.setAttribute("y1", `${coord.y}%`); 
+                    activeLine.setAttribute("x2", `${next.x}%`); 
+                    activeLine.setAttribute("y2", `${next.y}%`); 
+                    activeLine.setAttribute("stroke", color); 
+                    activeLine.setAttribute("stroke-width", "3"); 
+                    activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
+                    svg.appendChild(activeLine);
+                }
+            }
+        });
+    });
+}
 function renderSectorConstellation(svg, coords, color, nodesLit) {
     if (!svg || !coords) return;
     svg.innerHTML = ''; 
