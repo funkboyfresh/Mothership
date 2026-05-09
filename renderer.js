@@ -1054,9 +1054,16 @@ function renderOuterworlds(container) {
 }
 
 function renderSectorConstellation(svg, deityKey, sectorIndex, sectorProgress) {
-    const deity = PANTHEON_DATA[1].deities.find(d => d.k === deityKey); // Test logic for Kaelen-Tor
+    // [ FIXED ] Dynamically find the tower that contains this deity
+    let towerId = Object.keys(PANTHEON_DATA).find(tid => 
+        PANTHEON_DATA[tid].deities.some(d => d.k === deityKey)
+    );
+    
+    if (!towerId) return; // Safety check
+    
+    const deity = PANTHEON_DATA[towerId].deities.find(d => d.k === deityKey);
     const sector = deity.sectors[sectorIndex];
-    const towerColor = PANTHEON_DATA[1].color;
+    const towerColor = PANTHEON_DATA[towerId].color;
     
     // Determine which coordinates to use (handle branching)
     let coords = sector.isBranch ? sector.paths[state.pantheon.choices[deityKey] - 1]?.coords : sector.coords;
