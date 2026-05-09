@@ -234,21 +234,19 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // Match the Pantheon symbols
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
 
-    // [ UPGRADED ] Dynamic scaling for the Genesis icon (15% reduction)
+    // [ FIXED ] Corrected variable spelling and applied 15% reduction for Genesis icon
     const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
 
     let html = `
         <style>
-            /* [ UPGRADED ] Lowered 5% (from 26% to 31%) and applied 15% shrink to Genesis */
             .zenith-apex-tower {
                 position: absolute;
                 top: 31%; left: 50%;
                 transform: translate(-50%, -125%); 
-                font-size: ${zenitSize}; 
+                font-size: ${zenithSize}; 
                 color: #000; 
                 z-index: 16; 
                 pointer-events: none;
@@ -278,7 +276,7 @@ function renderAscensionTower(towerId) {
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
-            /* [ UPGRADED ] Lowered another 5% (from 27vh to 32vh) */
+            /* [ FIXED ] Lowered to 32vh to reflect the total 10% descent */
             .tower-content-top {
                 position: relative;
                 z-index: 25; 
@@ -340,8 +338,6 @@ function renderAscensionTower(towerId) {
 
     container.innerHTML = html;
 }
-
-
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
