@@ -58,7 +58,6 @@ function renderVoidPantheon() {
                 animation: fog-breathe 23s infinite alternate ease-in-out;
             }
 
-            /* [ RESTORED ] The missing Foreground Clouds! */
             .fg-stellar-nursery {
                 position: absolute;
                 top: -25%; left: -10%; 
@@ -228,6 +227,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
@@ -280,7 +280,6 @@ function renderAscensionTower(towerId) {
                 width: 14px; 
                 height: 14px; 
                 border-radius: 50%; 
-                z-index: 25; 
                 cursor: pointer; 
                 transition: all 0.3s ease;
             }
@@ -310,7 +309,11 @@ function renderAscensionTower(towerId) {
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
-                                    <div class="keystone-icon" style="color: ${isMaxed ? data.color : '#fff'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : '0 0 10px #fff'};">${d.icon}</div>
+                                    <div class="keystone-icon" 
+                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', ${progress === 30})" 
+                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#fff'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : '0 0 10px #fff'};">
+                                         ${d.icon}
+                                    </div>
                                 </div>
 
                                 <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
@@ -329,7 +332,7 @@ function renderAscensionTower(towerId) {
                                         return `
                                             <div class="minor-keystone-node" 
                                                  onclick="openConstellation('${d.k}', ${towerId}, ${i})"
-                                                 style="border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
+                                                 style="position: relative; z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
                                             </div>
                                         `;
                                     }).join('')}
@@ -363,30 +366,72 @@ function renderAscensionTower(towerId) {
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
+    const sector = deity.sectors[Math.floor(state.pantheon[deityKey] / 6)] || deity.sectors[4];
+    
     const isKeystone = nodeIndex === 6; 
-    const title = isKeystone ? "MAJOR KEYSTONE" : `MINOR STAR // NODE 0${nodeIndex}`;
-    const buffDesc = isKeystone ? deity.major : deity.minor;
+    const isMajor = nodeIndex === 'MAJOR';
+    
+    let cost = 1;
+    let typeText = `MINOR STAR // NODE 0${nodeIndex}`;
+    let buffName = `Star of ${deity.n}`;
+    let buffDesc = deity.starBuff;
+
+    if (isMajor) {
+        cost = 50; 
+        typeText = "MAJOR KEYSTONE"; 
+        buffName = deity.major.n; 
+        buffDesc = deity.major.desc;
+    } else if (isKeystone) {
+        cost = 5; 
+        typeText = "MINOR KEYSTONE"; 
+        buffName = sector.keystone; 
+        buffDesc = sector.perk;
+    }
+
     let actionsHtml = '';
     
-    if (isNext && state.offerings > 0) {
-        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">THE VOID DEMANDS TRIBUTE. DO YOU PROCEED?</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button></div>`;
-    } else if (isNext && state.offerings <= 0) {
-        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: var(--thrust); text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px var(--thrust-glow);">INSUFFICIENT OFFERINGS. THE VOID REMAINS SILENT.</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
+    if (isNext && state.offerings >= cost) {
+        actionsHtml = `
+            <div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button>
+                <button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button>
+            </div>
+        `;
+    } else if (isNext && state.offerings < cost) {
+        actionsHtml = `
+            <div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button>
+            </div>
+        `;
     } else {
-         actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button></div>`;
+         actionsHtml = `
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button>
+            </div>
+        `;
     }
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
     modal.style.display = 'flex';
-    modal.innerHTML = `<div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;"><div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${deity.n.toUpperCase()} // ${deity.title.toUpperCase()}</div><h2 class="view-main-title" style="margin-bottom: 15px; font-size: 1.1rem;">${title}</h2><div class="terminal-console" style="text-align: left; margin: 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);"><p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p></div>${actionsHtml}</div>`;
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${typeText}</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem;">${buffName.toUpperCase()}</h2>
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
+            </div>
+            ${actionsHtml}
+        </div>
+    `;
     document.body.appendChild(modal);
 }
 
 // --- CONSTELLATION MAP VISUALS ---
 
 function openConstellation(deityKey, towerId, sectorIndex) {
-    // Clear any existing modals to prevent stacking and glitches
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 
     const tower = PANTHEON_DATA[towerId];
@@ -394,12 +439,14 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const sector = deity.sectors[sectorIndex];
     const totalLevel = state.pantheon[deityKey];
     
-    // [ FIXED ] Calculate progress specifically for THIS sector map (0 to 6 max)
     let nodesLit = 0;
-    if (totalLevel >= (sectorIndex + 1) * 6) {
-        nodesLit = 6; // Completely mastered
-    } else if (totalLevel >= sectorIndex * 6) {
-        nodesLit = totalLevel % 6; // Currently working on it
+    if (totalLevel >= (sectorIndex + 1) * 6) nodesLit = 6; 
+    else if (totalLevel >= sectorIndex * 6) nodesLit = totalLevel % 6; 
+    
+    // Add completion button logic for the 6th level (Minor Keystone)
+    let completionHtml = '';
+    if (nodesLit === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
+        completionHtml = `<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ${tower.color}; color: #000; font-weight: bold;" onclick="openOfferingModal('${deityKey}', ${towerId}, 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>`;
     }
 
     const modal = document.createElement('div');
@@ -410,14 +457,11 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             <div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div>
             
             <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
-                
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 
                 ${sector.coords.map((c, i) => {
                     const isLit = nodesLit > i;
-                    // Only allow clicking if it's the exact next node in the active sector
                     const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
-                    
                     const nodeColor = isLit ? tower.color : '#444';
                     const bg = isLit ? tower.color : '#000';
                     const shadow = isLit || isNext ? `box-shadow: 0 0 15px ${tower.color};` : '';
@@ -425,56 +469,48 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                     
                     return `
                     <div class="star-node" 
-                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; 
-                                transform: translate(-50%, -50%); /* [ FIXED ] Centers the node for perfect wire alignment */
-                                border: 2px solid ${nodeColor}; background: ${bg}; 
-                                width: 18px; height: 18px; border-radius: 50%; 
-                                pointer-events: auto; cursor: ${cursor}; ${shadow} z-index: 10;"
+                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: 2px solid ${nodeColor}; background: ${bg}; width: 18px; height: 18px; border-radius: 50%; pointer-events: auto; cursor: ${cursor}; ${shadow} z-index: 10;"
                          onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
                     </div>
                     `;
                 }).join('')}
             </div>
             
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction: column; gap: 0;">
+                ${completionHtml}
                 <button class="mod-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove()">[ DISENGAGE ]</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
     
-    // Draw the connecting lines
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
     renderSectorConstellation(svg, sector.coords, tower.color, nodesLit);
 }
 
 function renderSectorConstellation(svg, coords, color, nodesLit) {
     if (!svg || !coords) return;
-    svg.innerHTML = ''; // Clear canvas
-
+    svg.innerHTML = ''; 
     coords.forEach((coord, i) => {
         if (i < coords.length - 1) {
             const next = coords[i + 1];
-            
-            // [ UPGRADED ] Draw a faint ghost line for the un-lit path
             const baseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
             baseLine.setAttribute("x1", `${coord.x}%`); 
-            baseLine.setAttribute("y1", `${coord.y}%`);
+            baseLine.setAttribute("y1", `${coord.y}%`); 
             baseLine.setAttribute("x2", `${next.x}%`); 
-            baseLine.setAttribute("y2", `${next.y}%`);
-            baseLine.setAttribute("stroke", "#333");
+            baseLine.setAttribute("y2", `${next.y}%`); 
+            baseLine.setAttribute("stroke", "#333"); 
             baseLine.setAttribute("stroke-width", "2");
             svg.appendChild(baseLine);
 
-            // Draw the glowing ignited line ONLY if both connected nodes are lit
             if (nodesLit > i + 1) {
                 const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 activeLine.setAttribute("x1", `${coord.x}%`); 
-                activeLine.setAttribute("y1", `${coord.y}%`);
+                activeLine.setAttribute("y1", `${coord.y}%`); 
                 activeLine.setAttribute("x2", `${next.x}%`); 
-                activeLine.setAttribute("y2", `${next.y}%`);
-                activeLine.setAttribute("stroke", color);
-                activeLine.setAttribute("stroke-width", "3");
+                activeLine.setAttribute("y2", `${next.y}%`); 
+                activeLine.setAttribute("stroke", color); 
+                activeLine.setAttribute("stroke-width", "3"); 
                 activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
                 svg.appendChild(activeLine);
             }
