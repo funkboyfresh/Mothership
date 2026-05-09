@@ -12,7 +12,7 @@ function renderVoidPantheon() {
     if(navBar) navBar.style.display = 'none';
 
     // Gravity-Weighted Starfield
-    let bgStars = '', midStars = '', fgStars = '';
+   let bgStars = '', midStars = '', fgStars = '';
     for(let i = 0; i < 375; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
@@ -21,7 +21,10 @@ function renderVoidPantheon() {
             let top = verticalBias * 100 + '%';
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             let dur = (Math.random() * 5 + 3) + 's';
-            let del = (Math.random() * 5) + 's';
+            
+            // [ FIXED ] A NEGATIVE delay forces the animation to start immediately, 
+            // but at a random phase in its cycle so they don't all twinkle at once!
+            let del = '-' + (Math.random() * 10) + 's'; 
             
             return `<div class="void-particle" style="position: absolute; background: #fff; border-radius: 50%; width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation: pantheon-twinkle ${dur} infinite alternate ease-in-out ${del};"></div>`;
         };
@@ -32,18 +35,13 @@ function renderVoidPantheon() {
 
     const atmosStyles = `
         <style>
-            @keyframes fog-breathe {
-                0% { opacity: 0.6; transform: scale(1) translateY(0); }
-                50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); }
-                100% { opacity: 0.6; transform: scale(1) translateY(0); }
-            }
-            @keyframes slow-drift {
-                0% { transform: translateX(-5%); }
-                100% { transform: translateX(5%); }
-            }
-            @keyframes pantheon-twinkle {
-                0% { transform: scale(0.8); opacity: 0.1; }
-                100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 5px #fff; }
+          @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
+            @keyframes slow-drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
+            
+            /* [ FIXED ] Raised minimum opacity to 0.3 so they never truly vanish */
+            @keyframes pantheon-twinkle { 
+                0% { transform: scale(0.8); opacity: 0.3; } 
+                100% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 5px #fff; } 
             }
 
             .pantheon-starfield-container {
