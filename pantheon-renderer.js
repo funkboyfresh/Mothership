@@ -13,7 +13,9 @@ function renderVoidPantheon() {
 
     // Gravity-Weighted Starfield
     let bgStars = '', midStars = '', fgStars = '';
-    for(let i = 0; i < 375; i++) {
+    
+    // [ OPTIMIZED ] Reduced from 375 to 200. Still looks incredible, much faster teardown.
+    for(let i = 0; i < 200; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
             let left = Math.random() * 100 + '%';
@@ -21,12 +23,10 @@ function renderVoidPantheon() {
             let top = verticalBias * 100 + '%';
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             let dur = (Math.random() * 5 + 3) + 's';
-            
-            // Negative delay prevents the initial mass-vanishing
             let del = '-' + (Math.random() * 10) + 's'; 
             
-            // [ RESTORED ] Uses your native void-particle movement, but forces it to loop infinitely
-            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del}; animation-iteration-count: infinite;"></div>`;
+            // [ OPTIMIZED ] Added translateZ(0) and will-change to force GPU rendering
+            return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del}; animation-iteration-count: infinite; transform: translateZ(0); will-change: opacity, transform;"></div>`;
         };
         bgStars += getStar(0.7); 
         midStars += getStar(1.1); 
@@ -37,12 +37,28 @@ function renderVoidPantheon() {
         <style>
             @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
             @keyframes slow-drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
-            
-            /* (Removed the heavy pantheon-twinkle box-shadow to restore 60 FPS) */
 
             .pantheon-starfield-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
-            .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; }
-            .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); }
+            
+            .bg-stellar-nursery { 
+                position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; 
+                background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); 
+                filter: blur(30px); z-index: 1; 
+                animation: fog-breathe 23s infinite alternate ease-in-out; 
+                /* [ OPTIMIZED ] GPU Acceleration flags */
+                transform: translateZ(0); will-change: transform, opacity;
+            }
+            
+            .fg-stellar-nursery { 
+                position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; 
+                background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); 
+                filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; 
+                animation: slow-drift 34s infinite alternate ease-in-out; 
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); 
+                /* [ OPTIMIZED ] GPU Acceleration flags */
+                transform: translateZ(0); will-change: transform;
+            }
+            
             .zenith-apex-void { position: absolute; top: 26%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
             .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
             .monolith-spire { position: absolute; bottom: -5vh; left: 0; width: 100%; height: calc(82% + 5vh); border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
@@ -56,64 +72,21 @@ function renderVoidPantheon() {
 
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
-            
-            <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">
-                ${bgStars}
-            </div>
-
+            <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">${bgStars}</div>
             <div class="bg-stellar-nursery"></div>
-
             <div class="zenith-apex-void">◬</div>
-
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
-                
-                <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;">
-                    <div class="monolith-spire"></div>
-                    <div class="tower-content">
-                        <div class="spire-text">GENESIS SPHERE</div>
-                        <div class="tower-icon-wrapper">
-                            <div class="tower-icon" style="font-size: 3rem;">۞</div> 
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;">
-                    <div class="monolith-spire"></div>
-                    <div class="tower-content">
-                        <div class="spire-text">ABYSSAL SYNDICATE</div>
-                        <div class="tower-icon-wrapper">
-                            <div class="tower-icon" style="font-size: 4.2rem;">⎊</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;">
-                    <div class="monolith-spire"></div>
-                    <div class="tower-content">
-                        <div class="spire-text">CELESTIAL VANGUARD</div>
-                        <div class="tower-icon-wrapper">
-                            <div class="tower-icon" style="font-size: 3rem;">❖</div>
-                        </div>
-                    </div>
-                </div>
-
+                <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">۞</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">⎊</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">❖</div></div></div></div>
             </div>
-
-            <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">
-                ${midStars}
-            </div>
-
+            <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
             <div class="fg-stellar-nursery"></div>
-
-            <div class="pantheon-starfield-container" style="z-index: 22;">
-                ${fgStars}
-            </div>
-
-          <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+            <div class="pantheon-starfield-container" style="z-index: 22;">${fgStars}</div>
+            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 OFFERINGS REMAINING: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
                 <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
             </div>
-
         </div>
     `;
 }
