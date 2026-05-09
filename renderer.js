@@ -1052,38 +1052,3 @@ function renderOuterworlds(container) {
         </div>
     `;
 }
-
-function renderSectorConstellation(svg, deityKey, sectorIndex, sectorProgress) {
-    // [ FIXED ] Dynamically find the tower that contains this deity
-    let towerId = Object.keys(PANTHEON_DATA).find(tid => 
-        PANTHEON_DATA[tid].deities.some(d => d.k === deityKey)
-    );
-    
-    if (!towerId) return; // Safety check
-    
-    const deity = PANTHEON_DATA[towerId].deities.find(d => d.k === deityKey);
-    const sector = deity.sectors[sectorIndex];
-    const towerColor = PANTHEON_DATA[towerId].color;
-    
-    // Determine which coordinates to use (handle branching)
-    let coords = sector.isBranch ? sector.paths[state.pantheon.choices[deityKey] - 1]?.coords : sector.coords;
-    if (!coords) coords = sector.isBranch ? sector.paths[0].coords : sector.coords; // Fallback
-
-    coords.forEach((coord, i) => {
-        // Draw the bridge line ONLY if the player has connected these two points
-        if (i < coords.length - 1 && sectorProgress > i + 1) {
-            const next = coords[i + 1];
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", `${coord.x}%`); 
-            line.setAttribute("y1", `${coord.y}%`);
-            line.setAttribute("x2", `${next.x}%`); 
-            line.setAttribute("y2", `${next.y}%`);
-            line.setAttribute("stroke", towerColor);
-            line.setAttribute("stroke-width", "1.5");
-            line.style.opacity = "0.8";
-            // Add a pulsing ignite animation
-            line.style.filter = `drop-shadow(0 0 5px ${towerColor})`;
-            svg.appendChild(line);
-        }
-    });
-}
