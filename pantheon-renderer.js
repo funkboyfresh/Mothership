@@ -230,46 +230,94 @@ function renderVoidPantheon() {
 
 // Renders the Ascension tower - each individual skill tree sector.
 
-// pantheon-renderer.js
-
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // Ambient background with the tower's specific color glow
+    // Faction-specific icons for the Zenith position
+    const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
+    const factionIcon = factionIcons[towerId] || '◬';
+
+    // Copying the high-fidelity atmosphere from renderVoidPantheon
     let html = `
+        <style>
+            .zenith-apex-tower {
+                position: absolute;
+                top: 23%; left: 50%;
+                transform: translate(-50%, -50%); 
+                font-size: 8rem;
+                color: #000; 
+                z-index: 16; 
+                pointer-events: none;
+                text-shadow: 0 0 30px ${data.color}33;
+            }
+            .tower-wrapper {
+                flex: 1;
+                position: relative;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start; /* Moved content to top */
+                align-items: center;
+                z-index: 20;
+            }
+            .monolith-spire-internal {
+                position: absolute;
+                bottom: -20vh; left: 0; 
+                width: 100%; 
+                border-style: solid;
+                border-width: 0 1px 0 1px; 
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1;
+                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%);
+                box-shadow: 0 0 25px -5px var(--t-color); 
+                transition: height 0.5s ease, filter 0.3s;
+                z-index: 5; 
+                -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+                mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+            }
+            .tower-content-top {
+                position: relative;
+                z-index: 25; 
+                margin-top: 20vh; /* Positioned at the top of the spire area */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                pointer-events: none;
+            }
+            .keystone-icon {
+                color: #fff;
+                font-size: 3.5rem;
+                text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color);
+                transition: transform 0.3s ease;
+            }
+            .tower-wrapper:hover .keystone-icon {
+                transform: scale(1.1) translateY(-5px);
+            }
+        </style>
+
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.4;">
-                <div id="tower-bg-stars"></div>
-            </div>
+            <button class="subtask-remove-minimal" style="position: absolute; top: 15px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100; cursor: pointer;" onclick="renderVoidPantheon()">×</button>
 
-            <div style="padding: 20px; z-index: 30; text-align: center; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);">
-                <div class="view-level-title" style="color: ${data.color}; letter-spacing: 5px; margin: 0;">${data.name}</div>
-                <button class="subtask-remove-minimal" style="position: absolute; top: 15px; right: 20px; font-size: 2rem; color: ${data.color}; cursor: pointer;" onclick="renderVoidPantheon()">×</button>
-            </div>
+            <div class="zenith-apex-tower">${factionIcon}</div>
 
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 15px; align-items: stretch; padding-bottom: 60px; z-index: 20;">
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 
                 ${data.deities.map(d => {
-                    const progress = state.pantheon[d.k]; // 0-30
-                    const currentSector = Math.floor(progress / 6); // 0-4
-                    const sectorProgress = progress % 6; // 0-5
-                    
+                    const progress = state.pantheon[d.k];
+                    const currentSector = Math.floor(progress / 6);
+                    // Spire height grows based on total progression (0-30)
+                    const spireHeight = 60 + (progress / 30) * 22; 
+
                     return `
                         <div class="tower-wrapper" onclick="openConstellation('${d.k}', ${towerId}, ${currentSector})" style="--t-color: ${data.color};">
-                            <div class="monolith-spire" style="height: calc(50% + ${(progress / 30) * 40}%);">
-                                <div style="position: absolute; top: 10px; width: 100%; text-align: center; color: #fff; font-size: 0.5rem; opacity: 0.5;">
-                                    SEC ${currentSector + 1}/5
+                            <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
+                            <div class="tower-content-top">
+                                <div class="keystone-icon">${d.icon}</div>
+                                <div class="spire-text" style="height: auto; margin-top: 20px; writing-mode: vertical-rl; transform: rotate(180deg); color: ${data.color}; font-weight: bold; letter-spacing: 4px;">
+                                    ${d.n.toUpperCase()}
                                 </div>
-                            </div>
-                            
-                            <div class="tower-content" style="transform: translateY(5vh);">
-                                <div class="spire-text">${d.n.toUpperCase()}</div>
-                                <div class="tower-icon-wrapper">
-                                    <div class="tower-icon" style="font-size: 3rem; ${progress >= 30 ? 'text-shadow: 0 0 20px #fff;' : ''}">${d.icon}</div> 
-                                </div>
-                                <div style="color: #fff; font-size: 0.6rem; margin-top: 5px; opacity: 0.8; font-family: monospace;">
+                                <div style="color: #fff; font-size: 0.6rem; margin-top: 10px; opacity: 0.6; font-family: monospace;">
                                     LVL ${progress}
                                 </div>
                             </div>
@@ -279,17 +327,13 @@ function renderAscensionTower(towerId) {
 
             </div>
 
-            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 25; pointer-events: none;">
-                OFFERINGS AVAILABLE: <span style="color: ${data.color}; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+                AVAILABLE OFFERINGS: <span style="color: ${data.color}; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
-
         </div>
     `;
 
     container.innerHTML = html;
-    
-    // Small script to re-generate stars for this specific view if needed
-    if (typeof generateStarfield === 'function') generateStarfield();
 }
 
 function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
