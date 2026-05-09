@@ -142,7 +142,7 @@ const PANTHEON_DATA = {
                 major: { n: "THE VEIL OF LIGHT", cost: 50, desc: "Damage has a 33% chance to be converted into Bonus Energy." }
             },
             {
-                k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', icon: '⸬',
+                k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', icon: '⛶',
                 sectors: [
                     { id: 1, name: "Siphon Root", coords: [{x:50,y:90}, {x:50,y:60}, {x:20,y:40}, {x:80,y:40}, {x:50,y:50}], perk: "DETECTION: Rare spawns +2%" },
                     { id: 2, name: "Hungry Maw", coords: [{x:50,y:50}, {x:30,y:20}, {x:70,y:20}, {x:30,y:80}, {x:70,y:80}], perk: "SIPHON: Secure rewards +5%" },
