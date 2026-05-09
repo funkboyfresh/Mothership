@@ -240,7 +240,6 @@ function renderAscensionTower(towerId) {
 
     let html = `
         <style>
-            /* [ UPGRADED ] Radiance increased; multi-layered shadow for thicker glow */
             .zenith-apex-tower {
                 position: absolute;
                 top: 26%; left: 50%;
@@ -275,10 +274,11 @@ function renderAscensionTower(towerId) {
                 -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
                 mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
             }
+            /* [ UPGRADED ] Lowered 5vh (from 22vh to 27vh) */
             .tower-content-top {
                 position: relative;
                 z-index: 25; 
-                margin-top: 22vh; 
+                margin-top: 27vh; 
                 display: flex;
                 flex-direction: column;
                 align-items: center;
