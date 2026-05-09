@@ -286,10 +286,10 @@ function renderAscensionTower(towerId) {
                 align-items: center;
                 pointer-events: none;
             }
-            /* [ NEW ] Bottom Aligned Readouts */
+            /* [ UPGRADED ] Lowered to sit exactly 30px above the 20px footer */
             .tower-content-bottom {
                 position: absolute;
-                bottom: 65px; /* Sits just above the 20px footer */
+                bottom: 50px; 
                 width: 100%;
                 display: flex;
                 flex-direction: column;
@@ -301,15 +301,15 @@ function renderAscensionTower(towerId) {
                 color: ${data.color};
                 font-weight: bold;
                 letter-spacing: 2px;
-                font-size: 0.7rem;
+                font-size: 0.75rem;
                 text-shadow: 0 0 10px ${data.color};
-                margin-bottom: 4px;
+                margin-bottom: 2px;
                 text-align: center;
             }
             .spire-lvl-label {
                 color: #fff;
                 font-size: 0.6rem;
-                opacity: 0.6;
+                opacity: 0.5;
                 font-family: monospace;
                 letter-spacing: 1px;
             }
