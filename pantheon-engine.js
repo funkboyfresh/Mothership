@@ -5,13 +5,15 @@
 
 function investOffering(deityKey, towerId) {
     const currentLevel = state.pantheon[deityKey];
+    
+    // Determine the nature of the NEXT level being purchased
     const isKeystoneNode = (currentLevel + 1) % 6 === 0;
     const isMajorNode = currentLevel === 30;
     
-    // Your custom pricing structure
+    // RPG Pricing Structure
     let cost = 1;
     if (isMajorNode) cost = 50;
-    else if (isKeystoneNode) cost = 10;
+    else if (isKeystoneNode) cost = 5;
 
     if (state.offerings >= cost && currentLevel < 31) {
         state.offerings -= cost;
@@ -29,9 +31,9 @@ function investOffering(deityKey, towerId) {
         const newTotal = state.pantheon[deityKey];
         const sectorIndex = Math.floor((newTotal - 1) / 6); 
         
-        // 3. Instantly redraw the constellation modal so the node lights up right before your eyes
-        if (typeof openConstellation === 'function') {
-            openConstellation(deityKey, towerId, sectorIndex);
+        // 3. Instantly redraw the constellation modal so the node lights up
+        if (typeof openConstellation === 'function' && !isMajorNode) {
+            openConstellation(deityKey, towerId, Math.min(sectorIndex, 4));
         }
 
     } else {
