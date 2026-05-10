@@ -56,10 +56,10 @@ function renderVoidPantheon() {
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
             <div class="fg-stellar-nursery"></div>
             <div class="pantheon-starfield-container" style="z-index: 22;">${fgStars}</div>
+            
             <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: auto;">
                 OFFERINGS REMAINING: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
-                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
-                <button onclick="window.isViewingPantheon = false; if(document.getElementById('nav-bar')) document.getElementById('nav-bar').style.display = 'flex'; render();" style="background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff3366; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[ DISENGAGE PANTHEON ]</button>
+                <button onclick="state.offerings += 500; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+500 DEV]</button>
             </div>
         </div>
     `;
@@ -70,11 +70,15 @@ function renderAscensionTower(towerId) {
     const container = document.getElementById('view-container');
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
-    const zenithSize = towerId === 1 ? '6.8rem' : '8rem';
+    
+    // Size logic updated per your request
+    let zenithSize = '8rem';
+    if (towerId === 1) zenithSize = '5.4rem'; // 20% smaller than 6.8
+    if (towerId === 3) zenithSize = '6.4rem'; // 20% smaller than 8.0
 
     let html = `
         <style>
-            .zenith-apex-tower { position: absolute; top: 28%; left: 50%; transform: translate(-50%, -125%); font-size: ${zenithSize}; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44; }
+            .zenith-apex-tower { position: absolute; top: 33%; left: 50%; transform: translate(-50%, -125%); font-size: ${zenithSize}; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44; }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
@@ -85,6 +89,11 @@ function renderAscensionTower(towerId) {
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             <button class="subtask-remove-minimal" style="position: absolute; top: 15px; right: 20px; font-size: 2rem; color: ${data.color}; z-index: 100; cursor: pointer;" onclick="renderVoidPantheon()">×</button>
             <div class="zenith-apex-tower">${factionIcon}</div>
+            
+            <div style="position: absolute; top: 22vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+                AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
+            </div>
+
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
                 
                 ${data.deities.map(d => {
@@ -135,9 +144,6 @@ function renderAscensionTower(towerId) {
                         </div>
                     `;
                 }).join('')}
-            </div>
-            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
-                AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
         </div>
     `;
