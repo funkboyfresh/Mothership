@@ -195,8 +195,6 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     document.body.appendChild(modal);
 }
 
-// [ FIXED ] Completely removes nested template literals to prevent syntax crashing
-// [ FIXED ] Completely removes nested template literals to prevent syntax crashing
 function openConstellation(deityKey, towerId, sectorIndex) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 
@@ -210,7 +208,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     if (totalLevel >= sectorStart + 6) localLevel = 6; 
     else if (totalLevel >= sectorStart) localLevel = totalLevel - sectorStart; 
     
-    // [ UPGRADED ] Evaluates if this is the active tier being worked on
+    // Evaluates if this is the active tier being worked on
     const isSectorActive = Math.floor(totalLevel / 6) === sectorIndex;
 
     let completionHtml = '';
@@ -229,14 +227,21 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         
         const nodeColor = isLit ? tower.color : '#444';
         let bg = isLit ? tower.color : '#000';
+        let nodeOpacity = "1";
         
         const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
         const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
         
         if (isWaypoint) {
-            if (isLit) bg = tower.color;
-            else if (isNext) bg = '#333'; // Slightly lighter grey for pending path
-            else bg = '#222'; 
+            if (isLit) {
+                bg = tower.color;
+            } else if (isNext) {
+                // [ UPGRADED ] Waypoints now light up softly when the guide wires do!
+                bg = tower.color;
+                nodeOpacity = "0.6"; // Softened to match the 0.5 opacity of the pending laser wire
+            } else {
+                bg = '#222'; 
+            }
         }
         
         let shadowStr = "";
@@ -245,10 +250,10 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
         } else if (isNext) {
             if (isWaypoint) {
-                // [ UPGRADED ] Soft glow on pending waypoints
-                shadowStr = "box-shadow: 0 0 8px " + tower.color + "88;"; 
+                // Soft glow for the pending waypoint
+                shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
             } else {
-                // [ UPGRADED ] 50% Brighter pulse on the next available interactive node
+                // Brighter 50% extra glow for the clickable target
                 shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
             }
         }
@@ -262,7 +267,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         
         const onClickStr = (!isWaypoint && (isLit || isNext)) ? 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + c.r + ', ' + isNext + ')"' : '';
         
-        return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
+        return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; opacity: ' + nodeOpacity + '; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
     }).join('')).join('');
 
     const modal = document.createElement('div');
@@ -289,7 +294,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     renderSectorConstellation(svg, pathsToRender, tower.color, localLevel, isSectorActive);
 }
 
-// [ UPGRADED ] Now accepts isSectorActive to detect and glow pending wires
+// Now accepts isSectorActive to detect and glow pending wires
 function renderSectorConstellation(svg, pathsToRender, color, localLevel, isSectorActive) {
     if (!svg || !pathsToRender) return;
     svg.innerHTML = ''; 
@@ -319,7 +324,7 @@ function renderSectorConstellation(svg, pathsToRender, color, localLevel, isSect
                     activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
                     svg.appendChild(activeLine);
                 } else if (isSectorActive && localLevel + 1 === next.r) {
-                    // [ UPGRADED ] Soft glow applied to pending wires
+                    // Soft glow applied to pending wires
                     const pendingLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     pendingLine.setAttribute("x1", `${coord.x}%`); 
                     pendingLine.setAttribute("y1", `${coord.y}%`); 
