@@ -228,16 +228,18 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const sector = deity.sectors[sectorIndex];
     const totalLevel = state.pantheon[deityKey] || 0; 
     
-    let nodesLit = 0;
-    if (totalLevel >= (sectorIndex + 1) * 6) nodesLit = 6; 
-    else if (totalLevel >= sectorIndex * 6) nodesLit = totalLevel % 6; 
+    // Calculate local level within THIS specific sector (0 to 6)
+    let localLevel = 0;
+    const sectorStart = sectorIndex * 6;
+    if (totalLevel >= sectorStart + 6) localLevel = 6; 
+    else if (totalLevel >= sectorStart) localLevel = totalLevel - sectorStart; 
     
     let completionHtml = '';
-    if (nodesLit === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
+    if (localLevel === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
         completionHtml = `<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ${tower.color}; color: #000; font-weight: bold;" onclick="openOfferingModal('${deityKey}', ${towerId}, 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>`;
     }
 
-    const pathsToRender = sector.isBranch ? [sector.paths[0].coords, sector.paths[1].coords] : [sector.coords];
+    const pathsToRender = sector.isBranch ? sector.paths : [sector.coords];
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
@@ -250,17 +252,17 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 
                 ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
-                    const isLit = nodesLit > i;
-                    const isNext = (nodesLit === i) && (Math.floor(totalLevel / 6) === sectorIndex);
-                    
-                    // Detects if this is the 6th coordinate (Keystone) in the array
-                    const isKeystone = i === coordsArray.length - 1; 
+                    // [ NEW ] Skip drawing HTML for invisible waypoints (Type 0)
+                    if (c.t === 0) return ''; 
+
+                    const isLit = localLevel >= c.r;
+                    const isNext = (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
+                    const isKeystone = c.t === 2; 
                     
                     const nodeColor = isLit ? tower.color : '#444';
                     const bg = isLit ? tower.color : '#000';
                     const cursor = isNext || isLit ? 'pointer' : 'not-allowed';
                     
-                    // Dynamic styling built with safe string concatenation to avoid syntax crashes
                     const size = isKeystone ? 28 : 18;
                     const shadowStr = isLit || isNext ? "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";" : "";
                     const iconColor = isLit ? '#000' : nodeColor;
@@ -269,7 +271,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                     return `
                     <div class="star-node" 
                          style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: 2px solid ${nodeColor}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; pointer-events: auto; cursor: ${cursor}; ${shadowStr} z-index: ${isKeystone ? 15 : 10}; transition: all 0.3s ease;"
-                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${i+1}, ${isNext})">
+                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${c.r}, ${isNext})">
                          ${iconHtml}
                     </div>
                     `;
@@ -285,10 +287,10 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     document.body.appendChild(modal);
     
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
-    renderSectorConstellation(svg, pathsToRender, tower.color, nodesLit);
+    renderSectorConstellation(svg, pathsToRender, tower.color, localLevel);
 }
 
-function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
+function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
     if (!svg || !pathsToRender) return;
     svg.innerHTML = ''; 
     
@@ -305,7 +307,8 @@ function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
                 baseLine.setAttribute("stroke-width", "2");
                 svg.appendChild(baseLine);
 
-                if (nodesLit > i + 1) {
+                // [ FIXED ] Laser ignites based on the requirement level (c.r), not the array index
+                if (localLevel >= next.r) {
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     activeLine.setAttribute("x1", `${coord.x}%`); 
                     activeLine.setAttribute("y1", `${coord.y}%`); 
@@ -319,4 +322,5 @@ function renderSectorConstellation(svg, pathsToRender, color, nodesLit) {
             }
         });
     });
+}
 }
