@@ -234,7 +234,61 @@ function renderAscensionTower(towerId) {
     container.innerHTML = html;
 }
 
+// [ RESTORED ] The crucial modal rendering function that was accidentally deleted!
+function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex, isNext) {
+    const tower = PANTHEON_DATA[towerId];
+    const deity = tower.deities.find(d => d.k === deityKey);
+    
+    const isMajor = sectorIndex === 'MAJOR';
+    let sector, path, targetNode, isKeystone = false;
+    
+    let cost = 1;
+    let typeText = "MINOR STAR";
+    let buffName = `Star of ${deity.n}`;
+    let buffDesc = deity.starBuff;
 
+    if (isMajor) {
+        cost = 50; typeText = "MAJOR KEYSTONE"; buffName = deity.major.n; buffDesc = deity.major.desc;
+    } else {
+        sector = deity.sectors[sectorIndex];
+        const paths = sector.isBranch ? sector.paths : [{coords: sector.coords}];
+        path = paths[pathIndex];
+        targetNode = path.coords[nodeIndex];
+        isKeystone = targetNode.t === 2;
+
+        if (isKeystone) {
+            cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk;
+        } else if (sector.isBranch) {
+            buffName = path.n; buffDesc = path.p; typeText = `BRANCH STAR // PATH 0${pathIndex + 1}`;
+        }
+    }
+
+    let actionsHtml = '';
+    const secArg = isMajor ? "'MAJOR'" : sectorIndex;
+
+    if (isNext && state.offerings >= cost) {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId}, ${secArg}, ${pathIndex}, ${nodeIndex});">[ SACRIFICE ]</button></div>`;
+    } else if (isNext && state.offerings < cost) {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
+    } else {
+         actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: ${tower.color}; color: ${tower.color};" onclick="this.closest('.modal-overlay').remove()">[ CLOSE COMMUNION ]</button></div>`;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid ${tower.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${tower.color}22; border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: ${tower.color}; text-shadow: 0 0 10px ${tower.color}; margin-top: 0;">${typeText}</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem;">${buffName.toUpperCase()}</h2>
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: ${tower.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
+            </div>
+            ${actionsHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 
 
 
