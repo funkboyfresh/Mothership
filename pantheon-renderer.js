@@ -232,19 +232,17 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                     const isLit = localLevel >= c.r;
                     const isNext = (!isWaypoint) && (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
                     
-                    // Base Colors
                     const nodeColor = isLit ? tower.color : '#444';
                     let bg = isLit ? tower.color : '#000';
                     
-                    // [ UPGRADED ] Visual Rules for Waypoints vs Clickable Stars
-                    const size = isWaypoint ? 10 : (isKeystone ? 28 : 18);
+                    // [ UPGRADED ] Waypoints are now exactly 14px (75% of 18px), solid filled
+                    const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
                     const borderStr = isWaypoint ? 'none' : '2px solid ' + nodeColor;
-                    if (isWaypoint) bg = isLit ? tower.color : '#222'; // Solid filled Waypoints
+                    if (isWaypoint) bg = isLit ? tower.color : '#222'; 
                     
-                    // Glow Dynamics
                     let shadowStr = "";
                     if (isLit || isNext) {
-                        if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; // Softer glow
+                        if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
                         else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
                     }
 
@@ -255,16 +253,15 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                     const iconColor = isLit ? '#000' : nodeColor;
                     const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
                     
-                    // Disable onclick completely for Waypoints
-                    const onClickStr = isWaypoint ? '' : `onclick="openOfferingModal('${deityKey}', ${towerId}, ${c.r}, ${isNext})"`;
+                    const onClickStr = isWaypoint ? '' : \`onclick="openOfferingModal('\${deityKey}', \${towerId}, \${c.r}, \${isNext})"\`;
                     
-                    return `
+                    return \`
                     <div class="star-node" 
-                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: ${borderStr}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; pointer-events: ${pointerEvents}; cursor: ${cursor}; ${shadowStr} z-index: ${zIdx}; transition: all 0.3s ease;"
-                         ${onClickStr}>
-                         ${iconHtml}
+                         style="position: absolute; left: \${c.x}%; top: \${c.y}%; transform: translate(-50%, -50%); border: \${borderStr}; background: \${bg}; width: \${size}px; height: \${size}px; border-radius: 50%; pointer-events: \${pointerEvents}; cursor: \${cursor}; \${shadowStr} z-index: \${zIdx}; transition: all 0.3s ease;"
+                         \${onClickStr}>
+                         \${iconHtml}
                     </div>
-                    `;
+                    \`;
                 }).join('')).join('')}
             </div>
             
