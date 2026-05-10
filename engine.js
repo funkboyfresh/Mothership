@@ -604,4 +604,3 @@ window.addEventListener('click', (e) => {
         toast.classList.remove('show');
     }
 });
-});
