@@ -25,8 +25,9 @@ function renderVoidPantheon() {
         bgStars += getStar(0.7); midStars += getStar(1.1); fgStars += getStar(1.6); 
     }
 
+    // [ FIXED ] Unified the Main Menu icons with the precise SVGs from the faction screens
     const t1Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="37.5,20 62.5,20 80,37.5 80,62.5 62.5,80 37.5,80 20,62.5 20,37.5" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></svg>`;
-    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,45 56,60 50,75 44,60" fill="currentColor" stroke="none" /></svg>`;
+    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,42 56,60 50,78 44,60" fill="currentColor" stroke="none" /></svg>`;
     const t3Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><g transform="rotate(45 50 50)"><path d="M 22 42 L 22 22 L 42 22 M 58 22 L 78 22 L 78 42 M 78 58 L 78 78 L 58 78 M 42 78 L 22 78 L 22 58" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><rect x="30" y="30" width="40" height="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></g></svg>`;
 
     const atmosStyles = `
@@ -101,12 +102,13 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
+        // [ FIXED ] Solid offset inner diamond added for Morvath's core
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
             <polygon points="15.36,30 84.64,30 50,90" stroke="${d1}" ${strokeFmt}/>
             <polygon points="50,30 62,60 50,90 38,60" stroke="${d2}" ${strokeFmt}/>
-            <polygon points="50,45 56,60 50,75 44,60" fill="${d2 === '#000' ? 'transparent' : d2}" stroke="none" />
+            <polygon points="50,42 56,60 50,78 44,60" fill="${d2 === '#000' ? 'transparent' : d2}" stroke="none" />
         </svg>`;
     } else if (towerId === 3) {
         factionSvg = `
@@ -119,19 +121,21 @@ function renderAscensionTower(towerId) {
         </svg>`;
     }
 
-    // [ FIXED ] Calculate the exact visual center of the Zenith SVG to anchor the wires directly to its core
-    const zenithCenterY = `calc(${zenithTop} - 0.75 * ${zenithSize})`;
+    // [ FIXED ] Normalized coordinates mapped directly to each tower to avoid calc() failures in Safari/SVG lines
+    let centerY = '25%';
+    if (towerId === 2) centerY = '30%';
+    if (towerId === 3) centerY = '27%';
 
     // [ FIXED ] Wires completely hidden from DOM until all 3 major keystones are purchased
     let wiresSvgHtml = '';
     if (allMajorsUnlocked) {
         wiresSvgHtml = `
             <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                <line x1="50%" y1="${zenithCenterY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
+                <line x1="50%" y1="${centerY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
                 
-                <line x1="20%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="50%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="80%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="20%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="80%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
             </svg>
         `;
     }
@@ -353,16 +357,15 @@ function openConstellation(deityKey, towerId, sectorIndex) {
 
             const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
             
-            // [ FIXED ] Removed !important tag which was breaking CSS parsers. 
-            // Clicks are now purely managed by Z-index layering.
-            const pointerEvents = isWaypoint ? 'none' : 'auto';
-            const zIdx = isWaypoint ? 5 : (isKeystone ? 115 : 110);
+            // [ FIXED ] Force absolute click interaction parsing using Template Literals
+            const pointerEvents = isWaypoint ? 'none' : 'all';
+            const zIdx = isWaypoint ? 5 : (isKeystone ? 9999 : 9990);
             
             const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
-            const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
+            const iconHtml = isKeystone ? `<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ${iconColor};">${deity.icon}</div>` : '';
             const onClickStr = (!isWaypoint && (isLit || isNext)) ? `onclick="openOfferingModal('${deityKey}', ${towerId}, ${sectorIndex}, ${pIdx}, ${nIdx}, ${isNext})"` : '';
             
-            return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; opacity: 1; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
+            return `<div class="star-node" style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: ${borderStr}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; opacity: 1; pointer-events: ${pointerEvents}; cursor: ${cursor}; ${shadowStr} z-index: ${zIdx}; transition: all 0.3s ease;" ${onClickStr}>${iconHtml}</div>`;
         }).join('');
     }).join('');
 
@@ -386,7 +389,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
     renderSectorConstellation(svg, pathsToRender, tower.color, unlocked, sectorIndex, isSectorActive);
 }
-
 
 function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIndex, isSectorActive) {
     if (!svg || !pathsToRender) return;
