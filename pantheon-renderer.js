@@ -75,7 +75,6 @@ function renderAscensionTower(towerId) {
     if (towerId === 1) zenithSize = '5.4rem'; 
     if (towerId === 3) zenithSize = '6.4rem'; 
 
-    // [ FIXED ] Drops the Abyssal Syndicate icon an extra 1%
     let zenithTop = towerId === 2 ? '34%' : '33%';
 
     let html = `
@@ -90,11 +89,11 @@ function renderAscensionTower(towerId) {
 
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <button class="zoom-btn" style="position: absolute; top: 15px; left: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ RETURN TO THE VOID ]</button>
+            <button class="zoom-btn" style="position: absolute; top: 20px; left: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
             <div class="zenith-apex-tower">${factionIcon}</div>
             
-            <div style="position: absolute; top: 24vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+            <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
 
