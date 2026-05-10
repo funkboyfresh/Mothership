@@ -3,10 +3,8 @@
  * Master visual controller for the Void Pantheon and Ascension Monoliths.
  */
 
-// Renders the Void Pantheon - entry to each of the three skill tree towers.
 function renderVoidPantheon() {
-    // [ FIXED ] Engage the Global Engine Lock
-    window.isViewingPantheon = true;
+    window.isViewingPantheon = true; // Global UI Lock
 
     const container = document.getElementById('view-container');
     const navBar = document.getElementById('nav-bar');
@@ -22,19 +20,15 @@ function renderVoidPantheon() {
             let dynamicOpacity = 0.2 + (verticalBias * 0.8); 
             let dur = (Math.random() * 5 + 3) + 's';
             let del = '-' + (Math.random() * 10) + 's'; 
-            
             return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del}; animation-iteration-count: infinite; transform: translateZ(0); will-change: opacity, transform;"></div>`;
         };
-        bgStars += getStar(0.7); 
-        midStars += getStar(1.1); 
-        fgStars += getStar(1.6); 
+        bgStars += getStar(0.7); midStars += getStar(1.1); fgStars += getStar(1.6); 
     }
 
     const atmosStyles = `
         <style>
             @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
             @keyframes slow-drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
-
             .pantheon-starfield-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
             .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; transform: translateZ(0); will-change: transform, opacity; }
             .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); transform: translateZ(0); will-change: transform; }
@@ -70,6 +64,7 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
@@ -178,10 +173,8 @@ function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex,
     }
 
     let actionsHtml = '';
-    
-    // [ FIXED ] Correctly passes strings for MAJOR and raw integers for Sectors
     const secArg = isMajor ? "'MAJOR'" : sectorIndex;
-    
+
     if (isNext && state.offerings >= cost) {
         actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId}, ${secArg}, ${pathIndex}, ${nodeIndex});">[ SACRIFICE ]</button></div>`;
     } else if (isNext && state.offerings < cost) {
@@ -261,8 +254,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 if (isLit) {
                     bg = tower.color;
                 } else if (isNext) {
-                    // [ PERFECTED IGNITION ] Node fills with light, but uses an inset shadow to look 'charging'
-                    bg = tower.color; 
+                    bg = '#1a1a1a'; 
                     shadowStr = "box-shadow: inset 0 0 6px rgba(0,0,0,0.6), 0 0 8px " + tower.color + ";"; 
                 } else {
                     bg = '#111'; 
@@ -332,6 +324,7 @@ function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIn
                 svg.appendChild(baseLine);
 
                 const nextId = `s${sectorIndex}_x${next.x}_y${next.y}`;
+                const coordId = `s${sectorIndex}_x${coord.x}_y${coord.y}`;
 
                 if (unlocked.includes(nextId)) {
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
