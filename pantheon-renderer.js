@@ -3,8 +3,11 @@
  * Master visual controller for the Void Pantheon and Ascension Monoliths.
  */
 
+// Renders the Void Pantheon - entry to each of the three skill tree towers.
 function renderVoidPantheon() {
+    // [ FIXED ] Engage the Global Engine Lock
     window.isViewingPantheon = true;
+
     const container = document.getElementById('view-container');
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
@@ -59,14 +62,14 @@ function renderVoidPantheon() {
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
             <div class="fg-stellar-nursery"></div>
             <div class="pantheon-starfield-container" style="z-index: 22;">${fgStars}</div>
-            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
+            <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: auto;">
                 OFFERINGS REMAINING: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
-                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px; pointer-events: auto;">[+5 DEV]</button>
+                <button onclick="state.offerings += 5; save(); renderVoidPantheon();" style="background: rgba(255, 255, 255, 0.2); border: 1px solid #fff; color: #fff; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[+5 DEV]</button>
+                <button onclick="window.isViewingPantheon = false; if(document.getElementById('nav-bar')) document.getElementById('nav-bar').style.display = 'flex'; render();" style="background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff3366; font-size: 0.5rem; padding: 2px 6px; cursor: pointer; border-radius: 2px;">[ DISENGAGE PANTHEON ]</button>
             </div>
         </div>
     `;
 }
-
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
