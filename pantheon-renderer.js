@@ -174,8 +174,12 @@ function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex,
     }
 
     let actionsHtml = '';
+    
+    // [ FIXED ] Syntax fix ensuring Sector strings/ints are cleanly passed to engine
+    const secArg = isMajor ? "'MAJOR'" : sectorIndex;
+    
     if (isNext && state.offerings >= cost) {
-        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId}, '${sectorIndex}', ${pathIndex}, ${nodeIndex});">[ SACRIFICE ]</button></div>`;
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId}, ${secArg}, ${pathIndex}, ${nodeIndex});">[ SACRIFICE ]</button></div>`;
     } else if (isNext && state.offerings < cost) {
         actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
     } else {
@@ -220,48 +224,56 @@ function openConstellation(deityKey, towerId, sectorIndex) {
 
     const pathsToRender = sector.isBranch ? sector.paths : [{coords: sector.coords}];
 
-    let starsHtml = pathsToRender.map((pathObj, pIdx) => pathObj.coords.map((c, nIdx) => {
-        const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
-        const isLit = unlocked.includes(nId);
+    let starsHtml = pathsToRender.map((pathObj, pIdx) => {
         
-        let isNext = false;
-        if (!isLit && isSectorActive) {
-            if (nIdx === 0) isNext = true;
-            else {
-                const prevNode = pathObj.coords[nIdx - 1];
-                if (unlocked.includes(`s${sectorIndex}_x${prevNode.x}_y${prevNode.y}`)) isNext = true;
+        // [ FIXED ] Waypoint Targeting - Locates the specific clickable star we need to route energy to
+        let firstUnlitClickableIndex = -1;
+        for (let i = 0; i < pathObj.coords.length; i++) {
+            const c = pathObj.coords[i];
+            const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
+            if (!unlocked.includes(nId) && c.t !== 0) {
+                firstUnlitClickableIndex = i;
+                break;
             }
         }
 
-        const isWaypoint = c.t === 0;
-        const isKeystone = c.t === 2;
-        
-        const nodeColor = isLit ? tower.color : '#444';
-        let bg = isLit ? tower.color : '#000';
-        
-        const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
-        const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
-        
-        let shadowStr = "";
-        if (isWaypoint) {
-            if (isLit) bg = tower.color;
-            else if (isNext) { bg = '#1a1a1a'; shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; } 
-            else bg = '#111'; 
-        } else {
-            if (isLit) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
-            else if (isNext) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
-        }
+        return pathObj.coords.map((c, nIdx) => {
+            const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
+            const isLit = unlocked.includes(nId);
+            
+            // Evaluates path depth perfectly up to the correct clickable target
+            const isNext = !isLit && isSectorActive && (firstUnlitClickableIndex !== -1) && (nIdx <= firstUnlitClickableIndex);
 
-        const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
-        const pointerEvents = isWaypoint ? 'none' : 'auto';
-        const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
-        
-        const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
-        const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
-        const onClickStr = (!isWaypoint && (isLit || isNext)) ? 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + sectorIndex + ', ' + pIdx + ', ' + nIdx + ', ' + isNext + ')"' : '';
-        
-        return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; opacity: 1; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
-    }).join('')).join('');
+            const isWaypoint = c.t === 0;
+            const isKeystone = c.t === 2;
+            
+            const nodeColor = isLit ? tower.color : '#444';
+            let bg = isLit ? tower.color : '#000';
+            
+            const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
+            const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
+            
+            let shadowStr = "";
+            if (isWaypoint) {
+                if (isLit) bg = tower.color;
+                else if (isNext) { bg = '#1a1a1a'; shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; } 
+                else bg = '#111'; 
+            } else {
+                if (isLit) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+                else if (isNext) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
+            }
+
+            const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
+            const pointerEvents = isWaypoint ? 'none' : 'auto';
+            const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
+            
+            const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
+            const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
+            const onClickStr = (!isWaypoint && (isLit || isNext)) ? `onclick="openOfferingModal('${deityKey}', ${towerId}, ${sectorIndex}, ${pIdx}, ${nIdx}, ${isNext})"` : '';
+            
+            return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; opacity: 1; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
+        }).join('');
+    }).join('');
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
@@ -289,6 +301,16 @@ function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIn
     svg.innerHTML = ''; 
     
     pathsToRender.forEach(pathObj => {
+        let firstUnlitClickableIndex = -1;
+        for (let j = 0; j < pathObj.coords.length; j++) {
+            const c = pathObj.coords[j];
+            const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
+            if (!unlocked.includes(nId) && c.t !== 0) {
+                firstUnlitClickableIndex = j;
+                break;
+            }
+        }
+
         pathObj.coords.forEach((coord, i) => {
             if (i < pathObj.coords.length - 1) {
                 const next = pathObj.coords[i + 1];
@@ -298,7 +320,6 @@ function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIn
                 svg.appendChild(baseLine);
 
                 const nextId = `s${sectorIndex}_x${next.x}_y${next.y}`;
-                const coordId = `s${sectorIndex}_x${coord.x}_y${coord.y}`;
 
                 if (unlocked.includes(nextId)) {
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -306,7 +327,7 @@ function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIn
                     activeLine.setAttribute("stroke", color); activeLine.setAttribute("stroke-width", "3"); 
                     activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
                     svg.appendChild(activeLine);
-                } else if (isSectorActive && (i === 0 ? true : unlocked.includes(coordId))) {
+                } else if (isSectorActive && firstUnlitClickableIndex !== -1 && (i + 1) <= firstUnlitClickableIndex) {
                     const pendingLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     pendingLine.setAttribute("x1", `${coord.x}%`); pendingLine.setAttribute("y1", `${coord.y}%`); pendingLine.setAttribute("x2", `${next.x}%`); pendingLine.setAttribute("y2", `${next.y}%`); 
                     pendingLine.setAttribute("stroke", color); pendingLine.setAttribute("stroke-width", "2"); 
