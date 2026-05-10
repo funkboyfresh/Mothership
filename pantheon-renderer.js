@@ -226,25 +226,42 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 
                 ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
-                    if (c.t === 0) return ''; 
-
+                    const isWaypoint = c.t === 0;
+                    const isKeystone = c.t === 2;
+                    
                     const isLit = localLevel >= c.r;
-                    const isNext = (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
-                    const isKeystone = c.t === 2; 
+                    const isNext = (!isWaypoint) && (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
                     
+                    // Base Colors
                     const nodeColor = isLit ? tower.color : '#444';
-                    const bg = isLit ? tower.color : '#000';
-                    const cursor = isNext || isLit ? 'pointer' : 'not-allowed';
+                    let bg = isLit ? tower.color : '#000';
                     
-                    const size = isKeystone ? 28 : 18;
-                    const shadowStr = isLit || isNext ? "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";" : "";
+                    // [ UPGRADED ] Visual Rules for Waypoints vs Clickable Stars
+                    const size = isWaypoint ? 10 : (isKeystone ? 28 : 18);
+                    const borderStr = isWaypoint ? 'none' : '2px solid ' + nodeColor;
+                    if (isWaypoint) bg = isLit ? tower.color : '#222'; // Solid filled Waypoints
+                    
+                    // Glow Dynamics
+                    let shadowStr = "";
+                    if (isLit || isNext) {
+                        if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; // Softer glow
+                        else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+                    }
+
+                    const cursor = (isNext || (isLit && !isWaypoint)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
+                    const pointerEvents = isWaypoint ? 'none' : 'auto';
+                    const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
+                    
                     const iconColor = isLit ? '#000' : nodeColor;
                     const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
                     
+                    // Disable onclick completely for Waypoints
+                    const onClickStr = isWaypoint ? '' : `onclick="openOfferingModal('${deityKey}', ${towerId}, ${c.r}, ${isNext})"`;
+                    
                     return `
                     <div class="star-node" 
-                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: 2px solid ${nodeColor}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; pointer-events: auto; cursor: ${cursor}; ${shadowStr} z-index: ${isKeystone ? 15 : 10}; transition: all 0.3s ease;"
-                         onclick="openOfferingModal('${deityKey}', ${towerId}, ${c.r}, ${isNext})">
+                         style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: ${borderStr}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; pointer-events: ${pointerEvents}; cursor: ${cursor}; ${shadowStr} z-index: ${zIdx}; transition: all 0.3s ease;"
+                         ${onClickStr}>
                          ${iconHtml}
                     </div>
                     `;
