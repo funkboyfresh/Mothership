@@ -71,11 +71,15 @@ function renderAscensionTower(towerId) {
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
     
+    // [ FIXED ] Scaled Celestial Vanguard down 10%
     let zenithSize = '8rem';
     if (towerId === 1) zenithSize = '5.4rem'; 
-    if (towerId === 3) zenithSize = '6.4rem'; 
+    if (towerId === 3) zenithSize = '5.8rem'; 
 
-    let zenithTop = towerId === 2 ? '34%' : '33%';
+    // [ FIXED ] Adjusted top percentages to visually align the center of mass for all 3 icons
+    let zenithTop = '33%'; 
+    if (towerId === 2) zenithTop = '38%'; 
+    if (towerId === 3) zenithTop = '35%'; 
 
     let html = `
         <style>
@@ -89,7 +93,7 @@ function renderAscensionTower(towerId) {
 
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             
-            <button class="zoom-btn" style="position: absolute; top: 20px; left: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
+            <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
             <div class="zenith-apex-tower">${factionIcon}</div>
             
