@@ -91,6 +91,7 @@ function renderAscensionTower(towerId) {
     const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
     if (towerId === 1) {
+        // GENESIS SPHERE: Intersecting Squares, Octagon, Inner Circle
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="${d1}" ${strokeFmt}/>
@@ -98,13 +99,15 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
+        // ABYSSAL SYNDICATE: Outer Circle, Inverted Triangle, The Predator's Eye (Vertical Slit)
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="42" stroke="${d0}" ${strokeFmt}/>
-            <polygon points="50,10 85,70 15,70" stroke="${d1}" ${strokeFmt}/>
-            <polygon points="50,30 65,50 50,70 35,50" stroke="${d2}" ${strokeFmt}/>
+            <polygon points="50,85 15,25 85,25" stroke="${d1}" ${strokeFmt}/>
+            <polygon points="50,25 60,48 50,75 40,48" stroke="${d2}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 3) {
+        // CELESTIAL VANGUARD: Rounded Square, Intersecting Cross, Center Diamond
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <rect x="15" y="15" width="70" height="70" rx="8" stroke="${d2}" ${strokeFmt}/>
@@ -123,7 +126,6 @@ function renderAscensionTower(towerId) {
             }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             
-            /* [ FIXED ] Perfected gradient fade, matching the physical height calculation */
             .monolith-spire-internal { 
                 position: absolute; bottom: -20vh; left: 0; width: 100%; 
                 border-style: solid; border-width: 0 1px 0 1px; 
@@ -136,81 +138,7 @@ function renderAscensionTower(towerId) {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%); 
             }
             
-            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
-            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
-            .minor-keystone-node:hover { transform: scale(1.3); }
-        </style>
-
-        <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
-            
-            <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
-
-            <div class="zenith-apex-tower">${factionSvg}</div>
-            
-            <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
-                AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
-            </div>
-
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
-                
-                ${data.deities.map(d => {
-                    const progress = getPantheonProgress(d.k, towerId); 
-                    const currentSector = Math.min(Math.floor(progress / 6), 4);
-                    
-                    // [ FIXED ] Adjusted the base height from 60 to 30 so the physical top tracks the actual nodes
-                    const spireHeight = 30 + (progress / 30) * 52; 
-                    
-                    const isMaxed = checkMajor(d.k) !== '#000';
-
-                    return `
-                        <div class="tower-wrapper" style="--t-color: ${data.color};">
-                            
-                            <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 20vh);"></div>
-                            <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
-                                
-                                <div style="text-align: center; margin-bottom: 10px;">
-                                    <div class="keystone-icon" 
-                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${progress === 30})" 
-                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
-                                         ${d.icon}
-                                    </div>
-                                </div>
-
-                                <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
-                                    <div style="position: absolute; width: 2px; height: 100%; background: #333; z-index: 1;"></div>
-                                    <div style="position: absolute; bottom: 0; width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
-                                    
-                                    ${[0, 1, 2, 3, 4].map(i => {
-                                        const isCompleted = progress >= (i + 1) * 6;
-                                        const isActive = currentSector === i;
-                                        const nodeColor = isCompleted || isActive ? data.color : '#444';
-                                        const bg = isCompleted ? data.color : '#000';
-                                        const glow = isCompleted || isActive ? `box-shadow: 0 0 15px ${data.color};` : '';
-                                        
-                                        return `
-                                            <div class="minor-keystone-node" 
-                                                 onclick="openConstellation('${d.k}', ${towerId}, ${i})"
-                                                 style="position: relative; z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-
-                                <div style="text-align: center; margin-top: 15px; margin-bottom: 50px;">
-                                    <div style="color: ${data.color}; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-shadow: 0 0 10px ${data.color}; margin-bottom: 4px;">
-                                        ${d.n.toUpperCase()}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        </div>
-    `;
-    container.innerHTML = html;
-}
-
+            .keystone-icon { font-size: 3.5rem; transition
 
 function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
