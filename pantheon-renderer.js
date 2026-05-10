@@ -77,41 +77,53 @@ function renderAscensionTower(towerId) {
     if (towerId === 2) zenithTop = '38%'; 
     if (towerId === 3) zenithTop = '35%'; 
 
-    // --- [ NEW ] VECTOR GRAPHIC INFILL LOGIC ---
-    // Checks if the MAJOR keystone is unlocked (Progress === 30) for each deity
-    const d0 = getPantheonProgress(data.deities[0].k, towerId) === 30 ? data.color : 'transparent';
-    const d1 = getPantheonProgress(data.deities[1].k, towerId) === 30 ? data.color : 'transparent';
-    const d2 = getPantheonProgress(data.deities[2].k, towerId) === 30 ? data.color : 'transparent';
+    // --- [ FIXED ] MAJOR KEYSTONE INFILL LOGIC ---
+    // Strictly checks if the 'MAJOR' string exists in the save file
+    const checkMajor = (dKey) => {
+        let u = state.pantheon[dKey] || [];
+        if (typeof u === 'number') u = migratePantheonSave(dKey, towerId, u);
+        return u.includes('MAJOR') ? data.color : '#000';
+    };
+
+    const d0 = checkMajor(data.deities[0].k);
+    const d1 = checkMajor(data.deities[1].k);
+    const d2 = checkMajor(data.deities[2].k);
 
     let factionSvg = '';
-    const strokeFmt = `stroke="#000" stroke-width="4" stroke-linejoin="round"`;
+    const strokeFmt = `fill="none" stroke-width="8" stroke-linejoin="round"`;
     
     if (towerId === 1) {
         // GENESIS SPHERE: 
-        // d1 (Aethelgard): Fills the 8 outer triangles of the intersecting squares
-        // d2 (Valerium): Fills the central octagon negative space (punched out for the circle)
-        // d0 (Kaelen-Tor): Fills the innermost floating circle
+        // d1 (Aethelgard): Traces the 8 outer triangles of the intersecting squares
+        // d2 (Valerium): Traces the central octagon negative space
+        // d0 (Kaelen-Tor): Traces the innermost floating circle
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <path d="M 37.5 20 L 50 7.5 L 62.5 20 Z M 80 37.5 L 92.5 50 L 80 62.5 Z M 62.5 80 L 50 92.5 L 37.5 80 Z M 20 62.5 L 7.5 50 L 20 37.5 Z M 20 20 L 37.5 20 L 20 37.5 Z M 80 20 L 80 37.5 L 62.5 20 Z M 80 80 L 62.5 80 L 80 62.5 Z M 20 80 L 20 62.5 L 37.5 80 Z" fill="${d1}" ${strokeFmt}/>
-            <path d="M 20 37.5 L 20 62.5 L 37.5 80 L 62.5 80 L 80 62.5 L 80 37.5 L 62.5 20 L 37.5 20 Z M 50 38 A 12 12 0 0 1 50 62 A 12 12 0 0 1 50 38 Z" fill-rule="evenodd" fill="${d2}" ${strokeFmt}/>
-            <circle cx="50" cy="50" r="12" fill="${d0}" ${strokeFmt}/>
+            <path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="${d1}" ${strokeFmt}/>
+            <polygon points="37.5,20 62.5,20 80,37.5 80,62.5 62.5,80 37.5,80 20,62.5 20,37.5" stroke="${d2}" ${strokeFmt}/>
+            <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // ABYSSAL SYNDICATE: Outer Circle, Inner Triangle, Center Diamond
+        // ABYSSAL SYNDICATE: 
+        // d0 (Syraxis): Outer Circle 
+        // d1 (Ignis-Kor): Inner Triangle
+        // d2 (Morvath): Center Diamond
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <path d="M 50 5 A 45 45 0 1 1 49.9 5 Z M 50 15 L 15 75 L 85 75 Z" fill-rule="evenodd" fill="${d0}" ${strokeFmt}/>
-            <path d="M 50 15 L 85 75 L 15 75 Z M 50 35 L 35 50 L 50 65 L 65 50 Z" fill-rule="evenodd" fill="${d1}" ${strokeFmt}/>
-            <polygon points="50,35 65,50 50,65 35,50" fill="${d2}" ${strokeFmt}/>
+            <circle cx="50" cy="50" r="42" stroke="${d0}" ${strokeFmt}/>
+            <polygon points="50,10 85,70 15,70" stroke="${d1}" ${strokeFmt}/>
+            <polygon points="50,30 65,50 50,70 35,50" stroke="${d2}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 3) {
-        // CELESTIAL VANGUARD: Outer Square, Intersecting Cross, Center Diamond
+        // CELESTIAL VANGUARD: 
+        // d2 (Xerxes): Outer Square 
+        // d1 (Luminara): Intersecting Cross 
+        // d0 (Ragnarath): Center Diamond
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <path d="M 23 15 L 77 15 A 8 8 0 0 1 85 23 L 85 77 A 8 8 0 0 1 77 85 L 23 85 A 8 8 0 0 1 15 77 L 15 23 A 8 8 0 0 1 23 15 Z M 20 20 L 20 30 L 40 50 L 20 70 L 20 80 L 30 80 L 50 60 L 70 80 L 80 80 L 80 70 L 60 50 L 80 30 L 80 20 L 70 20 L 50 40 L 30 20 Z" fill-rule="evenodd" fill="${d2}" ${strokeFmt}/>
-            <path d="M 20 20 L 30 20 L 50 40 L 70 20 L 80 20 L 80 30 L 60 50 L 80 70 L 80 80 L 70 80 L 50 60 L 30 80 L 20 80 L 20 70 L 40 50 L 20 30 Z M 50 35 L 35 50 L 50 65 L 65 50 Z" fill-rule="evenodd" fill="${d1}" ${strokeFmt}/>
-            <polygon points="50,35 65,50 50,65 35,50" fill="${d0}" ${strokeFmt}/>
+            <rect x="15" y="15" width="70" height="70" rx="8" stroke="${d2}" ${strokeFmt}/>
+            <polygon points="20,20 30,20 50,40 70,20 80,20 80,30 60,50 80,70 80,80 70,80 50,60 30,80 20,80 20,70 40,50 20,30" stroke="${d1}" ${strokeFmt}/>
+            <polygon points="50,35 65,50 50,65 35,50" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     }
 
@@ -120,7 +132,6 @@ function renderAscensionTower(towerId) {
             .zenith-apex-tower { 
                 position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -125%); 
                 font-size: ${zenithSize}; z-index: 16; pointer-events: none; 
-                /* [ FIXED ] Swapped text-shadow for SVG drop-shadow to create the back-lit silhouette effect */
                 filter: drop-shadow(0 0 15px ${data.color}) drop-shadow(0 0 40px ${data.color}88); 
                 transition: filter 0.8s ease;
             }
@@ -147,7 +158,7 @@ function renderAscensionTower(towerId) {
                     const progress = getPantheonProgress(d.k, towerId); 
                     const currentSector = Math.min(Math.floor(progress / 6), 4);
                     const spireHeight = 60 + (progress / 30) * 22; 
-                    const isMaxed = progress >= 30;
+                    const isMaxed = checkMajor(d.k) !== '#000';
 
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
