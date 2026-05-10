@@ -226,7 +226,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
 
     let starsHtml = pathsToRender.map((pathObj, pIdx) => {
         
-        // [ FIXED ] Waypoint Targeting - Locates the specific clickable star we need to route energy to
         let firstUnlitClickableIndex = -1;
         for (let i = 0; i < pathObj.coords.length; i++) {
             const c = pathObj.coords[i];
@@ -241,7 +240,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
             const isLit = unlocked.includes(nId);
             
-            // Evaluates path depth perfectly up to the correct clickable target
             const isNext = !isLit && isSectorActive && (firstUnlitClickableIndex !== -1) && (nIdx <= firstUnlitClickableIndex);
 
             const isWaypoint = c.t === 0;
@@ -254,13 +252,23 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
             
             let shadowStr = "";
+
             if (isWaypoint) {
-                if (isLit) bg = tower.color;
-                else if (isNext) { bg = '#1a1a1a'; shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; } 
-                else bg = '#111'; 
+                if (isLit) {
+                    bg = tower.color;
+                } else if (isNext) {
+                    // [ PERFECTED IGNITION ] Node fills with light, but uses an inset shadow to look 'charging'
+                    bg = tower.color; 
+                    shadowStr = "box-shadow: inset 0 0 6px rgba(0,0,0,0.6), 0 0 8px " + tower.color + ";"; 
+                } else {
+                    bg = '#111'; 
+                }
             } else {
-                if (isLit) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
-                else if (isNext) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
+                if (isLit) {
+                    shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+                } else if (isNext) {
+                    shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
+                }
             }
 
             const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
