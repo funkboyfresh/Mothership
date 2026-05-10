@@ -68,8 +68,6 @@ function renderVoidPantheon() {
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
-    const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
-    const factionIcon = factionIcons[towerId] || '◬';
     
     let zenithSize = '8rem';
     if (towerId === 1) zenithSize = '5.4rem'; 
@@ -79,56 +77,47 @@ function renderAscensionTower(towerId) {
     if (towerId === 2) zenithTop = '38%'; 
     if (towerId === 3) zenithTop = '35%'; 
 
-    // --- [ NEW ] DIRECTIONAL GLOW LOGIC ---
-    // Converts the faction's hex color into raw RGB for opacity blending
-    const hexToRGB = (hex) => {
-        let r = parseInt(hex.slice(1, 3), 16);
-        let g = parseInt(hex.slice(3, 5), 16);
-        let b = parseInt(hex.slice(5, 7), 16);
-        return `${r}, ${g}, ${b}`;
-    };
-    const rgbColor = hexToRGB(data.color);
+    // --- [ NEW ] VECTOR GRAPHIC INFILL LOGIC ---
+    // Checks if the MAJOR keystone is unlocked (Progress === 30) for each deity
+    const d0 = getPantheonProgress(data.deities[0].k, towerId) === 30 ? data.color : '#000';
+    const d1 = getPantheonProgress(data.deities[1].k, towerId) === 30 ? data.color : '#000';
+    const d2 = getPantheonProgress(data.deities[2].k, towerId) === 30 ? data.color : '#000';
 
-    // Apply a very faint ambient baseline glow so it isn't completely pitch black
-    let shadowLayers = [`0 0 15px rgba(${rgbColor}, 0.15)`]; 
+    let factionSvg = '';
     
-    data.deities.forEach((d, idx) => {
-        const progress = getPantheonProgress(d.k, towerId);
-        const intensity = Math.min(progress / 30, 1); // Scales from 0.0 (empty) to 1.0 (maxed)
-
-        if (intensity > 0) {
-            // Map the 3 deities to 3 distinct angles behind the icon
-            let x = 0, y = 0;
-            if (idx === 0) { x = 0; y = -45; }       // Top Core
-            else if (idx === 1) { x = 40; y = 25; }  // Bottom Right Core
-            else if (idx === 2) { x = -40; y = 25; } // Bottom Left Core
-
-            const spreadOuter = 40 + (intensity * 40); // Glow blooms outward as you level up
-            const spreadInner = 15 + (intensity * 15); // Core gets intensely bright
-            
-            const alphaOuter = (intensity * 0.6).toFixed(2); 
-            const alphaInner = (intensity * 1.0).toFixed(2); 
-
-            shadowLayers.push(`${x}px ${y}px ${spreadOuter}px rgba(${rgbColor}, ${alphaOuter})`);
-            shadowLayers.push(`${x * 0.4}px ${y * 0.4}px ${spreadInner}px rgba(${rgbColor}, ${alphaInner})`);
-        }
-    });
-
-    const zenithShadows = shadowLayers.join(', ');
+    if (towerId === 1) {
+        // GENESIS SPHERE: Star (Aethelgard - d1), Hexagon (Valerium - d2), Circle (Kaelen-Tor - d0)
+        factionSvg = `
+        <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
+            <path d="M50 0 L60 25 L85 15 L75 40 L100 50 L75 60 L85 85 L60 75 L50 100 L40 75 L15 85 L25 60 L0 50 L25 40 L15 15 L40 25 Z" fill="${d1}" stroke="${data.color}" stroke-width="1.5"/>
+            <polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="${d2}" stroke="${data.color}" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="16" fill="${d0}" stroke="${data.color}" stroke-width="1.5"/>
+        </svg>`;
+    } else if (towerId === 2) {
+        // ABYSSAL SYNDICATE: Circle (Syraxis - d0), Triangle (Ignis-Kor - d1), Diamond (Morvath - d2)
+        factionSvg = `
+        <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
+            <circle cx="50" cy="50" r="48" fill="${d0}" stroke="${data.color}" stroke-width="1.5"/>
+            <polygon points="50,15 85,75 15,75" fill="${d1}" stroke="${data.color}" stroke-width="1.5"/>
+            <polygon points="50,40 65,55 50,70 35,55" fill="${d2}" stroke="${data.color}" stroke-width="1.5"/>
+        </svg>`;
+    } else if (towerId === 3) {
+        // CELESTIAL VANGUARD: Square (Xerxes - d2), Cross (Luminara - d1), Diamond (Ragnarath - d0)
+        factionSvg = `
+        <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
+            <rect x="15" y="15" width="70" height="70" rx="8" fill="${d2}" stroke="${data.color}" stroke-width="1.5"/>
+            <polygon points="20,20 30,20 50,40 70,20 80,20 80,30 60,50 80,70 80,80 70,80 50,60 30,80 20,80 20,70 40,50 20,30" fill="${d1}" stroke="${data.color}" stroke-width="1.5"/>
+            <polygon points="50,35 65,50 50,65 35,50" fill="${d0}" stroke="${data.color}" stroke-width="1.5"/>
+        </svg>`;
+    }
 
     let html = `
         <style>
             .zenith-apex-tower { 
-                position: absolute; 
-                top: ${zenithTop}; 
-                left: 50%; 
-                transform: translate(-50%, -125%); 
-                font-size: ${zenithSize}; 
-                color: #000; 
-                z-index: 16; 
-                pointer-events: none; 
-                text-shadow: ${zenithShadows}; 
-                transition: text-shadow 0.8s ease; 
+                position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -125%); 
+                font-size: ${zenithSize}; z-index: 16; pointer-events: none; 
+                filter: drop-shadow(0 0 20px ${data.color}) drop-shadow(0 0 40px ${data.color}88); 
+                transition: filter 0.8s ease;
             }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
@@ -141,7 +130,7 @@ function renderAscensionTower(towerId) {
             
             <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
-            <div class="zenith-apex-tower">${factionIcon}</div>
+            <div class="zenith-apex-tower">${factionSvg}</div>
             
             <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
