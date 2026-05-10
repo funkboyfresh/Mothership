@@ -123,17 +123,17 @@ function renderAscensionTower(towerId) {
             }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             
-            /* [ RESTORED ] Smooth mask fade, anchored bottom, and 70% opacity reversed gradient */
+            /* [ FIXED ] Perfected gradient fade, matching the physical height calculation */
             .monolith-spire-internal { 
                 position: absolute; bottom: -20vh; left: 0; width: 100%; 
                 border-style: solid; border-width: 0 1px 0 1px; 
                 border-image: linear-gradient(to bottom, transparent 0%, var(--t-color) 100%) 1; 
-                background: linear-gradient(to bottom, #000000 0%, var(--t-color) 100%); 
+                background: linear-gradient(to bottom, transparent 0%, var(--t-color) 100%); 
                 opacity: 0.7; 
                 box-shadow: 0 0 25px -5px var(--t-color); 
                 transition: height 0.5s ease, filter 0.3s; z-index: 5; 
-                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%); 
-                mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%); 
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%); 
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%); 
             }
             
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
@@ -156,7 +156,10 @@ function renderAscensionTower(towerId) {
                 ${data.deities.map(d => {
                     const progress = getPantheonProgress(d.k, towerId); 
                     const currentSector = Math.min(Math.floor(progress / 6), 4);
-                    const spireHeight = 60 + (progress / 30) * 22; 
+                    
+                    // [ FIXED ] Adjusted the base height from 60 to 30 so the physical top tracks the actual nodes
+                    const spireHeight = 30 + (progress / 30) * 52; 
+                    
                     const isMaxed = checkMajor(d.k) !== '#000';
 
                     return `
