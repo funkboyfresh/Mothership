@@ -25,6 +25,10 @@ function renderVoidPantheon() {
         bgStars += getStar(0.7); midStars += getStar(1.1); fgStars += getStar(1.6); 
     }
 
+    const t1Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="37.5,20 62.5,20 80,37.5 80,62.5 62.5,80 37.5,80 20,62.5 20,37.5" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></svg>`;
+    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,45 56,60 50,75 44,60" fill="currentColor" stroke="none" /></svg>`;
+    const t3Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><g transform="rotate(45 50 50)"><path d="M 22 42 L 22 22 L 42 22 M 58 22 L 78 22 L 78 42 M 78 58 L 78 78 L 58 78 M 42 78 L 22 78 L 22 58" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><rect x="30" y="30" width="40" height="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></g></svg>`;
+
     const atmosStyles = `
         <style>
             @keyframes fog-breathe { 0% { opacity: 0.6; transform: scale(1) translateY(0); } 50% { opacity: 0.9; transform: scale(1.05) translateY(-2%); } 100% { opacity: 0.6; transform: scale(1) translateY(0); } }
@@ -39,7 +43,10 @@ function renderVoidPantheon() {
             .tower-content { position: relative; z-index: 20; padding-bottom: 10px; display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5vh); }
             .spire-text { height: 380px; display: flex; align-items: flex-end; color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 15px var(--t-color); white-space: nowrap; }
             .tower-icon-wrapper { height: 80px; display: flex; align-items: center; justify-content: center; margin-top: 15px; }
-            .tower-icon { color: #fff; text-shadow: 0 0 10px #fff, 0 0 30px var(--t-color), 0 0 60px var(--t-color); }
+            
+            /* [ FIXED ] Flawless SVG text-shadow translation using drop-shadow */
+            .tower-icon { color: #fff; display: flex; align-items: center; justify-content: center; }
+            .tower-icon-svg { width: 1em; height: 1em; overflow: visible; filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 20px var(--t-color)) drop-shadow(0 0 40px var(--t-color)); }
         </style>
     `;
 
@@ -49,9 +56,9 @@ function renderVoidPantheon() {
             <div class="bg-stellar-nursery"></div>
             <div class="zenith-apex-void">◬</div>
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
-                <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">۞</div></div></div></div>
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">⎊</div></div></div></div>
-                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">❖</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">${t2Icon}</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t3Icon}</div></div></div></div>
             </div>
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
             <div class="fg-stellar-nursery"></div>
@@ -69,7 +76,6 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    // [ FIXED ] Unified Scaling and Position. All 3 artifacts now share exact dimensions.
     let zenithSize = '5.4rem'; 
     let zenithTop = '33%'; 
 
@@ -83,11 +89,13 @@ function renderAscensionTower(towerId) {
     const d1 = checkMajor(data.deities[1].k);
     const d2 = checkMajor(data.deities[2].k);
 
+    const allMajorsUnlocked = (d0 !== '#000' && d1 !== '#000' && d2 !== '#000');
+    const ascensionUnlocked = state.pantheon['tower_' + towerId + '_ascension'];
+
     let factionSvg = '';
     const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
     if (towerId === 1) {
-        // GENESIS SPHERE
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="${d1}" ${strokeFmt}/>
@@ -95,15 +103,15 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // [ FIXED ] ABYSSAL SYNDICATE: Inscribed Math
+        // [ FIXED ] Solid offset inner diamond added for Morvath's core
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
             <polygon points="15.36,30 84.64,30 50,90" stroke="${d1}" ${strokeFmt}/>
             <polygon points="50,30 62,60 50,90 38,60" stroke="${d2}" ${strokeFmt}/>
+            <polygon points="50,45 56,60 50,75 44,60" fill="${d2 === '#000' ? 'transparent' : d2}" stroke="none" />
         </svg>`;
     } else if (towerId === 3) {
-        // [ FIXED ] CELESTIAL VANGUARD: 45-Degree Rotated Lattice
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <g transform="rotate(45 50 50)">
@@ -118,7 +126,8 @@ function renderAscensionTower(towerId) {
         <style>
             .zenith-apex-tower { 
                 position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -125%); 
-                font-size: ${zenithSize}; z-index: 16; pointer-events: none; 
+                font-size: ${zenithSize}; z-index: 16; 
+                pointer-events: ${allMajorsUnlocked ? 'auto' : 'none'}; cursor: ${allMajorsUnlocked ? 'pointer' : 'default'};
                 filter: drop-shadow(0 0 15px ${data.color}) drop-shadow(0 0 40px ${data.color}88); 
                 transition: filter 0.8s ease;
             }
@@ -136,8 +145,8 @@ function renderAscensionTower(towerId) {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%); 
             }
             
-            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
-            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
+            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; position: relative; z-index: 25; }
+            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 35; cursor: pointer; transition: all 0.3s ease; }
             .minor-keystone-node:hover { transform: scale(1.3); }
         </style>
 
@@ -145,7 +154,15 @@ function renderAscensionTower(towerId) {
             
             <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
-            <div class="zenith-apex-tower">${factionSvg}</div>
+            <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                <line x1="50%" y1="${zenithTop}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
+                
+                <line x1="20%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d0 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d0 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
+                <line x1="50%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d1 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d1 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
+                <line x1="80%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d2 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d2 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
+            </svg>
+
+            <div class="zenith-apex-tower" ${allMajorsUnlocked ? `onclick="openAscensionModal(${towerId}, ${!!ascensionUnlocked})"` : ''}>${factionSvg}</div>
             
             <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
@@ -206,6 +223,52 @@ function renderAscensionTower(towerId) {
         </div>
     `;
     container.innerHTML = html;
+}
+
+
+
+
+// [ NEW FUNCTION ] Handles purchasing the Faction Ascensions directly from the Zenith Core
+function openAscensionModal(towerId, isUnlocked) {
+    const data = PANTHEON_DATA[towerId];
+    
+    let buffName = "";
+    let buffDesc = "";
+    
+    if (towerId === 1) {
+        buffName = "THE GENESIS ENGINE";
+        buffDesc = "Integrates Forge, Time, and Shield mechanics. Passively increases all Scrap yields by 25% and reduces Energy action costs by 2.";
+    } else if (towerId === 2) {
+        buffName = "THE ABYSSAL EYE";
+        buffDesc = "Synchronizes Shadow, Reality, and Hunting mechanics. Bounty payouts and Offline generation permanently increased by 50%.";
+    } else if (towerId === 3) {
+        buffName = "THE OMEGA VANGUARD";
+        buffDesc = "Fuses Kinetic, Light, and Gravity mechanics. Boss damage is doubled and Shields absorb 25% more kinetic force.";
+    }
+
+    let actionsHtml = '';
+    if (isUnlocked) {
+        actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: ${data.color}; color: ${data.color};" onclick="this.closest('.modal-overlay').remove()">[ COMMUNION ESTABLISHED ]</button></div>`;
+    } else if (state.offerings >= 150) {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES 150 OFFERINGS</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button><button class="success-btn" style="flex: 1; background: ${data.color}; color: #000; box-shadow: 0 0 15px ${data.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); state.offerings -= 150; state.pantheon['tower_' + ${towerId} + '_ascension'] = true; save(); renderAscensionTower(${towerId});">[ ASCEND ]</button></div>`;
+    } else {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES 150)</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid ${data.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${data.color}22; border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: ${data.color}; text-shadow: 0 0 10px ${data.color}; margin-top: 0;">FACTION ASCENSION</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem;">${buffName}</h2>
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: ${data.color}; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">${buffDesc}</p>
+            </div>
+            ${actionsHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
 
 
@@ -281,8 +344,9 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             }
 
             const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
-            const pointerEvents = isWaypoint ? 'none' : 'auto';
-            const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
+            // [ FIXED ] Expliclty force auto pointer events so nodes are absolutely clickable over background SVGs
+            const pointerEvents = isWaypoint ? 'none' : 'auto !important';
+            const zIdx = isWaypoint ? 5 : (isKeystone ? 115 : 110);
             
             const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
             const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
@@ -312,6 +376,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
     renderSectorConstellation(svg, pathsToRender, tower.color, unlocked, sectorIndex, isSectorActive);
 }
+
 
 function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIndex, isSectorActive) {
     if (!svg || !pathsToRender) return;
