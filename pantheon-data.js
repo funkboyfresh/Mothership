@@ -7,16 +7,27 @@ const PANTHEON_DATA = {
                 k:'kaelenTor', n:'Kaelen-Tor', title: 'The Star-Forge', icon: '◉',
                 starBuff: "Micro-Forge: Permanently increases baseline Scrap yield by +0.5% per star activated.",
                 sectors: [
-                    { id: 1, name: "Ignition Core", keystone: "Spark of Genesis", coords: [{x:50,y:20}, {x:75,y:50}, {x:50,y:80}, {x:25,y:50}, {x:50,y:30}, {x:50,y:50}], perk: "MAGNETISM: +2% Base Yields" },
-                    { id: 2, name: "Pulsar Hammer", keystone: "Rhythmic Strike", coords: [{x:50,y:90}, {x:50,y:50}, {x:30,y:40}, {x:70,y:40}, {x:50,y:30}, {x:50,y:15}], perk: "TEMPERING: Forge failure rate -5%" },
+                    { id: 1, name: "Ignition Core", keystone: "Spark of Genesis", isBranch: false, coords: [{x:50,y:80,r:1,t:1}, {x:35,y:65,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:65,y:35,r:4,t:0}, {x:50,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}], perk: "MAGNETISM: +2% Base Yields" },
+                    { id: 2, name: "Pulsar Hammer", keystone: "Rhythmic Strike", isBranch: false, coords: [{x:20,y:70,r:1,t:1}, {x:50,y:80,r:2,t:0}, {x:80,y:70,r:3,t:1}, {x:65,y:40,r:4,t:0}, {x:50,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "TEMPERING: Forge failure rate -5%" },
                     { id: 3, name: "The Great Split", keystone: "Thermal Expansion", isBranch: true,
                         paths: [
-                            { id: 1, n: "Alpha: Cold-Forging", perk: "Offerings cost -10% Scrap", coords: [{x:50,y:80}, {x:50,y:60}, {x:30,y:40}, {x:15,y:20}, {x:40,y:15}, {x:20,y:15}] },
-                            { id: 2, n: "Omega: Over-Heating", perk: "Bonus Yields +10%", coords: [{x:50,y:80}, {x:50,y:60}, {x:70,y:40}, {x:85,y:20}, {x:60,y:15}, {x:80,y:15}] }
-                        ]
+                            [{x:50,y:80,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "SPLIT DYNAMICS: Advanced Forging Mechanics."
                     },
-                    { id: 4, name: "Anvil Peak", keystone: "Structural Reinforcement", coords: [{x:20,y:80}, {x:35,y:50}, {x:50,y:30}, {x:65,y:50}, {x:80,y:80}, {x:50,y:15}], perk: "REINFORCEMENT: Scrap payout +5%" },
-                    { id: 5, name: "Solar Crucible", keystone: "Heart of the Star", coords: [{x:20,y:30}, {x:30,y:70}, {x:50,y:85}, {x:70,y:70}, {x:80,y:30}, {x:50,y:50}], perk: "FORGE-MASTER: +1% Critical Craft chance" }
+                    { id: 4, name: "Anvil Peak", keystone: "Structural Reinforcement", isBranch: true, 
+                        paths: [
+                            [{x:50,y:90,r:1,t:1}, {x:20,y:75,r:2,t:0}, {x:20,y:55,r:3,t:1}, {x:20,y:35,r:4,t:0}, {x:35,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:80,y:75,r:2,t:0}, {x:80,y:55,r:3,t:1}, {x:80,y:35,r:4,t:0}, {x:65,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "REINFORCEMENT: Scrap payout +5%" 
+                    },
+                    { id: 5, name: "Solar Crucible", keystone: "Heart of the Star", isBranch: true,
+                        paths: [
+                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "FORGE-MASTER: +1% Critical Craft chance" 
+                    }
                 ],
                 major: { n: "THE MIDAS DRIVE", cost: 50, desc: "Convert 10% of lifetime Energy into a massive one-time Scrap payout." }
             },
@@ -24,16 +35,27 @@ const PANTHEON_DATA = {
                 k:'aethelgard', n:'Aethelgard', title: 'The Weaver of Eons', icon: '✷',
                 starBuff: "Temporal Shard: Mission warning alerts trigger 5 minutes earlier per star activated.",
                 sectors: [
-                    { id: 1, name: "Temporal Pulse", keystone: "First Breath", coords: [{x:15,y:50}, {x:30,y:20}, {x:50,y:80}, {x:70,y:20}, {x:85,y:50}, {x:50,y:50}], perk: "VELOCITY: +1% Scrap on fast clears" },
-                    { id: 2, name: "The Hourglass", keystone: "Falling Sands", coords: [{x:25,y:25}, {x:75,y:25}, {x:50,y:50}, {x:25,y:75}, {x:75,y:75}, {x:50,y:85}], perk: "SAND-SHIFT: Warning alerts +2h" },
+                    { id: 1, name: "Temporal Pulse", keystone: "First Breath", isBranch: false, coords: [{x:10,y:50,r:1,t:1}, {x:30,y:20,r:2,t:0}, {x:50,y:80,r:3,t:1}, {x:70,y:20,r:4,t:0}, {x:90,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "VELOCITY: +1% Scrap on fast clears" },
+                    { id: 2, name: "The Hourglass", keystone: "Falling Sands", isBranch: false, coords: [{x:25,y:25,r:1,t:1}, {x:75,y:25,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:25,y:75,r:4,t:0}, {x:75,y:75,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "SAND-SHIFT: Warning alerts +2h" },
                     { id: 3, name: "Timeline Fork", keystone: "The Choice", isBranch: true,
                         paths: [
-                            { id: 1, n: "Alpha: Dilated Time", perk: "Target timers -10% slower", coords: [{x:50,y:15}, {x:50,y:35}, {x:30,y:50}, {x:15,y:65}, {x:30,y:80}, {x:15,y:90}] },
-                            { id: 2, n: "Omega: Accelerated Eons", perk: "Energy generation +5%", coords: [{x:50,y:15}, {x:50,y:35}, {x:70,y:50}, {x:85,y:65}, {x:70,y:80}, {x:85,y:90}] }
-                        ]
+                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:15,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}],
+                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:85,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}]
+                        ], perk: "CHRONO-SPLIT: Time mechanics."
                     },
-                    { id: 4, name: "The Pendulum", keystone: "Momentum Swing", coords: [{x:50,y:15}, {x:50,y:40}, {x:30,y:60}, {x:50,y:80}, {x:70,y:60}, {x:80,y:80}], perk: "MOMENTUM: Consecutive tasks grant +1% Energy" },
-                    { id: 5, name: "Infinity Knot", keystone: "Eternal Loop", coords: [{x:30,y:30}, {x:70,y:70}, {x:70,y:30}, {x:30,y:70}, {x:20,y:50}, {x:50,y:50}], perk: "ETERNAL LOOP: Targets have 5% chance to auto-respawn" }
+                    { id: 4, name: "The Pendulum", keystone: "Momentum Swing", isBranch: true,
+                        paths: [
+                            [{x:50,y:85,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:35,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:40,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:85,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:65,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:60,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "MOMENTUM: Consecutive tasks grant +1% Energy" 
+                    },
+                    { id: 5, name: "Infinity Knot", keystone: "Eternal Loop", isBranch: true,
+                        paths: [
+                            [{x:50,y:90,r:1,t:1}, {x:15,y:70,r:2,t:0}, {x:15,y:40,r:3,t:1}, {x:15,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:85,y:70,r:2,t:0}, {x:85,y:40,r:3,t:1}, {x:85,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "ETERNAL LOOP: Targets have 5% chance to auto-respawn" 
+                    }
                 ],
                 major: { n: "CHRONOS SHIFT", cost: 50, desc: "Instantly advance Pilot Level by 1 without filling Capacitor." }
             },
@@ -41,16 +63,27 @@ const PANTHEON_DATA = {
                 k:'valerium', n:'Valerium', title: 'The Aegis Warden', icon: '⎔',
                 starBuff: "Plating Fragment: Reduces the Energy penalty of Overdue tasks by 0.2 points per star.",
                 sectors: [
-                    { id: 1, name: "Bulwark Base", keystone: "Iron Will", coords: [{x:20,y:80}, {x:40,y:80}, {x:60,y:80}, {x:80,y:80}, {x:50,y:50}, {x:50,y:30}], perk: "PLATING: -1 Overdue Penalty" },
-                    { id: 2, name: "Aegis Wall", keystone: "Deflection Grid", coords: [{x:15,y:30}, {x:85,y:30}, {x:80,y:60}, {x:50,y:85}, {x:20,y:60}, {x:50,y:50}], perk: "DEFLECTION: 5% lower Energy loss" },
+                    { id: 1, name: "Bulwark Base", keystone: "Iron Will", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:35,y:50,r:3,t:1}, {x:65,y:50,r:4,t:0}, {x:80,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "PLATING: -1 Overdue Penalty" },
+                    { id: 2, name: "Aegis Wall", keystone: "Deflection Grid", isBranch: false, coords: [{x:10,y:70,r:1,t:1}, {x:30,y:50,r:2,t:0}, {x:50,y:30,r:3,t:1}, {x:70,y:50,r:4,t:0}, {x:90,y:70,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "DEFLECTION: 5% lower Energy loss" },
                     { id: 3, name: "Shield Specialization", keystone: "Kinetic Absorption", isBranch: true,
                         paths: [
-                            { id: 1, n: "Alpha: Reflective Guard", perk: "Penalties returned as 5% Scrap", coords: [{x:50,y:80}, {x:20,y:60}, {x:20,y:30}, {x:40,y:15}, {x:60,y:30}, {x:30,y:40}] },
-                            { id: 2, n: "Omega: Kinetic Sink", perk: "Penalty Energy cap increased", coords: [{x:50,y:80}, {x:80,y:60}, {x:80,y:30}, {x:60,y:15}, {x:40,y:30}, {x:70,y:40}] }
-                        ]
+                            [{x:50,y:80,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:20,y:30,r:3,t:1}, {x:40,y:15,r:4,t:0}, {x:60,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:80,y:30,r:3,t:1}, {x:60,y:15,r:4,t:0}, {x:40,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}]
+                        ], perk: "SHIELD MATRIX: Kinetic mechanics."
                     },
-                    { id: 4, name: "Phalanx Array", keystone: "Vanguard Formation", coords: [{x:20,y:70}, {x:40,y:30}, {x:50,y:70}, {x:70,y:30}, {x:80,y:70}, {x:50,y:15}], perk: "GUARD: Shield Sub-Routines +10% strength" },
-                    { id: 5, name: "Bastion Peak", keystone: "Immortal Warden", coords: [{x:20,y:70}, {x:35,y:40}, {x:50,y:20}, {x:65,y:40}, {x:80,y:70}, {x:50,y:50}], perk: "IMMORTAL WARDEN: Energy never drops below 1" }
+                    { id: 4, name: "Phalanx Array", keystone: "Vanguard Formation", isBranch: true,
+                        paths: [
+                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:20,y:30,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:80,y:30,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "GUARD: Shield Sub-Routines +10% strength" 
+                    },
+                    { id: 5, name: "Bastion Peak", keystone: "Immortal Warden", isBranch: true,
+                        paths: [
+                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                        ], perk: "IMMORTAL WARDEN: Energy never drops below 1" 
+                    }
                 ],
                 major: { n: "WARDEN'S GRACE", cost: 50, desc: "Auto-generate Sub-Routine Shields on Decaying tasks." }
             }
