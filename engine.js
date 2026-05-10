@@ -588,10 +588,13 @@ runDatabaseMigration();
 generateStarfield(); 
 render();
 
-setInterval(render, 60000);
+// [ FIXED ] The Pantheon Lock! Prevents the 60s background refresh from overwriting the Void Pantheon.
+setInterval(() => {
+    if (!window.isViewingPantheon) render();
+}, 60000);
 
 window.addEventListener('resize', () => { 
-    if(state.level === 1) render(); 
+    if(state.level === 1 && !window.isViewingPantheon) render(); 
 });
 
 /** [ PATCHED ] Soft Warning event listener for UI stability.*/
@@ -600,4 +603,5 @@ window.addEventListener('click', (e) => {
     if (toast && toast.classList.contains('show')) {
         toast.classList.remove('show');
     }
+});
 });
