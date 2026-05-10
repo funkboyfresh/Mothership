@@ -196,6 +196,7 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
 }
 
 // [ FIXED ] Completely removes nested template literals to prevent syntax crashing
+// [ FIXED ] Completely removes nested template literals to prevent syntax crashing
 function openConstellation(deityKey, towerId, sectorIndex) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 
@@ -209,42 +210,57 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     if (totalLevel >= sectorStart + 6) localLevel = 6; 
     else if (totalLevel >= sectorStart) localLevel = totalLevel - sectorStart; 
     
+    // [ UPGRADED ] Evaluates if this is the active tier being worked on
+    const isSectorActive = Math.floor(totalLevel / 6) === sectorIndex;
+
     let completionHtml = '';
-    if (localLevel === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
+    if (localLevel === 5 && isSectorActive) {
         completionHtml = '<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ' + tower.color + '; color: #000; font-weight: bold;" onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>';
     }
 
     const pathsToRender = sector.isBranch ? sector.paths : [sector.coords];
 
-    // Build the stars using raw string concatenation first
     let starsHtml = pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
         const isWaypoint = c.t === 0;
         const isKeystone = c.t === 2;
         
         const isLit = localLevel >= c.r;
-        const isNext = (!isWaypoint) && (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
+        const isNext = (localLevel + 1 === c.r) && isSectorActive;
         
         const nodeColor = isLit ? tower.color : '#444';
         let bg = isLit ? tower.color : '#000';
         
         const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
-        const borderStr = isWaypoint ? 'none' : '2px solid ' + nodeColor;
-        if (isWaypoint) bg = isLit ? tower.color : '#222'; 
+        const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
+        
+        if (isWaypoint) {
+            if (isLit) bg = tower.color;
+            else if (isNext) bg = '#333'; // Slightly lighter grey for pending path
+            else bg = '#222'; 
+        }
         
         let shadowStr = "";
-        if (isLit || isNext) {
+        if (isLit) {
             if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
             else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+        } else if (isNext) {
+            if (isWaypoint) {
+                // [ UPGRADED ] Soft glow on pending waypoints
+                shadowStr = "box-shadow: 0 0 8px " + tower.color + "88;"; 
+            } else {
+                // [ UPGRADED ] 50% Brighter pulse on the next available interactive node
+                shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
+            }
         }
 
-        const cursor = (isNext || (isLit && !isWaypoint)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
+        const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
         const pointerEvents = isWaypoint ? 'none' : 'auto';
         const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
         
-        const iconColor = isLit ? '#000' : nodeColor;
+        const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
         const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
         
-        const onClickStr = isWaypoint ? '' : 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + c.r + ', ' + isNext + ')"';
+        const onClickStr = (!isWaypoint && (isLit || isNext)) ? 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + c.r + ', ' + isNext + ')"' : '';
         
         return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
     }).join('')).join('');
@@ -270,10 +286,11 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     document.body.appendChild(modal);
     
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
-    renderSectorConstellation(svg, pathsToRender, tower.color, localLevel);
+    renderSectorConstellation(svg, pathsToRender, tower.color, localLevel, isSectorActive);
 }
 
-function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
+// [ UPGRADED ] Now accepts isSectorActive to detect and glow pending wires
+function renderSectorConstellation(svg, pathsToRender, color, localLevel, isSectorActive) {
     if (!svg || !pathsToRender) return;
     svg.innerHTML = ''; 
     
@@ -291,6 +308,7 @@ function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
                 svg.appendChild(baseLine);
 
                 if (localLevel >= next.r) {
+                    // Fully Activated Wire
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     activeLine.setAttribute("x1", `${coord.x}%`); 
                     activeLine.setAttribute("y1", `${coord.y}%`); 
@@ -300,6 +318,18 @@ function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
                     activeLine.setAttribute("stroke-width", "3"); 
                     activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
                     svg.appendChild(activeLine);
+                } else if (isSectorActive && localLevel + 1 === next.r) {
+                    // [ UPGRADED ] Soft glow applied to pending wires
+                    const pendingLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    pendingLine.setAttribute("x1", `${coord.x}%`); 
+                    pendingLine.setAttribute("y1", `${coord.y}%`); 
+                    pendingLine.setAttribute("x2", `${next.x}%`); 
+                    pendingLine.setAttribute("y2", `${next.y}%`); 
+                    pendingLine.setAttribute("stroke", color); 
+                    pendingLine.setAttribute("stroke-width", "2"); 
+                    pendingLine.style.opacity = "0.5";
+                    pendingLine.style.filter = `drop-shadow(0 0 5px ${color})`;
+                    svg.appendChild(pendingLine);
                 }
             }
         });
