@@ -3,18 +3,12 @@
  * Master visual controller for the Void Pantheon and Ascension Monoliths.
  */
 
-// Renders the Void Pantheon - entry to each of the three skill tree towers.
 function renderVoidPantheon() {
     const container = document.getElementById('view-container');
-    
-    // Kill the secondary "GALAXY" nav bar to let the view stretch to the ceiling
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
 
-    // Gravity-Weighted Starfield
     let bgStars = '', midStars = '', fgStars = '';
-    
-    // [ OPTIMIZED ] Reduced from 375 to 200. Still looks incredible, much faster teardown.
     for(let i = 0; i < 200; i++) {
         const getStar = (scale) => {
             let size = (Math.random() * 2 * scale) + 'px';
@@ -25,7 +19,6 @@ function renderVoidPantheon() {
             let dur = (Math.random() * 5 + 3) + 's';
             let del = '-' + (Math.random() * 10) + 's'; 
             
-            // [ OPTIMIZED ] Added translateZ(0) and will-change to force GPU rendering
             return `<div class="void-particle" style="width:${size}; height:${size}; left:${left}; top:${top}; opacity:${dynamicOpacity}; animation-duration:${dur}; animation-delay:${del}; animation-iteration-count: infinite; transform: translateZ(0); will-change: opacity, transform;"></div>`;
         };
         bgStars += getStar(0.7); 
@@ -39,26 +32,8 @@ function renderVoidPantheon() {
             @keyframes slow-drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
 
             .pantheon-starfield-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
-            
-            .bg-stellar-nursery { 
-                position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; 
-                background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); 
-                filter: blur(30px); z-index: 1; 
-                animation: fog-breathe 23s infinite alternate ease-in-out; 
-                /* [ OPTIMIZED ] GPU Acceleration flags */
-                transform: translateZ(0); will-change: transform, opacity;
-            }
-            
-            .fg-stellar-nursery { 
-                position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; 
-                background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); 
-                filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; 
-                animation: slow-drift 34s infinite alternate ease-in-out; 
-                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); 
-                /* [ OPTIMIZED ] GPU Acceleration flags */
-                transform: translateZ(0); will-change: transform;
-            }
-            
+            .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; transform: translateZ(0); will-change: transform, opacity; }
+            .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); transform: translateZ(0); will-change: transform; }
             .zenith-apex-void { position: absolute; top: 26%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
             .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
             .monolith-spire { position: absolute; bottom: -5vh; left: 0; width: 100%; height: calc(82% + 5vh); border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
@@ -104,7 +79,7 @@ function renderAscensionTower(towerId) {
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
-            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; }
+            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
             .minor-keystone-node:hover { transform: scale(1.3); }
         </style>
 
@@ -228,7 +203,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const sector = deity.sectors[sectorIndex];
     const totalLevel = state.pantheon[deityKey] || 0; 
     
-    // Calculate local level within THIS specific sector (0 to 6)
     let localLevel = 0;
     const sectorStart = sectorIndex * 6;
     if (totalLevel >= sectorStart + 6) localLevel = 6; 
@@ -252,7 +226,6 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 
                 ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
-                    // [ NEW ] Skip drawing HTML for invisible waypoints (Type 0)
                     if (c.t === 0) return ''; 
 
                     const isLit = localLevel >= c.r;
@@ -307,7 +280,6 @@ function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
                 baseLine.setAttribute("stroke-width", "2");
                 svg.appendChild(baseLine);
 
-                // [ FIXED ] Laser ignites based on the requirement level (c.r), not the array index
                 if (localLevel >= next.r) {
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                     activeLine.setAttribute("x1", `${coord.x}%`); 
@@ -322,5 +294,4 @@ function renderSectorConstellation(svg, pathsToRender, color, localLevel) {
             }
         });
     });
-}
 }
