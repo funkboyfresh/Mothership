@@ -25,9 +25,8 @@ function renderVoidPantheon() {
         bgStars += getStar(0.7); midStars += getStar(1.1); fgStars += getStar(1.6); 
     }
 
-    // [ FIXED ] Unified the Main Menu icons with the precise SVGs from the faction screens
     const t1Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="37.5,20 62.5,20 80,37.5 80,62.5 62.5,80 37.5,80 20,62.5 20,37.5" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></svg>`;
-    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,42 56,60 50,78 44,60" fill="currentColor" stroke="none" /></svg>`;
+    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,25 60,48 50,75 40,48" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,38 54,48 50,62 46,48" fill="currentColor" stroke="none" /></svg>`;
     const t3Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><g transform="rotate(45 50 50)"><path d="M 22 42 L 22 22 L 42 22 M 58 22 L 78 22 L 78 42 M 78 58 L 78 78 L 58 78 M 42 78 L 22 78 L 22 58" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><rect x="30" y="30" width="40" height="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></g></svg>`;
 
     const atmosStyles = `
@@ -37,7 +36,7 @@ function renderVoidPantheon() {
             .pantheon-starfield-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
             .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; transform: translateZ(0); will-change: transform, opacity; }
             .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); transform: translateZ(0); will-change: transform; }
-            .zenith-apex-void { position: absolute; top: 26%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
+            .zenith-apex-void { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -100%); font-size: 8rem; z-index: 16; pointer-events: auto; transition: all 0.5s ease; }
             .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
             .monolith-spire { position: absolute; bottom: -5vh; left: 0; width: 100%; height: calc(82% + 5vh); border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
             .tower-wrapper:hover .monolith-spire { filter: brightness(1.3) drop-shadow(0 0 10px var(--t-color)); }
@@ -49,16 +48,36 @@ function renderVoidPantheon() {
         </style>
     `;
 
+    const t1Asc = state.pantheon['tower_1_ascension'];
+    const t2Asc = state.pantheon['tower_2_ascension'];
+    const t3Asc = state.pantheon['tower_3_ascension'];
+    const allAscended = t1Asc && t2Asc && t3Asc;
+    const voidUnlocked = state.pantheon['void_ascension'];
+
+    const voidZenithStyle = allAscended 
+        ? `cursor:pointer; color:${voidUnlocked ? '#fff' : '#444'}; text-shadow:${voidUnlocked ? '0 0 40px #fff' : 'none'};` 
+        : `color:#000; text-shadow:0 0 30px rgba(255,255,255,0.1);`;
+
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">${bgStars}</div>
             <div class="bg-stellar-nursery"></div>
-            <div class="zenith-apex-void">◬</div>
-            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
+            
+            <svg class="void-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                <line x1="20%" y1="58%" x2="50%" y2="25%" stroke="${t1Asc ? '#00d4ff' : '#222'}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${t1Asc ? '#00d4ff' : 'transparent'});" />
+                <line x1="50%" y1="58%" x2="50%" y2="25%" stroke="${t2Asc ? '#ffd700' : '#222'}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${t2Asc ? '#ffd700' : 'transparent'});" />
+                <line x1="80%" y1="58%" x2="50%" y2="25%" stroke="${t3Asc ? '#ff00ff' : '#222'}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${t3Asc ? '#ff00ff' : 'transparent'});" />
+                ${allAscended ? `<line x1="50%" y1="25%" x2="50%" y2="-10%" stroke="${voidUnlocked ? '#fff' : '#222'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${voidUnlocked ? '#fff' : 'transparent'}); transition: all 1s ease;" />` : ''}
+            </svg>
+
+            <div class="zenith-apex-void" style="${voidZenithStyle}" ${allAscended ? `onclick="openVoidAscensionModal(${!!voidUnlocked})"` : ''}>◬</div>
+            
+            <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px; z-index: 20;">
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
                 <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3.6rem;">${t2Icon}</div></div></div></div>
                 <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t3Icon}</div></div></div></div>
             </div>
+            
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
             <div class="fg-stellar-nursery"></div>
             <div class="pantheon-starfield-container" style="z-index: 22;">${fgStars}</div>
@@ -120,16 +139,23 @@ function renderAscensionTower(towerId) {
         </svg>`;
     }
 
-    const zenithCenterY = `calc(${zenithTop} - 0.75 * ${zenithSize})`;
+    // [ FIXED ] Coordinates normalized into fixed percentages to prevent SVGs from jumping to 0. 
+    // Mapped carefully so they terminate just before touching the Zenith and Keystone icons.
+    let wireTop = '29%'; 
+    if (towerId === 2) wireTop = '34%';
+    if (towerId === 3) wireTop = '31%';
+    
+    let wireBottom = '41%'; 
 
     let wiresSvgHtml = '';
     if (allMajorsUnlocked) {
         wiresSvgHtml = `
             <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                <line x1="50%" y1="${zenithCenterY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
-                <line x1="20%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="50%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="80%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="${wireTop}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
+                
+                <line x1="20%" y1="${wireBottom}" x2="50%" y2="${wireTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="${wireBottom}" x2="50%" y2="${wireTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="80%" y1="${wireBottom}" x2="50%" y2="${wireTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
             </svg>
         `;
     }
@@ -182,8 +208,10 @@ function renderAscensionTower(towerId) {
                     const spireHeight = 30 + (progress / 30) * 52; 
                     const isMaxed = checkMajor(d.k) !== '#000';
                     
-                    // [ FIXED ] Prevents an already-bought Major Keystone from prompting you to spend another 50 Offerings
                     const isMajorNext = progress === 30 && !isMaxed;
+                    
+                    // [ FIXED ] Automatically target and scale up Aethelgard's star
+                    const iconScale = d.k === 'aethelgard' ? 'transform: scale(1.25);' : '';
 
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
@@ -191,17 +219,18 @@ function renderAscensionTower(towerId) {
                             <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 20vh);"></div>
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
                                 
-                                <div style="text-align: center; margin-bottom: 10px;">
+                                <div style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
                                     <div class="keystone-icon" 
                                          onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${isMajorNext})" 
-                                         style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
+                                         style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'}; pointer-events: auto; display: flex; align-items: center; justify-content: center; ${iconScale}">
                                          ${d.icon}
                                     </div>
                                 </div>
 
-                                <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
-                                    <div style="position: absolute; width: 2px; height: 100%; background: #333; z-index: 1;"></div>
-                                    <div style="position: absolute; bottom: 0; width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
+                                <div style="flex: 1; position: relative; width: 100%; margin: 15px 0;">
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: 100%; background: #333; z-index: 1;"></div>
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: ${Math.min((currentSector + 1) * 20, 100)}%; background: ${data.color}; opacity: 0.3; box-shadow: 0 0 5px ${data.color}; z-index: 1; transition: height 0.5s ease;"></div>
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
                                     
                                     ${[0, 1, 2, 3, 4].map(i => {
                                         const isCompleted = progress >= (i + 1) * 6;
@@ -213,7 +242,7 @@ function renderAscensionTower(towerId) {
                                         return `
                                             <div class="minor-keystone-node" 
                                                  onclick="openConstellation('${d.k}', ${towerId}, ${i})"
-                                                 style="position: relative; z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
+                                                 style="position: absolute; bottom: ${(i + 1) * 20}%; left: 50%; transform: translate(-50%, 50%); z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}; pointer-events: auto;">
                                             </div>
                                         `;
                                     }).join('')}
@@ -234,7 +263,11 @@ function renderAscensionTower(towerId) {
     container.innerHTML = html;
 }
 
-// [ RESTORED ] The crucial modal rendering function that was accidentally deleted!
+
+
+
+
+// [ RESTORED ] The crucial modal rendering
 function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
