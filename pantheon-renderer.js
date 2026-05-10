@@ -88,7 +88,6 @@ function renderAscensionTower(towerId) {
     const d2 = checkMajor(data.deities[2].k);
 
     let factionSvg = '';
-    // [ FIXED ] Stroke width reduced from 8 to 5 for sharper lines
     const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
     if (towerId === 1) {
@@ -124,15 +123,19 @@ function renderAscensionTower(towerId) {
             }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             
-            /* [ FIXED ] The Endless Spire Illusion. Bottom anchored 100vh down, fading to black at 25% */
+            /* [ RESTORED ] Smooth mask fade, anchored bottom, and 70% opacity reversed gradient */
             .monolith-spire-internal { 
-                position: absolute; bottom: -100vh; left: 0; width: 100%; 
+                position: absolute; bottom: -20vh; left: 0; width: 100%; 
                 border-style: solid; border-width: 0 1px 0 1px; 
-                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 8%, #000 25%) 1; 
-                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 25%); 
+                border-image: linear-gradient(to bottom, transparent 0%, var(--t-color) 100%) 1; 
+                background: linear-gradient(to bottom, #000000 0%, var(--t-color) 100%); 
+                opacity: 0.7; 
                 box-shadow: 0 0 25px -5px var(--t-color); 
                 transition: height 0.5s ease, filter 0.3s; z-index: 5; 
+                -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%); 
+                mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%); 
             }
+            
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
             .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
             .minor-keystone-node:hover { transform: scale(1.3); }
@@ -159,7 +162,7 @@ function renderAscensionTower(towerId) {
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
                             
-                            <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 100vh);"></div>
+                            <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 20vh);"></div>
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
@@ -204,7 +207,6 @@ function renderAscensionTower(towerId) {
     `;
     container.innerHTML = html;
 }
-
 
 
 function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex, isNext) {
