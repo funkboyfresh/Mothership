@@ -69,13 +69,9 @@ function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
     const container = document.getElementById('view-container');
     
-    let zenithSize = '8rem';
-    if (towerId === 1) zenithSize = '5.4rem'; 
-    if (towerId === 3) zenithSize = '5.8rem'; 
-
+    // [ FIXED ] Unified Scaling and Position. All 3 artifacts now share exact dimensions.
+    let zenithSize = '5.4rem'; 
     let zenithTop = '33%'; 
-    if (towerId === 2) zenithTop = '38%'; 
-    if (towerId === 3) zenithTop = '35%'; 
 
     const checkMajor = (dKey) => {
         let u = state.pantheon[dKey] || [];
@@ -91,7 +87,7 @@ function renderAscensionTower(towerId) {
     const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
     if (towerId === 1) {
-        // GENESIS SPHERE: Intersecting Squares, Octagon, Inner Circle
+        // GENESIS SPHERE
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="${d1}" ${strokeFmt}/>
@@ -99,23 +95,22 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // ABYSSAL SYNDICATE: Outer Circle, Inverted Triangle, The Predator's Eye
+        // [ FIXED ] ABYSSAL SYNDICATE: Inscribed Math
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <circle cx="50" cy="50" r="42" stroke="${d0}" ${strokeFmt}/>
-            <polygon points="50,85 15,25 85,25" stroke="${d1}" ${strokeFmt}/>
-            <polygon points="50,25 60,48 50,75 40,48" stroke="${d2}" ${strokeFmt}/>
+            <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
+            <polygon points="15.36,30 84.64,30 50,90" stroke="${d1}" ${strokeFmt}/>
+            <polygon points="50,30 62,60 50,90 38,60" stroke="${d2}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 3) {
-        // CELESTIAL VANGUARD: 
-        // d2 (Xerxes): The Targeting Reticle Brackets
-        // d1 (Luminara): Intersecting Cross / 4-Square Grid base
-        // d0 (Ragnarath): Center Diamond Core
+        // [ FIXED ] CELESTIAL VANGUARD: 45-Degree Rotated Lattice
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <path d="M 28 12 L 12 12 L 12 28 M 72 12 L 88 12 L 88 28 M 88 72 L 88 88 L 72 88 M 12 72 L 12 88 L 28 88" stroke="${d2}" ${strokeFmt}/>
-            <polygon points="20,20 30,20 50,40 70,20 80,20 80,30 60,50 80,70 80,80 70,80 50,60 30,80 20,80 20,70 40,50 20,30" stroke="${d1}" ${strokeFmt}/>
-            <polygon points="50,35 65,50 50,65 35,50" stroke="${d0}" ${strokeFmt}/>
+            <g transform="rotate(45 50 50)">
+                <path d="M 22 42 L 22 22 L 42 22 M 58 22 L 78 22 L 78 42 M 78 58 L 78 78 L 58 78 M 42 78 L 22 78 L 22 58" stroke="${d2}" ${strokeFmt}/>
+                <rect x="30" y="30" width="40" height="40" stroke="${d1}" ${strokeFmt}/>
+                <path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="${d0}" ${strokeFmt}/>
+            </g>
         </svg>`;
     }
 
@@ -212,6 +207,10 @@ function renderAscensionTower(towerId) {
     `;
     container.innerHTML = html;
 }
+
+
+
+
 
 function openConstellation(deityKey, towerId, sectorIndex) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
