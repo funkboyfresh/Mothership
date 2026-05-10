@@ -41,7 +41,7 @@ const PANTHEON_DATA = {
                         paths: [
                             [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:15,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}],
                             [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:85,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}]
-                        ], perk: "CHRONO-SPLIT: Time mechanics."
+                        ], perk: "CHRONO-SPLIT: Target timers -10% slower"
                     },
                     { id: 4, name: "The Pendulum", keystone: "Momentum Swing", isBranch: true,
                         paths: [
@@ -96,25 +96,25 @@ const PANTHEON_DATA = {
                 k:'syraxis', n:'Syraxis', title: 'The Shadow-Walker', icon: '◯',
                 starBuff: "Shadow Step: Offline generation rate increased by +0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Shadow Blade", keystone: "First Strike", isBranch: false, coords: [{x:50,y:85,r:1,t:1}, {x:50,y:70,r:2,t:0}, {x:50,y:55,r:3,t:1}, {x:50,y:40,r:4,t:0}, {x:50,y:25,r:5,t:1}, {x:50,y:10,r:6,t:2}], perk: "UNDERWORLD: +2% Market Rate" },
-                    { id: 2, name: "Veil of Mist", keystone: "Smoke Screen", isBranch: false, coords: [{x:20,y:70,r:1,t:1}, {x:50,y:80,r:2,t:0}, {x:80,y:70,r:3,t:1}, {x:65,y:40,r:4,t:0}, {x:50,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "CLOAK: Hidden bounty payouts +5%" },
+                    { id: 1, name: "Shadow Blade", keystone: "First Strike", isBranch: false, coords: [{x:30,y:80,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:30,y:20,r:4,t:0}, {x:50,y:10,r:5,t:1}, {x:80,y:10,r:6,t:2}], perk: "UNDERWORLD: +2% Market Rate" },
+                    { id: 2, name: "Veil of Mist", keystone: "Smoke Screen", isBranch: false, coords: [{x:20,y:80,r:1,t:1}, {x:40,y:65,r:2,t:0}, {x:25,y:50,r:3,t:1}, {x:60,y:35,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:80,y:15,r:6,t:2}], perk: "CLOAK: Hidden bounty payouts +5%" },
                     { id: 3, name: "The Silent Fork", keystone: "Assassin's Path", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:30,y:35,r:4,t:0}, {x:20,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:70,y:35,r:4,t:0}, {x:80,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
                         ], perk: "Mission travel cost -1 Energy"
                     },
                     { id: 4, name: "The Eclipse", keystone: "Total Darkness", isBranch: true, 
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:75,r:2,t:0}, {x:20,y:55,r:3,t:1}, {x:20,y:35,r:4,t:0}, {x:35,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:75,r:2,t:0}, {x:80,y:55,r:3,t:1}, {x:80,y:35,r:4,t:0}, {x:65,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:20,y:65,r:2,t:0}, {x:15,y:45,r:3,t:1}, {x:30,y:25,r:4,t:0}, {x:50,y:15,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:80,y:65,r:2,t:0}, {x:85,y:45,r:3,t:1}, {x:70,y:25,r:4,t:0}, {x:50,y:15,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "VOID-SIGHT: Rare encounters +2%" 
                     },
                     { id: 5, name: "Void Cloak", keystone: "Phantom Drive", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:15,y:45,r:3,t:1}, {x:30,y:25,r:4,t:0}, {x:40,y:15,r:5,t:1}, {x:50,y:30,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:50,y:65,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:40,r:4,t:1}, {x:50,y:25,r:5,t:0}, {x:50,y:30,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:85,y:45,r:3,t:1}, {x:70,y:25,r:4,t:0}, {x:60,y:15,r:5,t:1}, {x:50,y:30,r:6,t:2}]
                         ], perk: "PHANTOM DRIVE: +10% Offline generation" 
                     }
                 ],
@@ -124,25 +124,25 @@ const PANTHEON_DATA = {
                 k:'ignisKor', n:'Ignis-Kor', title: 'The Reality Shaper', icon: '▵',
                 starBuff: "Quantum Fluctuation: Buff durations extended by +2 minutes per star.",
                 sectors: [
-                    { id: 1, name: "Primary Cube", keystone: "Base Reality", isBranch: false, coords: [{x:10,y:50,r:1,t:1}, {x:30,y:20,r:2,t:0}, {x:50,y:80,r:3,t:1}, {x:70,y:20,r:4,t:0}, {x:90,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "STABILITY: Buffs last +15m" },
-                    { id: 2, name: "Prism Lens", keystone: "Refraction Index", isBranch: false, coords: [{x:25,y:25,r:1,t:1}, {x:75,y:25,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:25,y:75,r:4,t:0}, {x:75,y:75,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "REFRACTION: Buff strength +2%" },
+                    { id: 1, name: "Primary Cube", keystone: "Base Reality", isBranch: false, coords: [{x:30,y:80,r:1,t:1}, {x:30,y:40,r:2,t:0}, {x:70,y:40,r:3,t:1}, {x:70,y:80,r:4,t:0}, {x:50,y:80,r:5,t:1}, {x:50,y:60,r:6,t:2}], perk: "STABILITY: Buffs last +15m" },
+                    { id: 2, name: "Prism Lens", keystone: "Refraction Index", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:50,y:30,r:3,t:1}, {x:80,y:60,r:4,t:0}, {x:50,y:90,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "REFRACTION: Buff strength +2%" },
                     { id: 3, name: "Reality Matrix", keystone: "The Paradigm Shift", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:15,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:85,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}]
+                            [{x:50,y:85,r:1,t:1}, {x:10,y:70,r:2,t:0}, {x:10,y:30,r:3,t:1}, {x:50,y:15,r:4,t:0}, {x:30,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:85,r:1,t:1}, {x:90,y:70,r:2,t:0}, {x:90,y:30,r:3,t:1}, {x:50,y:15,r:4,t:0}, {x:70,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "Buff cost -25% Energy"
                     },
                     { id: 4, name: "Tesseract Frame", keystone: "Folded Space", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:35,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:40,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:65,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:60,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:90,r:1,t:1}, {x:25,y:75,r:2,t:0}, {x:25,y:25,r:3,t:1}, {x:75,y:25,r:4,t:0}, {x:40,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:75,y:75,r:2,t:0}, {x:75,y:25,r:3,t:1}, {x:25,y:25,r:4,t:0}, {x:60,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "FOLDED SPACE: Cargo capacity +10%" 
                     },
                     { id: 5, name: "The Singularity", keystone: "Event Horizon", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:15,y:70,r:2,t:0}, {x:15,y:40,r:3,t:1}, {x:15,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:85,y:70,r:2,t:0}, {x:85,y:40,r:3,t:1}, {x:85,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:10,y:70,r:2,t:0}, {x:15,y:30,r:3,t:1}, {x:40,y:15,r:4,t:0}, {x:45,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:50,y:95,r:2,t:1}, {x:50,y:75,r:3,t:0}, {x:50,y:65,r:4,t:1}, {x:50,y:60,r:5,t:0}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:90,y:70,r:2,t:0}, {x:85,y:30,r:3,t:1}, {x:60,y:15,r:4,t:0}, {x:55,y:40,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "TRUE SHAPER: 5% chance buffs never expire" 
                     }
                 ],
@@ -152,25 +152,25 @@ const PANTHEON_DATA = {
                 k:'morvath', n:'Morvath', title: 'The Void Hunter', icon: '◈',
                 starBuff: "Blood Trail: Bounty rewards increased by +0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Hunter's Mark", keystone: "The Quarry", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:35,y:50,r:3,t:1}, {x:65,y:50,r:4,t:0}, {x:80,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "BLOOD-MONEY: Bounties +2%" },
-                    { id: 2, name: "Jagged Talon", keystone: "Deep Wound", isBranch: false, coords: [{x:10,y:70,r:1,t:1}, {x:30,y:50,r:2,t:0}, {x:50,y:30,r:3,t:1}, {x:70,y:50,r:4,t:0}, {x:90,y:70,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "TRACKER: Rare spawns +1%" },
+                    { id: 1, name: "Hunter's Mark", keystone: "The Quarry", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:80,y:60,r:3,t:1}, {x:20,y:30,r:4,t:0}, {x:80,y:30,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "BLOOD-MONEY: Bounties +2%" },
+                    { id: 2, name: "Jagged Talon", keystone: "Deep Wound", isBranch: false, coords: [{x:50,y:10,r:1,t:1}, {x:30,y:40,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:40,y:70,r:4,t:0}, {x:60,y:80,r:5,t:1}, {x:50,y:95,r:6,t:2}], perk: "TRACKER: Rare spawns +1%" },
                     { id: 3, name: "The Stalk", keystone: "Predator's Patience", isBranch: true,
                         paths: [
-                            [{x:50,y:80,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:20,y:30,r:3,t:1}, {x:40,y:15,r:4,t:0}, {x:60,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}],
-                            [{x:50,y:80,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:80,y:30,r:3,t:1}, {x:60,y:15,r:4,t:0}, {x:40,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}]
+                            [{x:50,y:85,r:1,t:1}, {x:15,y:70,r:2,t:0}, {x:15,y:40,r:3,t:1}, {x:30,y:20,r:4,t:0}, {x:45,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:85,r:1,t:1}, {x:85,y:70,r:2,t:0}, {x:85,y:40,r:3,t:1}, {x:70,y:20,r:4,t:0}, {x:55,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "Bounty timers +4h"
                     },
                     { id: 4, name: "Stellar Sight", keystone: "True Vision", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:20,y:30,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:80,y:30,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:15,y:50,r:1,t:1}, {x:35,y:30,r:2,t:0}, {x:50,y:25,r:3,t:1}, {x:65,y:30,r:4,t:0}, {x:85,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:15,y:50,r:1,t:1}, {x:35,y:70,r:2,t:0}, {x:50,y:75,r:3,t:1}, {x:65,y:70,r:4,t:0}, {x:85,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "PREDATOR: Critical bounty chance +3%" 
                     },
                     { id: 5, name: "Apex Strike", keystone: "Killing Blow", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:10,r:1,t:1}, {x:20,y:30,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:25,y:70,r:4,t:0}, {x:40,y:80,r:5,t:1}, {x:50,y:90,r:6,t:2}],
+                            [{x:50,y:10,r:1,t:1}, {x:50,y:30,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:60,r:4,t:1}, {x:50,y:75,r:5,t:0}, {x:50,y:90,r:6,t:2}],
+                            [{x:50,y:10,r:1,t:1}, {x:80,y:30,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:75,y:70,r:4,t:0}, {x:60,y:80,r:5,t:1}, {x:50,y:90,r:6,t:2}]
                         ], perk: "OBLITERATION: Bonus Scrap on all kills" 
                     }
                 ],
@@ -185,25 +185,25 @@ const PANTHEON_DATA = {
                 k:'ragnarath', n:'Ragnarath', title: 'The Dread-Caller', icon: '◇',
                 starBuff: "Kinetic Force: Boss damage increased by +0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Impact Crater", keystone: "Meteor Strike", isBranch: false, coords: [{x:50,y:85,r:1,t:1}, {x:50,y:70,r:2,t:0}, {x:50,y:55,r:3,t:1}, {x:50,y:40,r:4,t:0}, {x:50,y:25,r:5,t:1}, {x:50,y:10,r:6,t:2}], perk: "KINETIC: +2% Boss Damage" },
-                    { id: 2, name: "Shattered Spine", keystone: "Brutal Force", isBranch: false, coords: [{x:20,y:70,r:1,t:1}, {x:50,y:80,r:2,t:0}, {x:80,y:70,r:3,t:1}, {x:65,y:40,r:4,t:0}, {x:50,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "RAGE: Energy loss adds +1% Damage" },
+                    { id: 1, name: "Impact Crater", keystone: "Meteor Strike", isBranch: false, coords: [{x:20,y:20,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:50,y:85,r:3,t:1}, {x:80,y:70,r:4,t:0}, {x:80,y:20,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "KINETIC: +2% Boss Damage" },
+                    { id: 2, name: "Shattered Spine", keystone: "Brutal Force", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:60,y:50,r:3,t:1}, {x:35,y:30,r:4,t:0}, {x:55,y:15,r:5,t:1}, {x:50,y:40,r:6,t:2}], perk: "RAGE: Energy loss adds +1% Damage" },
                     { id: 3, name: "Dread Torrent", keystone: "Unstoppable Momentum", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:30,y:60,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:35,y:20,r:4,t:0}, {x:45,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:70,y:60,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:65,y:20,r:4,t:0}, {x:55,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "Boss Scrap payout +15%"
                     },
                     { id: 4, name: "Spiked Maw", keystone: "Devouring Jaws", isBranch: true, 
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:75,r:2,t:0}, {x:20,y:55,r:3,t:1}, {x:20,y:35,r:4,t:0}, {x:35,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:75,r:2,t:0}, {x:80,y:55,r:3,t:1}, {x:80,y:35,r:4,t:0}, {x:65,y:20,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:15,y:60,r:2,t:0}, {x:35,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:45,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:85,y:60,r:2,t:0}, {x:65,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:55,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "HARVEST: Boss kills grant +5 Offering" 
                     },
                     { id: 5, name: "Apocalypse Gate", keystone: "The End Times", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:20,y:90,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:20,y:30,r:3,t:1}, {x:35,y:20,r:4,t:0}, {x:45,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:90,r:1,t:1}, {x:50,y:80,r:2,t:1}, {x:50,y:70,r:3,t:0}, {x:50,y:65,r:4,t:1}, {x:50,y:60,r:5,t:0}, {x:50,y:50,r:6,t:2}],
+                            [{x:80,y:90,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:80,y:30,r:3,t:1}, {x:65,y:20,r:4,t:0}, {x:55,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "DREAD-LORD: Orbital Strike cooldown -24h" 
                     }
                 ],
@@ -213,25 +213,25 @@ const PANTHEON_DATA = {
                 k:'luminara', n:'Luminara', title: 'The Cosmic Veil', icon: '✕',
                 starBuff: "Ion Shielding: Hostile encounter energy drain reduced by 0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Soft Halo", keystone: "Gentle Light", isBranch: false, coords: [{x:10,y:50,r:1,t:1}, {x:30,y:20,r:2,t:0}, {x:50,y:80,r:3,t:1}, {x:70,y:20,r:4,t:0}, {x:90,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "RESISTANCE: Ion drain -2%" },
-                    { id: 2, name: "Solar Flare", keystone: "Blinding Flash", isBranch: false, coords: [{x:25,y:25,r:1,t:1}, {x:75,y:25,r:2,t:0}, {x:50,y:50,r:3,t:1}, {x:25,y:75,r:4,t:0}, {x:75,y:75,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "RADIANCE: Encounter rewards +5%" },
+                    { id: 1, name: "Soft Halo", keystone: "Gentle Light", isBranch: false, coords: [{x:20,y:60,r:1,t:1}, {x:30,y:30,r:2,t:0}, {x:50,y:15,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:80,y:60,r:5,t:1}, {x:50,y:80,r:6,t:2}], perk: "RESISTANCE: Ion drain -2%" },
+                    { id: 2, name: "Solar Flare", keystone: "Blinding Flash", isBranch: false, coords: [{x:50,y:50,r:1,t:1}, {x:20,y:20,r:2,t:0}, {x:50,y:10,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:80,y:80,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "RADIANCE: Encounter rewards +5%" },
                     { id: 3, name: "Glow Prism", keystone: "Light Refraction", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:15,y:50,r:3,t:1}, {x:30,y:30,r:4,t:0}, {x:40,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:85,y:50,r:3,t:1}, {x:70,y:30,r:4,t:0}, {x:60,y:20,r:5,t:1}, {x:50,y:15,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:30,y:60,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:40,y:20,r:4,t:0}, {x:50,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:70,y:60,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:60,y:20,r:4,t:0}, {x:50,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "Encounter Scrap +15%"
                     },
                     { id: 4, name: "Stellar Ribbon", keystone: "Cosmic Flow", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:35,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:40,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:65,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:60,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:15,y:80,r:1,t:1}, {x:35,y:60,r:2,t:0}, {x:25,y:40,r:3,t:1}, {x:45,y:20,r:4,t:0}, {x:50,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:85,y:80,r:1,t:1}, {x:65,y:60,r:2,t:0}, {x:75,y:40,r:3,t:1}, {x:55,y:20,r:4,t:0}, {x:50,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "WAVE-FORM: Fast travel cost -5% Scrap" 
                     },
                     { id: 5, name: "Cosmic Crown", keystone: "Queen of Stars", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:15,y:70,r:2,t:0}, {x:15,y:40,r:3,t:1}, {x:15,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:85,y:70,r:2,t:0}, {x:85,y:40,r:3,t:1}, {x:85,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:50,y:80,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:15,y:30,r:3,t:1}, {x:30,y:20,r:4,t:0}, {x:40,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:50,y:65,r:2,t:1}, {x:50,y:45,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:80,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:85,y:30,r:3,t:1}, {x:70,y:20,r:4,t:0}, {x:60,y:35,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "VEIL-BORN: 10% chance to dodge encounters" 
                     }
                 ],
@@ -241,25 +241,25 @@ const PANTHEON_DATA = {
                 k:'xerxes', n:'Xerxes', title: 'The Harvester of Suns', icon: '⛶',
                 starBuff: "Gravitational Pull: Rare encounter spawn chance increased by 0.5% per star.",
                 sectors: [
-                    { id: 1, name: "Siphon Root", keystone: "Deep Drain", isBranch: false, coords: [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:35,y:50,r:3,t:1}, {x:65,y:50,r:4,t:0}, {x:80,y:30,r:5,t:1}, {x:50,y:15,r:6,t:2}], perk: "DETECTION: Rare spawns +2%" },
-                    { id: 2, name: "Hungry Maw", keystone: "Endless Appetite", isBranch: false, coords: [{x:10,y:70,r:1,t:1}, {x:30,y:50,r:2,t:0}, {x:50,y:30,r:3,t:1}, {x:70,y:50,r:4,t:0}, {x:90,y:70,r:5,t:1}, {x:50,y:85,r:6,t:2}], perk: "SIPHON: Secure rewards +5%" },
+                    { id: 1, name: "Siphon Root", keystone: "Deep Drain", isBranch: false, coords: [{x:20,y:20,r:1,t:1}, {x:80,y:20,r:2,t:0}, {x:35,y:45,r:3,t:1}, {x:65,y:65,r:4,t:0}, {x:45,y:80,r:5,t:1}, {x:50,y:95,r:6,t:2}], perk: "DETECTION: Rare spawns +2%" },
+                    { id: 2, name: "Hungry Maw", keystone: "Endless Appetite", isBranch: false, coords: [{x:20,y:20,r:1,t:1}, {x:80,y:20,r:2,t:0}, {x:80,y:80,r:3,t:1}, {x:20,y:80,r:4,t:0}, {x:35,y:50,r:5,t:1}, {x:50,y:50,r:6,t:2}], perk: "SIPHON: Secure rewards +5%" },
                     { id: 3, name: "The Web", keystone: "Sticky Trap", isBranch: true,
                         paths: [
-                            [{x:50,y:80,r:1,t:1}, {x:20,y:60,r:2,t:0}, {x:20,y:30,r:3,t:1}, {x:40,y:15,r:4,t:0}, {x:60,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}],
-                            [{x:50,y:80,r:1,t:1}, {x:80,y:60,r:2,t:0}, {x:80,y:30,r:3,t:1}, {x:60,y:15,r:4,t:0}, {x:40,y:30,r:5,t:1}, {x:50,y:45,r:6,t:2}]
+                            [{x:50,y:50,r:1,t:1}, {x:20,y:20,r:2,t:0}, {x:15,y:50,r:3,t:1}, {x:30,y:80,r:4,t:0}, {x:45,y:65,r:5,t:1}, {x:50,y:50,r:6,t:2}],
+                            [{x:50,y:50,r:1,t:1}, {x:80,y:20,r:2,t:0}, {x:85,y:50,r:3,t:1}, {x:70,y:80,r:4,t:0}, {x:55,y:65,r:5,t:1}, {x:50,y:50,r:6,t:2}]
                         ], perk: "Rare Encounter Scrap +25%"
                     },
                     { id: 4, name: "Funnel Core", keystone: "Singularity Point", isBranch: true,
                         paths: [
-                            [{x:50,y:85,r:1,t:1}, {x:30,y:70,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:20,y:30,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:85,r:1,t:1}, {x:70,y:70,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:80,y:30,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:15,y:15,r:1,t:1}, {x:40,y:30,r:2,t:0}, {x:30,y:50,r:3,t:1}, {x:45,y:70,r:4,t:0}, {x:40,y:85,r:5,t:1}, {x:50,y:95,r:6,t:2}],
+                            [{x:85,y:15,r:1,t:1}, {x:60,y:30,r:2,t:0}, {x:70,y:50,r:3,t:1}, {x:55,y:70,r:4,t:0}, {x:60,y:85,r:5,t:1}, {x:50,y:95,r:6,t:2}]
                         ], perk: "GRAVITY: Magnetism pull range +20%" 
                     },
                     { id: 5, name: "Solar Scythe", keystone: "The Harvest", isBranch: true,
                         paths: [
-                            [{x:50,y:90,r:1,t:1}, {x:20,y:70,r:2,t:0}, {x:20,y:40,r:3,t:1}, {x:20,y:20,r:4,t:0}, {x:35,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:50,y:70,r:2,t:1}, {x:50,y:50,r:3,t:0}, {x:50,y:30,r:4,t:1}, {x:50,y:20,r:5,t:0}, {x:50,y:10,r:6,t:2}],
-                            [{x:50,y:90,r:1,t:1}, {x:80,y:70,r:2,t:0}, {x:80,y:40,r:3,t:1}, {x:80,y:20,r:4,t:0}, {x:65,y:15,r:5,t:1}, {x:50,y:10,r:6,t:2}]
+                            [{x:20,y:80,r:1,t:1}, {x:15,y:40,r:2,t:0}, {x:30,y:20,r:3,t:1}, {x:50,y:35,r:4,t:0}, {x:45,y:50,r:5,t:1}, {x:50,y:60,r:6,t:2}],
+                            [{x:50,y:95,r:1,t:1}, {x:50,y:85,r:2,t:1}, {x:50,y:75,r:3,t:0}, {x:50,y:65,r:4,t:1}, {x:50,y:55,r:5,t:0}, {x:50,y:60,r:6,t:2}],
+                            [{x:80,y:80,r:1,t:1}, {x:85,y:40,r:2,t:0}, {x:70,y:20,r:3,t:1}, {x:50,y:35,r:4,t:0}, {x:55,y:50,r:5,t:1}, {x:50,y:60,r:6,t:2}]
                         ], perk: "SUN-EATER: Fully clear Sector for permanent +25% boost" 
                     }
                 ],
