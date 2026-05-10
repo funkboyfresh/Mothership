@@ -195,6 +195,7 @@ function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
     document.body.appendChild(modal);
 }
 
+// [ FIXED ] Completely removes nested template literals to prevent syntax crashing
 function openConstellation(deityKey, towerId, sectorIndex) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 
@@ -210,10 +211,43 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     
     let completionHtml = '';
     if (localLevel === 5 && Math.floor(totalLevel / 6) === sectorIndex) {
-        completionHtml = `<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ${tower.color}; color: #000; font-weight: bold;" onclick="openOfferingModal('${deityKey}', ${towerId}, 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>`;
+        completionHtml = '<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ' + tower.color + '; color: #000; font-weight: bold;" onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>';
     }
 
     const pathsToRender = sector.isBranch ? sector.paths : [sector.coords];
+
+    // Build the stars using raw string concatenation first
+    let starsHtml = pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
+        const isWaypoint = c.t === 0;
+        const isKeystone = c.t === 2;
+        
+        const isLit = localLevel >= c.r;
+        const isNext = (!isWaypoint) && (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
+        
+        const nodeColor = isLit ? tower.color : '#444';
+        let bg = isLit ? tower.color : '#000';
+        
+        const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
+        const borderStr = isWaypoint ? 'none' : '2px solid ' + nodeColor;
+        if (isWaypoint) bg = isLit ? tower.color : '#222'; 
+        
+        let shadowStr = "";
+        if (isLit || isNext) {
+            if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
+            else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+        }
+
+        const cursor = (isNext || (isLit && !isWaypoint)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
+        const pointerEvents = isWaypoint ? 'none' : 'auto';
+        const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
+        
+        const iconColor = isLit ? '#000' : nodeColor;
+        const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
+        
+        const onClickStr = isWaypoint ? '' : 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + c.r + ', ' + isNext + ')"';
+        
+        return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
+    }).join('')).join('');
 
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
@@ -224,45 +258,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             
             <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
-                
-                ${pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
-                    const isWaypoint = c.t === 0;
-                    const isKeystone = c.t === 2;
-                    
-                    const isLit = localLevel >= c.r;
-                    const isNext = (!isWaypoint) && (localLevel + 1 === c.r) && (Math.floor(totalLevel / 6) === sectorIndex);
-                    
-                    const nodeColor = isLit ? tower.color : '#444';
-                    let bg = isLit ? tower.color : '#000';
-                    
-                    // [ UPGRADED ] Waypoints are now exactly 14px (75% of 18px), solid filled
-                    const size = isWaypoint ? 14 : (isKeystone ? 28 : 18);
-                    const borderStr = isWaypoint ? 'none' : '2px solid ' + nodeColor;
-                    if (isWaypoint) bg = isLit ? tower.color : '#222'; 
-                    
-                    let shadowStr = "";
-                    if (isLit || isNext) {
-                        if (isWaypoint) shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
-                        else shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
-                    }
-
-                    const cursor = (isNext || (isLit && !isWaypoint)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
-                    const pointerEvents = isWaypoint ? 'none' : 'auto';
-                    const zIdx = isWaypoint ? 5 : (isKeystone ? 15 : 10);
-                    
-                    const iconColor = isLit ? '#000' : nodeColor;
-                    const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
-                    
-                    const onClickStr = isWaypoint ? '' : \`onclick="openOfferingModal('\${deityKey}', \${towerId}, \${c.r}, \${isNext})"\`;
-                    
-                    return \`
-                    <div class="star-node" 
-                         style="position: absolute; left: \${c.x}%; top: \${c.y}%; transform: translate(-50%, -50%); border: \${borderStr}; background: \${bg}; width: \${size}px; height: \${size}px; border-radius: 50%; pointer-events: \${pointerEvents}; cursor: \${cursor}; \${shadowStr} z-index: \${zIdx}; transition: all 0.3s ease;"
-                         \${onClickStr}>
-                         \${iconHtml}
-                    </div>
-                    \`;
-                }).join('')).join('')}
+                ${starsHtml}
             </div>
             
             <div class="modal-actions" style="flex-direction: column; gap: 0;">
