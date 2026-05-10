@@ -3,11 +3,6 @@
  * Handles data mutation and cost logic for the Void Pantheon.
  */
 
-/**
- * PANTHEON-ENGINE.JS
- * RPG Calculation and Save Migration 
- */
-
 // Calculates UI Spire Height based on maximum depth achieved
 function getPantheonProgress(deityKey, towerId) {
     const unlocked = state.pantheon[deityKey] || [];
@@ -20,7 +15,8 @@ function getPantheonProgress(deityKey, towerId) {
     let maxProgress = 0;
     let majorUnlocked = unlocked.includes('MAJOR');
 
-    deity.sectors.forEach((sec, sIdx) => {
+    for (let sIdx = 0; sIdx < deity.sectors.length; sIdx++) {
+        const sec = deity.sectors[sIdx];
         const paths = sec.isBranch ? sec.paths : [{coords: sec.coords}];
         let keystoneUnlocked = false;
         let maxDepthInSector = 0;
@@ -37,12 +33,13 @@ function getPantheonProgress(deityKey, towerId) {
         });
 
         if (keystoneUnlocked) {
-            if ((sIdx + 1) * 6 > maxProgress) maxProgress = (sIdx + 1) * 6;
+            maxProgress = (sIdx + 1) * 6;
         } else {
-            let currentSecProgress = (sIdx * 6) + maxDepthInSector;
-            if (currentSecProgress > maxProgress) maxProgress = currentSecProgress;
+            // [ FIXED ] Breaks the loop so empty future sectors don't inflate progress
+            maxProgress = (sIdx * 6) + maxDepthInSector;
+            break; 
         }
-    });
+    }
 
     if (majorUnlocked) maxProgress = 30;
     return maxProgress;
@@ -71,7 +68,7 @@ function migratePantheonSave(deityKey, towerId, oldLevel) {
     return unlocked;
 }
 
-// Replaces your old investOffering function
+// Processes Offerings and Unlocks Nodes
 function investOffering(deityKey, towerId, sectorIndex, pathIndex, targetNodeIndex) {
     let unlocked = state.pantheon[deityKey] || [];
     if (typeof unlocked === 'number') unlocked = migratePantheonSave(deityKey, towerId, unlocked);
@@ -89,6 +86,9 @@ function investOffering(deityKey, towerId, sectorIndex, pathIndex, targetNodeInd
         }
         return;
     }
+
+    // [ FIXED ] Ensures the sectorIndex is treated as Math, not a String
+    sectorIndex = parseInt(sectorIndex);
 
     const data = PANTHEON_DATA[towerId];
     const deity = data.deities.find(d => d.k === deityKey);
