@@ -175,7 +175,7 @@ function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex,
 
     let actionsHtml = '';
     
-    // [ FIXED ] Syntax fix ensuring Sector strings/ints are cleanly passed to engine
+    // [ FIXED ] Correctly passes strings for MAJOR and raw integers for Sectors
     const secArg = isMajor ? "'MAJOR'" : sectorIndex;
     
     if (isNext && state.offerings >= cost) {
