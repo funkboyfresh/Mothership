@@ -77,8 +77,6 @@ function renderAscensionTower(towerId) {
     if (towerId === 2) zenithTop = '38%'; 
     if (towerId === 3) zenithTop = '35%'; 
 
-    // --- [ FIXED ] MAJOR KEYSTONE INFILL LOGIC ---
-    // Strictly checks if the 'MAJOR' string exists in the save file
     const checkMajor = (dKey) => {
         let u = state.pantheon[dKey] || [];
         if (typeof u === 'number') u = migratePantheonSave(dKey, towerId, u);
@@ -90,13 +88,10 @@ function renderAscensionTower(towerId) {
     const d2 = checkMajor(data.deities[2].k);
 
     let factionSvg = '';
-    const strokeFmt = `fill="none" stroke-width="8" stroke-linejoin="round"`;
+    // [ FIXED ] Stroke width reduced from 8 to 5 for sharper lines
+    const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
     if (towerId === 1) {
-        // GENESIS SPHERE: 
-        // d1 (Aethelgard): Traces the 8 outer triangles of the intersecting squares
-        // d2 (Valerium): Traces the central octagon negative space
-        // d0 (Kaelen-Tor): Traces the innermost floating circle
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="${d1}" ${strokeFmt}/>
@@ -104,10 +99,6 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // ABYSSAL SYNDICATE: 
-        // d0 (Syraxis): Outer Circle 
-        // d1 (Ignis-Kor): Inner Triangle
-        // d2 (Morvath): Center Diamond
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="42" stroke="${d0}" ${strokeFmt}/>
@@ -115,10 +106,6 @@ function renderAscensionTower(towerId) {
             <polygon points="50,30 65,50 50,70 35,50" stroke="${d2}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 3) {
-        // CELESTIAL VANGUARD: 
-        // d2 (Xerxes): Outer Square 
-        // d1 (Luminara): Intersecting Cross 
-        // d0 (Ragnarath): Center Diamond
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <rect x="15" y="15" width="70" height="70" rx="8" stroke="${d2}" ${strokeFmt}/>
@@ -136,7 +123,16 @@ function renderAscensionTower(towerId) {
                 transition: filter 0.8s ease;
             }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
-            .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
+            
+            /* [ FIXED ] The Endless Spire Illusion. Bottom anchored 100vh down, fading to black at 25% */
+            .monolith-spire-internal { 
+                position: absolute; bottom: -100vh; left: 0; width: 100%; 
+                border-style: solid; border-width: 0 1px 0 1px; 
+                border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 8%, #000 25%) 1; 
+                background: linear-gradient(to bottom, var(--t-color) 0%, #000000 25%); 
+                box-shadow: 0 0 25px -5px var(--t-color); 
+                transition: height 0.5s ease, filter 0.3s; z-index: 5; 
+            }
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
             .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
             .minor-keystone-node:hover { transform: scale(1.3); }
@@ -162,13 +158,14 @@ function renderAscensionTower(towerId) {
 
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
-                            <div class="monolith-spire-internal" style="height: ${spireHeight}%;"></div>
+                            
+                            <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 100vh);"></div>
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
                                          onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${progress === 30})" 
-                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#fff'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : '0 0 10px #fff'};">
+                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
                                          ${d.icon}
                                     </div>
                                 </div>
