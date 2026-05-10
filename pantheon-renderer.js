@@ -89,8 +89,8 @@ function renderAscensionTower(towerId) {
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch;">
                 
                 ${data.deities.map(d => {
-                    const progress = state.pantheon[d.k] || 0; 
-                    const currentSector = Math.floor(progress / 6);
+                    const progress = getPantheonProgress(d.k, towerId); 
+                    const currentSector = Math.min(Math.floor(progress / 6), 4);
                     const spireHeight = 60 + (progress / 30) * 22; 
                     const isMaxed = progress >= 30;
 
@@ -101,7 +101,7 @@ function renderAscensionTower(towerId) {
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
-                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', ${progress === 30})" 
+                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${progress === 30})" 
                                          style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#fff'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : '0 0 10px #fff'};">
                                          ${d.icon}
                                     </div>
@@ -131,16 +131,12 @@ function renderAscensionTower(towerId) {
                                     <div style="color: ${data.color}; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-shadow: 0 0 10px ${data.color}; margin-bottom: 4px;">
                                         ${d.n.toUpperCase()}
                                     </div>
-                                    <div style="color: #fff; font-size: 0.6rem; opacity: 0.5; font-family: monospace; letter-spacing: 1px;">
-                                        LVL ${progress}
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }).join('')}
             </div>
-
             <div style="position: absolute; bottom: 20px; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
             </div>
@@ -149,30 +145,37 @@ function renderAscensionTower(towerId) {
     container.innerHTML = html;
 }
 
-function openOfferingModal(deityKey, towerId, nodeIndex, isNext) {
-    const totalLevel = state.pantheon[deityKey] || 0; 
+function openOfferingModal(deityKey, towerId, sectorIndex, pathIndex, nodeIndex, isNext) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
-    const sector = deity.sectors[Math.floor(totalLevel / 6)] || deity.sectors[4];
     
-    const isKeystone = nodeIndex === 6; 
-    const isMajor = nodeIndex === 'MAJOR';
+    const isMajor = sectorIndex === 'MAJOR';
+    let sector, path, targetNode, isKeystone = false;
     
     let cost = 1;
-    let typeText = `MINOR STAR // NODE 0${nodeIndex}`;
+    let typeText = "MINOR STAR";
     let buffName = `Star of ${deity.n}`;
     let buffDesc = deity.starBuff;
 
     if (isMajor) {
         cost = 50; typeText = "MAJOR KEYSTONE"; buffName = deity.major.n; buffDesc = deity.major.desc;
-    } else if (isKeystone) {
-        cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk;
+    } else {
+        sector = deity.sectors[sectorIndex];
+        const paths = sector.isBranch ? sector.paths : [{coords: sector.coords}];
+        path = paths[pathIndex];
+        targetNode = path.coords[nodeIndex];
+        isKeystone = targetNode.t === 2;
+
+        if (isKeystone) {
+            cost = 5; typeText = "MINOR KEYSTONE"; buffName = sector.keystone; buffDesc = sector.perk;
+        } else if (sector.isBranch) {
+            buffName = path.n; buffDesc = path.p; typeText = `BRANCH STAR // PATH 0${pathIndex + 1}`;
+        }
     }
 
     let actionsHtml = '';
-    
     if (isNext && state.offerings >= cost) {
-        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId});">[ SACRIFICE ]</button></div>`;
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERING${cost > 1 ? 'S' : ''}</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ RENOUNCE ]</button><button class="success-btn" style="flex: 1; background: ${tower.color}; color: #000; box-shadow: 0 0 15px ${tower.color}; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); investOffering('${deityKey}', ${towerId}, '${sectorIndex}', ${pathIndex}, ${nodeIndex});">[ SACRIFICE ]</button></div>`;
     } else if (isNext && state.offerings < cost) {
         actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
     } else {
@@ -201,28 +204,37 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     const tower = PANTHEON_DATA[towerId];
     const deity = tower.deities.find(d => d.k === deityKey);
     const sector = deity.sectors[sectorIndex];
-    const totalLevel = state.pantheon[deityKey] || 0; 
     
-    let localLevel = 0;
-    const sectorStart = sectorIndex * 6;
-    if (totalLevel >= sectorStart + 6) localLevel = 6; 
-    else if (totalLevel >= sectorStart) localLevel = totalLevel - sectorStart; 
+    let unlocked = state.pantheon[deityKey] || [];
+    if (typeof unlocked === 'number') unlocked = migratePantheonSave(deityKey, towerId, unlocked);
     
-    const isSectorActive = Math.floor(totalLevel / 6) === sectorIndex;
-
-    let completionHtml = '';
-    if (localLevel === 5 && isSectorActive) {
-        completionHtml = '<button class="success-btn" style="width: 100%; margin-bottom: 10px; background: ' + tower.color + '; color: #000; font-weight: bold;" onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', 6, true)">[ UNLOCK MINOR KEYSTONE ]</button>';
+    let isSectorActive = false;
+    if (sectorIndex === 0) {
+        isSectorActive = true;
+    } else {
+        const prevSec = deity.sectors[sectorIndex - 1];
+        const prevPaths = prevSec.isBranch ? prevSec.paths : [{coords: prevSec.coords}];
+        const prevK = prevPaths[0].coords[prevPaths[0].coords.length - 1];
+        if (unlocked.includes(`s${sectorIndex - 1}_x${prevK.x}_y${prevK.y}`)) isSectorActive = true;
     }
 
-    const pathsToRender = sector.isBranch ? sector.paths : [sector.coords];
+    const pathsToRender = sector.isBranch ? sector.paths : [{coords: sector.coords}];
 
-    let starsHtml = pathsToRender.map(coordsArray => coordsArray.map((c, i) => {
+    let starsHtml = pathsToRender.map((pathObj, pIdx) => pathObj.coords.map((c, nIdx) => {
+        const nId = `s${sectorIndex}_x${c.x}_y${c.y}`;
+        const isLit = unlocked.includes(nId);
+        
+        let isNext = false;
+        if (!isLit && isSectorActive) {
+            if (nIdx === 0) isNext = true;
+            else {
+                const prevNode = pathObj.coords[nIdx - 1];
+                if (unlocked.includes(`s${sectorIndex}_x${prevNode.x}_y${prevNode.y}`)) isNext = true;
+            }
+        }
+
         const isWaypoint = c.t === 0;
         const isKeystone = c.t === 2;
-        
-        const isLit = localLevel >= c.r;
-        const isNext = (localLevel + 1 === c.r) && isSectorActive;
         
         const nodeColor = isLit ? tower.color : '#444';
         let bg = isLit ? tower.color : '#000';
@@ -231,24 +243,13 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         const borderStr = isWaypoint ? 'none' : '2px solid ' + (isNext ? tower.color : nodeColor);
         
         let shadowStr = "";
-
-        // [ PERFECTED ] Split the logic cleanly between Waypoints and Interactive Stars
         if (isWaypoint) {
-            if (isLit) {
-                bg = tower.color;
-            } else if (isNext) {
-                bg = '#1a1a1a'; // Solid dark background perfectly masks the lines
-                shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; 
-            } else {
-                bg = '#111'; 
-            }
+            if (isLit) bg = tower.color;
+            else if (isNext) { bg = '#1a1a1a'; shadowStr = "box-shadow: 0 0 8px " + tower.color + ";"; } 
+            else bg = '#111'; 
         } else {
-            if (isLit) {
-                shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
-            } else if (isNext) {
-                // Brighter 50% extra glow for the clickable target
-                shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
-            }
+            if (isLit) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "25px " : "15px ") + tower.color + ";";
+            else if (isNext) shadowStr = "box-shadow: 0 0 " + (isKeystone ? "35px" : "25px") + " " + tower.color + ", 0 0 " + (isKeystone ? "15px" : "10px") + " " + tower.color + ";";
         }
 
         const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
@@ -257,8 +258,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         
         const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
         const iconHtml = isKeystone ? '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ' + iconColor + ';">' + deity.icon + '</div>' : '';
-        
-        const onClickStr = (!isWaypoint && (isLit || isNext)) ? 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + c.r + ', ' + isNext + ')"' : '';
+        const onClickStr = (!isWaypoint && (isLit || isNext)) ? 'onclick="openOfferingModal(\'' + deityKey + '\', ' + towerId + ', ' + sectorIndex + ', ' + pIdx + ', ' + nIdx + ', ' + isNext + ')"' : '';
         
         return '<div class="star-node" style="position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; transform: translate(-50%, -50%); border: ' + borderStr + '; background: ' + bg + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; opacity: 1; pointer-events: ' + pointerEvents + '; cursor: ' + cursor + '; ' + shadowStr + ' z-index: ' + zIdx + '; transition: all 0.3s ease;" ' + onClickStr + '>' + iconHtml + '</div>';
     }).join('')).join('');
@@ -269,14 +269,11 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     modal.innerHTML = `
         <div class="modal-box" style="width: 95%; max-width: 500px; height: 80vh; border-color: ${tower.color}; display: flex; flex-direction: column;">
             <div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div>
-            
             <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
                 <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
                 ${starsHtml}
             </div>
-            
             <div class="modal-actions" style="flex-direction: column; gap: 0;">
-                ${completionHtml}
                 <button class="mod-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove()">[ DISENGAGE ]</button>
             </div>
         </div>
@@ -284,46 +281,36 @@ function openConstellation(deityKey, towerId, sectorIndex) {
     document.body.appendChild(modal);
     
     const svg = document.getElementById(`constellation-svg-${deityKey}`);
-    renderSectorConstellation(svg, pathsToRender, tower.color, localLevel, isSectorActive);
+    renderSectorConstellation(svg, pathsToRender, tower.color, unlocked, sectorIndex, isSectorActive);
 }
 
-function renderSectorConstellation(svg, pathsToRender, color, localLevel, isSectorActive) {
+function renderSectorConstellation(svg, pathsToRender, color, unlocked, sectorIndex, isSectorActive) {
     if (!svg || !pathsToRender) return;
     svg.innerHTML = ''; 
     
-    pathsToRender.forEach(coords => {
-        coords.forEach((coord, i) => {
-            if (i < coords.length - 1) {
-                const next = coords[i + 1];
+    pathsToRender.forEach(pathObj => {
+        pathObj.coords.forEach((coord, i) => {
+            if (i < pathObj.coords.length - 1) {
+                const next = pathObj.coords[i + 1];
                 const baseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                baseLine.setAttribute("x1", `${coord.x}%`); 
-                baseLine.setAttribute("y1", `${coord.y}%`); 
-                baseLine.setAttribute("x2", `${next.x}%`); 
-                baseLine.setAttribute("y2", `${next.y}%`); 
-                baseLine.setAttribute("stroke", "#333"); 
-                baseLine.setAttribute("stroke-width", "2");
+                baseLine.setAttribute("x1", `${coord.x}%`); baseLine.setAttribute("y1", `${coord.y}%`); baseLine.setAttribute("x2", `${next.x}%`); baseLine.setAttribute("y2", `${next.y}%`); 
+                baseLine.setAttribute("stroke", "#333"); baseLine.setAttribute("stroke-width", "2");
                 svg.appendChild(baseLine);
 
-                if (localLevel >= next.r) {
+                const nextId = `s${sectorIndex}_x${next.x}_y${next.y}`;
+                const coordId = `s${sectorIndex}_x${coord.x}_y${coord.y}`;
+
+                if (unlocked.includes(nextId)) {
                     const activeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    activeLine.setAttribute("x1", `${coord.x}%`); 
-                    activeLine.setAttribute("y1", `${coord.y}%`); 
-                    activeLine.setAttribute("x2", `${next.x}%`); 
-                    activeLine.setAttribute("y2", `${next.y}%`); 
-                    activeLine.setAttribute("stroke", color); 
-                    activeLine.setAttribute("stroke-width", "3"); 
+                    activeLine.setAttribute("x1", `${coord.x}%`); activeLine.setAttribute("y1", `${coord.y}%`); activeLine.setAttribute("x2", `${next.x}%`); activeLine.setAttribute("y2", `${next.y}%`); 
+                    activeLine.setAttribute("stroke", color); activeLine.setAttribute("stroke-width", "3"); 
                     activeLine.style.filter = `drop-shadow(0 0 8px ${color})`;
                     svg.appendChild(activeLine);
-                } else if (isSectorActive && localLevel + 1 === next.r) {
+                } else if (isSectorActive && (i === 0 ? true : unlocked.includes(coordId))) {
                     const pendingLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    pendingLine.setAttribute("x1", `${coord.x}%`); 
-                    pendingLine.setAttribute("y1", `${coord.y}%`); 
-                    pendingLine.setAttribute("x2", `${next.x}%`); 
-                    pendingLine.setAttribute("y2", `${next.y}%`); 
-                    pendingLine.setAttribute("stroke", color); 
-                    pendingLine.setAttribute("stroke-width", "2"); 
-                    pendingLine.style.opacity = "0.5";
-                    pendingLine.style.filter = `drop-shadow(0 0 5px ${color})`;
+                    pendingLine.setAttribute("x1", `${coord.x}%`); pendingLine.setAttribute("y1", `${coord.y}%`); pendingLine.setAttribute("x2", `${next.x}%`); pendingLine.setAttribute("y2", `${next.y}%`); 
+                    pendingLine.setAttribute("stroke", color); pendingLine.setAttribute("stroke-width", "2"); 
+                    pendingLine.style.opacity = "0.5"; pendingLine.style.filter = `drop-shadow(0 0 5px ${color})`;
                     svg.appendChild(pendingLine);
                 }
             }
