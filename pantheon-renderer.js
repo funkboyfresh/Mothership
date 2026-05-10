@@ -4,6 +4,7 @@
  */
 
 function renderVoidPantheon() {
+    window.isViewingPantheon = true;
     const container = document.getElementById('view-container');
     const navBar = document.getElementById('nav-bar');
     if(navBar) navBar.style.display = 'none';
