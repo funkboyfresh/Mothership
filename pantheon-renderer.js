@@ -71,19 +71,65 @@ function renderAscensionTower(towerId) {
     const factionIcons = { 1: '۞', 2: '⎊', 3: '❖' };
     const factionIcon = factionIcons[towerId] || '◬';
     
-    // [ FIXED ] Scaled Celestial Vanguard down 10%
     let zenithSize = '8rem';
     if (towerId === 1) zenithSize = '5.4rem'; 
     if (towerId === 3) zenithSize = '5.8rem'; 
 
-    // [ FIXED ] Adjusted top percentages to visually align the center of mass for all 3 icons
     let zenithTop = '33%'; 
     if (towerId === 2) zenithTop = '38%'; 
     if (towerId === 3) zenithTop = '35%'; 
 
+    // --- [ NEW ] DIRECTIONAL GLOW LOGIC ---
+    // Converts the faction's hex color into raw RGB for opacity blending
+    const hexToRGB = (hex) => {
+        let r = parseInt(hex.slice(1, 3), 16);
+        let g = parseInt(hex.slice(3, 5), 16);
+        let b = parseInt(hex.slice(5, 7), 16);
+        return `${r}, ${g}, ${b}`;
+    };
+    const rgbColor = hexToRGB(data.color);
+
+    // Apply a very faint ambient baseline glow so it isn't completely pitch black
+    let shadowLayers = [`0 0 15px rgba(${rgbColor}, 0.15)`]; 
+    
+    data.deities.forEach((d, idx) => {
+        const progress = getPantheonProgress(d.k, towerId);
+        const intensity = Math.min(progress / 30, 1); // Scales from 0.0 (empty) to 1.0 (maxed)
+
+        if (intensity > 0) {
+            // Map the 3 deities to 3 distinct angles behind the icon
+            let x = 0, y = 0;
+            if (idx === 0) { x = 0; y = -45; }       // Top Core
+            else if (idx === 1) { x = 40; y = 25; }  // Bottom Right Core
+            else if (idx === 2) { x = -40; y = 25; } // Bottom Left Core
+
+            const spreadOuter = 40 + (intensity * 40); // Glow blooms outward as you level up
+            const spreadInner = 15 + (intensity * 15); // Core gets intensely bright
+            
+            const alphaOuter = (intensity * 0.6).toFixed(2); 
+            const alphaInner = (intensity * 1.0).toFixed(2); 
+
+            shadowLayers.push(`${x}px ${y}px ${spreadOuter}px rgba(${rgbColor}, ${alphaOuter})`);
+            shadowLayers.push(`${x * 0.4}px ${y * 0.4}px ${spreadInner}px rgba(${rgbColor}, ${alphaInner})`);
+        }
+    });
+
+    const zenithShadows = shadowLayers.join(', ');
+
     let html = `
         <style>
-            .zenith-apex-tower { position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -125%); font-size: ${zenithSize}; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 40px ${data.color}, 0 0 80px ${data.color}88, 0 0 120px ${data.color}44; }
+            .zenith-apex-tower { 
+                position: absolute; 
+                top: ${zenithTop}; 
+                left: 50%; 
+                transform: translate(-50%, -125%); 
+                font-size: ${zenithSize}; 
+                color: #000; 
+                z-index: 16; 
+                pointer-events: none; 
+                text-shadow: ${zenithShadows}; 
+                transition: text-shadow 0.8s ease; 
+            }
             .tower-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 20; padding-top: 30vh; }
             .monolith-spire-internal { position: absolute; bottom: -20vh; left: 0; width: 100%; border-style: solid; border-width: 0 1px 0 1px; border-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--t-color) 15%, #000 80%) 1; background: linear-gradient(to bottom, var(--t-color) 0%, #000000 70%); box-shadow: 0 0 25px -5px var(--t-color); transition: height 0.5s ease, filter 0.3s; z-index: 5; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%); }
             .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
@@ -156,7 +202,6 @@ function renderAscensionTower(towerId) {
     `;
     container.innerHTML = html;
 }
-
 
 
 
