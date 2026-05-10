@@ -1,6 +1,6 @@
 /**
  * PANTHEON-ENGINE.JS
- * Handles data mutation and cost logic for the Void Pantheon.
+ * RPG Calculation and Save Migration 
  */
 
 // Calculates UI Spire Height based on maximum depth achieved
@@ -35,9 +35,8 @@ function getPantheonProgress(deityKey, towerId) {
         if (keystoneUnlocked) {
             maxProgress = (sIdx + 1) * 6;
         } else {
-            // [ FIXED ] Breaks the loop so empty future sectors don't inflate progress
             maxProgress = (sIdx * 6) + maxDepthInSector;
-            break; 
+            break; // Stop counting if we haven't beaten this sector yet
         }
     }
 
@@ -87,7 +86,7 @@ function investOffering(deityKey, towerId, sectorIndex, pathIndex, targetNodeInd
         return;
     }
 
-    // [ FIXED ] Ensures the sectorIndex is treated as Math, not a String
+    // Lock index to integer math to prevent String collision bugs
     sectorIndex = parseInt(sectorIndex);
 
     const data = PANTHEON_DATA[towerId];
