@@ -43,8 +43,6 @@ function renderVoidPantheon() {
             .tower-content { position: relative; z-index: 20; padding-bottom: 10px; display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5vh); }
             .spire-text { height: 380px; display: flex; align-items: flex-end; color: var(--t-color); writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 15px var(--t-color); white-space: nowrap; }
             .tower-icon-wrapper { height: 80px; display: flex; align-items: center; justify-content: center; margin-top: 15px; }
-            
-            /* [ FIXED ] Flawless SVG text-shadow translation using drop-shadow */
             .tower-icon { color: #fff; display: flex; align-items: center; justify-content: center; }
             .tower-icon-svg { width: 1em; height: 1em; overflow: visible; filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 20px var(--t-color)) drop-shadow(0 0 40px var(--t-color)); }
         </style>
@@ -57,7 +55,7 @@ function renderVoidPantheon() {
             <div class="zenith-apex-void">◬</div>
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">${t2Icon}</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3.6rem;">${t2Icon}</div></div></div></div>
                 <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t3Icon}</div></div></div></div>
             </div>
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
@@ -103,7 +101,6 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // [ FIXED ] Solid offset inner diamond added for Morvath's core
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
@@ -120,6 +117,23 @@ function renderAscensionTower(towerId) {
                 <path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="${d0}" ${strokeFmt}/>
             </g>
         </svg>`;
+    }
+
+    // [ FIXED ] Calculate the exact visual center of the Zenith SVG to anchor the wires directly to its core
+    const zenithCenterY = `calc(${zenithTop} - 0.75 * ${zenithSize})`;
+
+    // [ FIXED ] Wires completely hidden from DOM until all 3 major keystones are purchased
+    let wiresSvgHtml = '';
+    if (allMajorsUnlocked) {
+        wiresSvgHtml = `
+            <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                <line x1="50%" y1="${zenithCenterY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
+                
+                <line x1="20%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="80%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+            </svg>
+        `;
     }
 
     let html = `
@@ -154,13 +168,7 @@ function renderAscensionTower(towerId) {
             
             <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
-            <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                <line x1="50%" y1="${zenithTop}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
-                
-                <line x1="20%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d0 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d0 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
-                <line x1="50%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d1 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d1 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
-                <line x1="80%" y1="42%" x2="50%" y2="${zenithTop}" stroke="${d2 === '#000' ? '#222' : data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${d2 === '#000' ? 'transparent' : data.color}); transition: all 1s ease;" />
-            </svg>
+            ${wiresSvgHtml}
 
             <div class="zenith-apex-tower" ${allMajorsUnlocked ? `onclick="openAscensionModal(${towerId}, ${!!ascensionUnlocked})"` : ''}>${factionSvg}</div>
             
@@ -344,8 +352,10 @@ function openConstellation(deityKey, towerId, sectorIndex) {
             }
 
             const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
-            // [ FIXED ] Expliclty force auto pointer events so nodes are absolutely clickable over background SVGs
-            const pointerEvents = isWaypoint ? 'none' : 'auto !important';
+            
+            // [ FIXED ] Removed !important tag which was breaking CSS parsers. 
+            // Clicks are now purely managed by Z-index layering.
+            const pointerEvents = isWaypoint ? 'none' : 'auto';
             const zIdx = isWaypoint ? 5 : (isKeystone ? 115 : 110);
             
             const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
@@ -363,7 +373,7 @@ function openConstellation(deityKey, towerId, sectorIndex) {
         <div class="modal-box" style="width: 95%; max-width: 500px; height: 80vh; border-color: ${tower.color}; display: flex; flex-direction: column;">
             <div class="modal-header">${deity.n.toUpperCase()} // ${sector.name.toUpperCase()}</div>
             <div style="flex: 1; position: relative; background: #000; margin: 10px 0; border: 1px solid #222; overflow: hidden;">
-                <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+                <svg id="constellation-svg-${deityKey}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></svg>
                 ${starsHtml}
             </div>
             <div class="modal-actions" style="flex-direction: column; gap: 0;">
