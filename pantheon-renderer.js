@@ -102,7 +102,6 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="10" stroke="${d0}" ${strokeFmt}/>
         </svg>`;
     } else if (towerId === 2) {
-        // [ FIXED ] Solid offset inner diamond added for Morvath's core
         factionSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
             <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
@@ -121,21 +120,16 @@ function renderAscensionTower(towerId) {
         </svg>`;
     }
 
-    // [ FIXED ] Normalized coordinates mapped directly to each tower to avoid calc() failures in Safari/SVG lines
-    let centerY = '25%';
-    if (towerId === 2) centerY = '30%';
-    if (towerId === 3) centerY = '27%';
+    const zenithCenterY = `calc(${zenithTop} - 0.75 * ${zenithSize})`;
 
-    // [ FIXED ] Wires completely hidden from DOM until all 3 major keystones are purchased
     let wiresSvgHtml = '';
     if (allMajorsUnlocked) {
         wiresSvgHtml = `
             <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                <line x1="50%" y1="${centerY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
-                
-                <line x1="20%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="50%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="80%" y1="42%" x2="50%" y2="${centerY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="${zenithCenterY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
+                <line x1="20%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="80%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
             </svg>
         `;
     }
@@ -187,6 +181,9 @@ function renderAscensionTower(towerId) {
                     const currentSector = Math.min(Math.floor(progress / 6), 4);
                     const spireHeight = 30 + (progress / 30) * 52; 
                     const isMaxed = checkMajor(d.k) !== '#000';
+                    
+                    // [ FIXED ] Prevents an already-bought Major Keystone from prompting you to spend another 50 Offerings
+                    const isMajorNext = progress === 30 && !isMaxed;
 
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
@@ -196,8 +193,8 @@ function renderAscensionTower(towerId) {
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
-                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${progress === 30})" 
-                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
+                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${isMajorNext})" 
+                                         style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
                                          ${d.icon}
                                     </div>
                                 </div>
@@ -236,6 +233,7 @@ function renderAscensionTower(towerId) {
     `;
     container.innerHTML = html;
 }
+
 
 
 
@@ -355,15 +353,18 @@ function openConstellation(deityKey, towerId, sectorIndex) {
                 }
             }
 
-            const cursor = (!isWaypoint && (isLit || isNext)) ? 'pointer' : (isWaypoint ? 'default' : 'not-allowed');
+            // [ FIXED ] Cursor defaults to pointer for any non-waypoint, so players can freely inspect the skill tree
+            const cursor = isWaypoint ? 'default' : 'pointer';
             
-            // [ FIXED ] Force absolute click interaction parsing using Template Literals
-            const pointerEvents = isWaypoint ? 'none' : 'all';
+            // [ FIXED ] Uses the HTML-valid 'auto' rule so browsers don't ignore it
+            const pointerEvents = isWaypoint ? 'none' : 'auto';
             const zIdx = isWaypoint ? 5 : (isKeystone ? 9999 : 9990);
             
             const iconColor = isLit ? '#000' : (isNext ? tower.color : nodeColor);
             const iconHtml = isKeystone ? `<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 16px; color: ${iconColor};">${deity.icon}</div>` : '';
-            const onClickStr = (!isWaypoint && (isLit || isNext)) ? `onclick="openOfferingModal('${deityKey}', ${towerId}, ${sectorIndex}, ${pIdx}, ${nIdx}, ${isNext})"` : '';
+            
+            // [ FIXED ] Allows the click event to fire on ALL nodes, so you can inspect buffs before unlocking them
+            const onClickStr = !isWaypoint ? `onclick="openOfferingModal('${deityKey}', ${towerId}, ${sectorIndex}, ${pIdx}, ${nIdx}, ${isNext})"` : '';
             
             return `<div class="star-node" style="position: absolute; left: ${c.x}%; top: ${c.y}%; transform: translate(-50%, -50%); border: ${borderStr}; background: ${bg}; width: ${size}px; height: ${size}px; border-radius: 50%; opacity: 1; pointer-events: ${pointerEvents}; cursor: ${cursor}; ${shadowStr} z-index: ${zIdx}; transition: all 0.3s ease;" ${onClickStr}>${iconHtml}</div>`;
         }).join('');
