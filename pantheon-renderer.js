@@ -4,7 +4,7 @@
  */
 
 function renderVoidPantheon() {
-    window.isViewingPantheon = true; // Global UI Lock
+    window.isViewingPantheon = true; 
 
     const container = document.getElementById('view-container');
     const navBar = document.getElementById('nav-bar');
@@ -53,14 +53,16 @@ function renderVoidPantheon() {
     const allAscended = t1Asc && t2Asc && t3Asc;
     const voidUnlocked = state.pantheon['void_ascension'];
 
-    // [ FIXED ] The Dynamic Zenith Emblem. Tri-segmented SVG that lights up with each Faction Ascension
+    // [ FIXED ] The segmented Tri-Force emblem
+    const triMixGlow = voidUnlocked ? 'filter: drop-shadow(0 0 8px #00d4ff) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 8px #ff00ff);' : '';
+    
     const dynamicZenithHtml = `
         <div style="position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); z-index: 16; cursor: ${allAscended ? 'pointer' : 'default'};" ${allAscended ? `onclick="openVoidAscensionModal(${!!voidUnlocked})"` : ''}>
             <svg viewBox="0 0 100 100" style="width: 8rem; height: 8rem; overflow: visible;">
-                <polygon points="50,55 30,45 10,80 50,80" fill="${t1Asc ? '#00d4ff' : 'transparent'}" stroke="${t1Asc ? '#00d4ff' : '#444'}" stroke-width="4" stroke-linejoin="round" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
-                <polygon points="50,55 70,45 50,10 30,45" fill="${t2Asc ? '#ffd700' : 'transparent'}" stroke="${t2Asc ? '#ffd700' : '#444'}" stroke-width="4" stroke-linejoin="round" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
-                <polygon points="50,55 50,80 90,80 70,45" fill="${t3Asc ? '#ff00ff' : 'transparent'}" stroke="${t3Asc ? '#ff00ff' : '#444'}" stroke-width="4" stroke-linejoin="round" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
-                <circle cx="50" cy="55" r="7" fill="${voidUnlocked ? '#ffffff' : '#111'}" stroke="${voidUnlocked ? '#fff' : '#444'}" stroke-width="3" style="transition: all 1s ease; ${voidUnlocked ? 'filter: drop-shadow(0 0 10px #00d4ff) drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 10px #ff00ff);' : ''}" />
+                <path d="M 30 45 L 10 80 L 50 80 L 50 56 Z" fill="${t1Asc ? '#00d4ff' : 'transparent'}" stroke="${t1Asc ? '#00d4ff' : '#444'}" stroke-width="2" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
+                <path d="M 50 10 L 30 45 L 50 56 L 70 45 Z" fill="${t2Asc ? '#ffd700' : 'transparent'}" stroke="${t2Asc ? '#ffd700' : '#444'}" stroke-width="2" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
+                <path d="M 50 56 L 50 80 L 90 80 L 70 45 Z" fill="${t3Asc ? '#ff00ff' : 'transparent'}" stroke="${t3Asc ? '#ff00ff' : '#444'}" stroke-width="2" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
+                <circle cx="50" cy="56" r="6" fill="${voidUnlocked ? '#ffffff' : '#111'}" stroke="${voidUnlocked ? '#ffffff' : '#444'}" stroke-width="2" style="transition: all 1s ease; ${triMixGlow}" />
             </svg>
         </div>
     `;
@@ -95,10 +97,8 @@ function renderAscensionTower(towerId) {
     const container = document.getElementById('view-container');
     
     let zenithSize = '5.4rem'; 
-    // [ FIXED ] Coordinates completely flattened to mathematical absolute centers
-    let zenithTop = '15%'; 
-    if (towerId === 2) zenithTop = '20%'; 
-    if (towerId === 3) zenithTop = '17%'; 
+    // [ FIXED ] Locked Zenith to a strict mathematical center point
+    let zenithTop = '18%'; 
 
     const checkMajor = (dKey) => {
         let u = state.pantheon[dKey] || [];
@@ -142,16 +142,17 @@ function renderAscensionTower(towerId) {
         </svg>`;
     }
 
-    // [ FIXED ] Wires perfectly route to exact centers. Y1 starts deeply hidden at 65vh to sit behind keystones.
+    // [ FIXED ] Wires strictly locked to the Zenith's 18% coordinate.
+    // Z-index: 10 ensures it is perfectly masked behind the Keystone and Zenith void-backgrounds!
     let wiresSvgHtml = '';
     if (allMajorsUnlocked) {
         wiresSvgHtml = `
             <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                ${ascensionUnlocked ? `<line x1="50%" y1="${zenithTop}" x2="50%" y2="-10%" stroke="${data.color}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />` : ''}
+                ${ascensionUnlocked ? `<line x1="50%" y1="18%" x2="50%" y2="0%" stroke="${data.color}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />` : ''}
                 
-                <line x1="20%" y1="65%" x2="50%" y2="${zenithTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="50%" y1="65%" x2="50%" y2="${zenithTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="80%" y1="65%" x2="50%" y2="${zenithTop}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="20%" y1="36%" x2="50%" y2="18%" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="50%" y1="36%" x2="50%" y2="18%" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
+                <line x1="80%" y1="36%" x2="50%" y2="18%" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
             </svg>
         `;
     }
@@ -160,9 +161,8 @@ function renderAscensionTower(towerId) {
         <style>
             .zenith-apex-tower { 
                 position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -50%); 
-                font-size: ${zenithSize}; z-index: 16; 
+                font-size: ${zenithSize}; z-index: 30; /* Masks the Skyward Line */
                 pointer-events: ${allMajorsUnlocked ? 'auto' : 'none'}; cursor: ${allMajorsUnlocked ? 'pointer' : 'default'};
-                /* [ FIXED ] Zenith icon rests dark, and explodes with Faction Color upon purchase */
                 filter: ${ascensionUnlocked ? `drop-shadow(0 0 25px ${data.color}) drop-shadow(0 0 50px ${data.color})` : `drop-shadow(0 0 5px ${data.color}33)`}; 
                 transition: filter 0.8s ease;
             }
@@ -191,7 +191,11 @@ function renderAscensionTower(towerId) {
 
             ${wiresSvgHtml}
 
-            <div class="zenith-apex-tower" ${allMajorsUnlocked ? `onclick="openAscensionModal(${towerId}, ${!!ascensionUnlocked})"` : ''}>${factionSvg}</div>
+            <div class="zenith-apex-tower" ${allMajorsUnlocked ? `onclick="openAscensionModal(${towerId}, ${!!ascensionUnlocked})"` : ''}>
+                <div style="background: #010003; border-radius: 50%;">
+                    ${factionSvg}
+                </div>
+            </div>
             
             <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
@@ -207,7 +211,7 @@ function renderAscensionTower(towerId) {
                     
                     const isMajorNext = progress === 30 && !isMaxed;
                     
-                    // [ FIXED ] Scaled strictly via font-size to preserve perfect alignment
+                    // [ FIXED ] Scaled strictly via font-size to preserve perfect alignment without box-warping
                     const iconScale = d.k === 'aethelgard' ? 'font-size: 4.375rem;' : '';
 
                     return `
@@ -216,11 +220,11 @@ function renderAscensionTower(towerId) {
                             <div class="monolith-spire-internal" style="height: calc(${spireHeight}% + 20vh);"></div>
                             <div style="display: flex; flex-direction: column; height: 100%; width: 100%; z-index: 20;">
                                 
-                                <div style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 25;">
+                                <div style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 30;">
                                     <div style="background: #010003; border-radius: 50%; width: 5.5rem; height: 5.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px #010003;">
                                         <div class="keystone-icon" 
                                              onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${isMajorNext})" 
-                                             style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'}; pointer-events: auto; ${iconScale}">
+                                             style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'}; pointer-events: auto; display: flex; align-items: center; justify-content: center; ${iconScale}">
                                              ${d.icon}
                                         </div>
                                     </div>
@@ -261,7 +265,6 @@ function renderAscensionTower(towerId) {
     `;
     container.innerHTML = html;
 }
-
 
 
 
@@ -341,7 +344,7 @@ function openAscensionModal(towerId, isUnlocked) {
     }
 
     let actionsHtml = '';
-    // [ FIXED ] Cost strictly set to 200 Offerings for Faction Ascension
+    // [ FIXED ] Cost strictly set to 200 Offerings
     const cost = 200; 
 
     if (isUnlocked) {
@@ -367,7 +370,6 @@ function openAscensionModal(towerId, isUnlocked) {
     `;
     document.body.appendChild(modal);
 }
-
 
 
 
