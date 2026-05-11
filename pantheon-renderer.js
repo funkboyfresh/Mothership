@@ -25,9 +25,8 @@ function renderVoidPantheon() {
         bgStars += getStar(0.7); midStars += getStar(1.1); fgStars += getStar(1.6); 
     }
 
-    // [ FIXED ] Unified the Main Menu icons with the precise SVGs from the faction screens
     const t1Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><path d="M 37.5 20 L 50 7.5 L 62.5 20 L 80 20 L 80 37.5 L 92.5 50 L 80 62.5 L 80 80 L 62.5 80 L 50 92.5 L 37.5 80 L 20 80 L 20 62.5 L 7.5 50 L 20 37.5 L 20 20 Z" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="37.5,20 62.5,20 80,37.5 80,62.5 62.5,80 37.5,80 20,62.5 20,37.5" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></svg>`;
-    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,42 56,60 50,78 44,60" fill="currentColor" stroke="none" /></svg>`;
+    const t2Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="15.36,30 84.64,30 50,90" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,30 62,60 50,90 38,60" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><polygon points="50,45 56,60 50,75 44,60" fill="currentColor" stroke="none" /></svg>`;
     const t3Icon = `<svg class="tower-icon-svg" viewBox="0 0 100 100"><g transform="rotate(45 50 50)"><path d="M 22 42 L 22 22 L 42 22 M 58 22 L 78 22 L 78 42 M 78 58 L 78 78 L 58 78 M 42 78 L 22 78 L 22 58" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><rect x="30" y="30" width="40" height="40" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/><path d="M 50 30 L 50 70 M 30 50 L 70 50" stroke="currentColor" fill="none" stroke-width="5" stroke-linejoin="round"/></g></svg>`;
 
     const atmosStyles = `
@@ -49,14 +48,37 @@ function renderVoidPantheon() {
         </style>
     `;
 
+    // Retrieve Ascension States
+    const t1Asc = state.pantheon['tower_1_ascension'];
+    const t2Asc = state.pantheon['tower_2_ascension'];
+    const t3Asc = state.pantheon['tower_3_ascension'];
+    const allAscended = t1Asc && t2Asc && t3Asc;
+    const voidUnlocked = state.pantheon['void_ascension'];
+
+    const triMixGlow = voidUnlocked ? 'filter: drop-shadow(0 0 8px #00d4ff) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 8px #ff00ff);' : '';
+
+    // The mathematically segmented Tri-Force SVG
+    const pantheonSvg = `
+        <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
+            <path d="M 32.5 45 L 15 80 L 50 80 L 50 56 Z" fill="${t1Asc ? '#00d4ff' : '#000'}" stroke="${t1Asc ? '#00d4ff' : '#444'}" stroke-width="3" stroke-linejoin="round" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
+            <path d="M 50 10 L 32.5 45 L 50 56 L 67.5 45 Z" fill="${t2Asc ? '#ffd700' : '#000'}" stroke="${t2Asc ? '#ffd700' : '#444'}" stroke-width="3" stroke-linejoin="round" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
+            <path d="M 50 56 L 50 80 L 85 80 L 67.5 45 Z" fill="${t3Asc ? '#ff00ff' : '#000'}" stroke="${t3Asc ? '#ff00ff' : '#444'}" stroke-width="3" stroke-linejoin="round" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
+            <circle cx="50" cy="56" r="6" fill="${voidUnlocked ? '#ffffff' : '#000'}" stroke="${voidUnlocked ? '#ffffff' : '#444'}" stroke-width="3" style="transition: all 1s ease; ${triMixGlow}" />
+        </svg>
+    `;
+
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">${bgStars}</div>
             <div class="bg-stellar-nursery"></div>
-            <div class="zenith-apex-void">◬</div>
+            
+            <div class="zenith-apex-void" style="${allAscended ? 'pointer-events: auto; cursor: pointer;' : ''}" ${allAscended ? `onclick="openVoidAscensionModal(${!!voidUnlocked})"` : ''}>
+                ${pantheonSvg}
+            </div>
+
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3.6rem;">${t2Icon}</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">${t2Icon}</div></div></div></div>
                 <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t3Icon}</div></div></div></div>
             </div>
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
@@ -70,6 +92,39 @@ function renderVoidPantheon() {
         </div>
     `;
 }
+
+
+
+function openVoidAscensionModal(isUnlocked) {
+    let cost = 500;
+    let actionsHtml = '';
+
+    if (isUnlocked) {
+        actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #fff; color: #fff;" onclick="this.closest('.modal-overlay').remove()">[ PROTOCOL ACTIVE ]</button></div>`;
+    } else if (state.offerings >= cost) {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERINGS</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button><button class="success-btn" style="flex: 1; background: #fff; color: #000; box-shadow: 0 0 15px #fff; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); state.offerings -= ${cost}; state.pantheon['void_ascension'] = true; save(); renderVoidPantheon();">[ ASSIMILATE ]</button></div>`;
+    } else {
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay warp-transition';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 1px solid #fff; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.2); border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: #fff; text-shadow: 0 0 10px #fff; margin-top: 0;">VOID ASCENSION</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem; color: #fff;">THE OMEGA PROTOCOL</h2>
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: #fff; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">The final synchronization. All systems optimized. Reality bends to your will.</p>
+            </div>
+            ${actionsHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+
+
 
 function renderAscensionTower(towerId) {
     const data = PANTHEON_DATA[towerId];
