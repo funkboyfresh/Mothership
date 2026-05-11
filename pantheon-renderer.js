@@ -37,7 +37,7 @@ function renderVoidPantheon() {
             .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; transform: translateZ(0); will-change: transform, opacity; }
             .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); transform: translateZ(0); will-change: transform; }
             
-            /* [ FIXED ] Lowered strictly to 30% */
+            /* [ FIXED ] Top mathematically locked to 30% */
             .zenith-apex-void { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
             
             .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
@@ -51,12 +51,36 @@ function renderVoidPantheon() {
         </style>
     `;
 
+    // Fetch faction unlock states
+    const t1Asc = state.pantheon['tower_1_ascension'];
+    const t2Asc = state.pantheon['tower_2_ascension'];
+    const t3Asc = state.pantheon['tower_3_ascension'];
+    const allAscended = t1Asc && t2Asc && t3Asc;
+    const voidUnlocked = state.pantheon['void_ascension'];
+
+    const triMixGlow = voidUnlocked ? 'filter: drop-shadow(0 0 10px #00d4ff) drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 10px #ff00ff);' : '';
+
+    // [ EXACT BLUEPRINT ] Three solid, disconnected polygons and one center circle. No strokes, completely transparent negative space.
+    const dynamicPantheonSvg = `
+        <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
+            <polygon points="15,80 45,80 30,50" fill="${t1Asc ? '#00d4ff' : '#000'}" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
+            
+            <polygon points="50,10 35,40 65,40" fill="${t2Asc ? '#ffd700' : '#000'}" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
+            
+            <polygon points="85,80 55,80 70,50" fill="${t3Asc ? '#ff00ff' : '#000'}" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
+            
+            <circle cx="50" cy="60" r="8" fill="${voidUnlocked ? '#ffffff' : '#000'}" style="transition: all 1s ease; ${triMixGlow}" />
+        </svg>
+    `;
+
     container.innerHTML = atmosStyles + `
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding: 0; background: #010003; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden;">
             <div class="pantheon-starfield-container" style="z-index: 0; opacity: 0.6;">${bgStars}</div>
             <div class="bg-stellar-nursery"></div>
             
-            <div class="zenith-apex-void">◬</div>
+            <div class="zenith-apex-void" style="cursor: ${allAscended ? 'pointer' : 'default'}; pointer-events: ${allAscended ? 'auto' : 'none'};" ${allAscended ? `onclick="openVoidAscensionModal(${!!voidUnlocked})"` : ''}>
+                ${dynamicPantheonSvg}
+            </div>
             
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
@@ -75,15 +99,14 @@ function renderVoidPantheon() {
     `;
 }
 
-
 function openVoidAscensionModal(isUnlocked) {
-    let cost = 400;
+    let cost = 500;
     let actionsHtml = '';
 
     if (isUnlocked) {
-        actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #aa8eaa; color: #aa8eaa;" onclick="this.closest('.modal-overlay').remove()">[ PROTOCOL ACTIVE ]</button></div>`;
+        actionsHtml = `<div style="margin-top: 20px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #fff; color: #fff;" onclick="this.closest('.modal-overlay').remove()">[ PROTOCOL ACTIVE ]</button></div>`;
     } else if (state.offerings >= cost) {
-        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERINGS</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button><button class="success-btn" style="flex: 1; background: #aa8eaa; color: #000; box-shadow: 0 0 15px #aa8eaa; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); state.offerings -= ${cost}; state.pantheon['void_ascension'] = true; save(); renderVoidPantheon();">[ ASSIMILATE ]</button></div>`;
+        actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #fff; opacity: 0.8; text-align: center; letter-spacing: 1px;">REQUIRES ${cost} OFFERINGS</div><div style="display: flex; gap: 10px; margin-top: 15px;"><button class="mod-btn" style="flex: 1; border-color: #555; color: #888; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button><button class="success-btn" style="flex: 1; background: #fff; color: #000; box-shadow: 0 0 15px #fff; font-weight: bold; letter-spacing: 2px;" onclick="this.closest('.modal-overlay').remove(); state.offerings -= ${cost}; state.pantheon['void_ascension'] = true; save(); renderVoidPantheon();">[ ASSIMILATE ]</button></div>`;
     } else {
         actionsHtml = `<div style="margin-top: 20px; font-size: 0.65rem; color: #ff3366; text-align: center; letter-spacing: 1px; text-shadow: 0 0 10px #ff3366;">INSUFFICIENT TRIBUTE (REQUIRES ${cost})</div><div style="margin-top: 15px; text-align: center;"><button class="mod-btn" style="width: 100%; border-color: #555; color: #888;" onclick="this.closest('.modal-overlay').remove()">[ WITHDRAW ]</button></div>`;
     }
@@ -92,10 +115,10 @@ function openVoidAscensionModal(isUnlocked) {
     modal.className = 'modal-overlay warp-transition';
     modal.style.display = 'flex';
     modal.innerHTML = `
-        <div class="modal-content" style="border: 1px solid #aa8eaa; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(170,142,170,0.2); border-radius: 4px; display: flex; flex-direction: column;">
-            <div class="view-level-title" style="color: #aa8eaa; text-shadow: 0 0 10px #aa8eaa; margin-top: 0;">VOID ASCENSION</div>
+        <div class="modal-content" style="border: 1px solid #fff; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 380px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.2); border-radius: 4px; display: flex; flex-direction: column;">
+            <div class="view-level-title" style="color: #fff; text-shadow: 0 0 10px #fff; margin-top: 0;">VOID ASCENSION</div>
             <h2 class="view-main-title" style="margin-bottom: 5px; font-size: 1.1rem; color: #fff;">THE OMEGA PROTOCOL</h2>
-            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: #aa8eaa; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+            <div class="terminal-console" style="text-align: left; margin: 15px 0 0 0; padding: 15px; border-color: #fff; background: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
                 <p style="font-size: 0.75rem; line-height: 1.6; color: #e0e0e0; margin: 0;">The final synchronization. All systems optimized. Reality bends to your will.</p>
             </div>
             ${actionsHtml}
@@ -103,6 +126,7 @@ function openVoidAscensionModal(isUnlocked) {
     `;
     document.body.appendChild(modal);
 }
+
 
 
 
