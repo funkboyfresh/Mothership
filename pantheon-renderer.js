@@ -37,7 +37,7 @@ function renderVoidPantheon() {
             .bg-stellar-nursery { position: absolute; top: -20%; left: -10%; width: 120%; height: 110%; background: radial-gradient(ellipse at 50% 30%, rgba(50, 10, 80, 0.5) 0%, transparent 70%), radial-gradient(ellipse at 20% 40%, rgba(10, 50, 80, 0.4) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(80, 50, 10, 0.4) 0%, transparent 60%); filter: blur(30px); z-index: 1; animation: fog-breathe 23s infinite alternate ease-in-out; transform: translateZ(0); will-change: transform, opacity; }
             .fg-stellar-nursery { position: absolute; top: -25%; left: -10%; width: 120%; height: 115%; opacity: 0.9; background: radial-gradient(circle at 17% 35%, rgba(0,212,255,0.55) 0%, rgba(0,212,255,0.15) 40%, transparent 60%), radial-gradient(circle at 50% 30%, rgba(255,215,0,0.75) 0%, rgba(255,215,0,0.25) 40%, transparent 65%), radial-gradient(circle at 83% 35%, rgba(255,0,255,0.7) 0%, rgba(255,0,255,0.2) 40%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 67% 35%, rgba(255,255,255,0.5) 0%, transparent 50%), radial-gradient(circle at 50% 40%, rgba(255,255,255,0.35) 0%, transparent 60%), radial-gradient(circle at 33% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 67% 35%, rgba(0,0,0,0.8) 0%, transparent 45%), radial-gradient(circle at 50% 15%, rgba(0,0,0,0.85) 0%, transparent 55%); filter: blur(30px); mix-blend-mode: hard-light; z-index: 15; pointer-events: none; animation: slow-drift 34s infinite alternate ease-in-out; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); transform: translateZ(0); will-change: transform; }
             
-            /* [ FIXED ] Top mathematically locked to 30% */
+            /* [ FIXED ] Top mathematically locked strictly to 30% */
             .zenith-apex-void { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -125%); font-size: 8rem; color: #000; z-index: 16; pointer-events: none; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
             
             .tower-wrapper { flex: 1; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
@@ -60,16 +60,17 @@ function renderVoidPantheon() {
 
     const triMixGlow = voidUnlocked ? 'filter: drop-shadow(0 0 10px #00d4ff) drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 10px #ff00ff);' : '';
 
-    // [ EXACT BLUEPRINT ] Three solid, disconnected polygons and one center circle. No strokes, completely transparent negative space.
+    // [ EXACT BLUEPRINT ] Three thick hollow paths creating a single triangle frame, and a standalone center dot. 
+    // They act identically to solid "bars" when filled with the #000 or colored stroke.
     const dynamicPantheonSvg = `
         <svg viewBox="0 0 100 100" style="width: 1em; height: 1em; overflow: visible;">
-            <polygon points="15,80 45,80 30,50" fill="${t1Asc ? '#00d4ff' : '#000'}" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
+            <path d="M 30 45 L 10 80 L 50 80" fill="none" stroke="${t1Asc ? '#00d4ff' : '#000'}" stroke-width="7" stroke-linejoin="miter" stroke-miterlimit="4" style="transition: all 1s ease; ${t1Asc ? 'filter: drop-shadow(0 0 15px #00d4ff);' : ''}" />
             
-            <polygon points="50,10 35,40 65,40" fill="${t2Asc ? '#ffd700' : '#000'}" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
+            <path d="M 30 45 L 50 10 L 70 45" fill="none" stroke="${t2Asc ? '#ffd700' : '#000'}" stroke-width="7" stroke-linejoin="miter" stroke-miterlimit="4" style="transition: all 1s ease; ${t2Asc ? 'filter: drop-shadow(0 0 15px #ffd700);' : ''}" />
             
-            <polygon points="85,80 55,80 70,50" fill="${t3Asc ? '#ff00ff' : '#000'}" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
+            <path d="M 70 45 L 90 80 L 50 80" fill="none" stroke="${t3Asc ? '#ff00ff' : '#000'}" stroke-width="7" stroke-linejoin="miter" stroke-miterlimit="4" style="transition: all 1s ease; ${t3Asc ? 'filter: drop-shadow(0 0 15px #ff00ff);' : ''}" />
             
-            <circle cx="50" cy="60" r="8" fill="${voidUnlocked ? '#ffffff' : '#000'}" style="transition: all 1s ease; ${triMixGlow}" />
+            <circle cx="50" cy="53" r="8" fill="${voidUnlocked ? '#ffffff' : '#000'}" stroke="none" style="transition: all 1s ease; ${triMixGlow}" />
         </svg>
     `;
 
@@ -84,7 +85,7 @@ function renderVoidPantheon() {
             
             <div style="display: flex; flex: 1; width: 90%; margin: 0 auto; gap: 10px; align-items: stretch; padding-bottom: 80px;">
                 <div class="tower-wrapper" onclick="renderAscensionTower(1)" style="--t-color: #00d4ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">GENESIS SPHERE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t1Icon}</div></div></div></div>
-                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3.6rem;">${t2Icon}</div></div></div></div>
+                <div class="tower-wrapper" onclick="renderAscensionTower(2)" style="--t-color: #ffd700;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">ABYSSAL SYNDICATE</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 4.2rem;">${t2Icon}</div></div></div></div>
                 <div class="tower-wrapper" onclick="renderAscensionTower(3)" style="--t-color: #ff00ff;"><div class="monolith-spire"></div><div class="tower-content"><div class="spire-text">CELESTIAL VANGUARD</div><div class="tower-icon-wrapper"><div class="tower-icon" style="font-size: 3rem;">${t3Icon}</div></div></div></div>
             </div>
             <div class="pantheon-starfield-container" style="z-index: 10; opacity: 0.8;">${midStars}</div>
