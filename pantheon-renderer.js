@@ -88,9 +88,6 @@ function renderAscensionTower(towerId) {
     const d1 = checkMajor(data.deities[1].k);
     const d2 = checkMajor(data.deities[2].k);
 
-    const allMajorsUnlocked = (d0 !== '#000' && d1 !== '#000' && d2 !== '#000');
-    const ascensionUnlocked = state.pantheon['tower_' + towerId + '_ascension'];
-
     let factionSvg = '';
     const strokeFmt = `fill="none" stroke-width="5" stroke-linejoin="round"`;
     
@@ -107,7 +104,6 @@ function renderAscensionTower(towerId) {
             <circle cx="50" cy="50" r="40" stroke="${d0}" ${strokeFmt}/>
             <polygon points="15.36,30 84.64,30 50,90" stroke="${d1}" ${strokeFmt}/>
             <polygon points="50,30 62,60 50,90 38,60" stroke="${d2}" ${strokeFmt}/>
-            <polygon points="50,42 56,60 50,78 44,60" fill="${d2 === '#000' ? 'transparent' : d2}" stroke="none" />
         </svg>`;
     } else if (towerId === 3) {
         factionSvg = `
@@ -120,26 +116,11 @@ function renderAscensionTower(towerId) {
         </svg>`;
     }
 
-    const zenithCenterY = `calc(${zenithTop} - 0.75 * ${zenithSize})`;
-
-    let wiresSvgHtml = '';
-    if (allMajorsUnlocked) {
-        wiresSvgHtml = `
-            <svg class="ascension-wires" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                <line x1="50%" y1="${zenithCenterY}" x2="50%" y2="-10%" stroke="${ascensionUnlocked ? data.color : 'transparent'}" stroke-width="5" style="filter: drop-shadow(0 0 15px ${data.color}); transition: all 1s ease;" />
-                <line x1="20%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="50%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-                <line x1="80%" y1="42%" x2="50%" y2="${zenithCenterY}" stroke="${data.color}" stroke-width="3" style="filter: drop-shadow(0 0 10px ${data.color});" />
-            </svg>
-        `;
-    }
-
     let html = `
         <style>
             .zenith-apex-tower { 
                 position: absolute; top: ${zenithTop}; left: 50%; transform: translate(-50%, -125%); 
-                font-size: ${zenithSize}; z-index: 16; 
-                pointer-events: ${allMajorsUnlocked ? 'auto' : 'none'}; cursor: ${allMajorsUnlocked ? 'pointer' : 'default'};
+                font-size: ${zenithSize}; z-index: 16; pointer-events: none; 
                 filter: drop-shadow(0 0 15px ${data.color}) drop-shadow(0 0 40px ${data.color}88); 
                 transition: filter 0.8s ease;
             }
@@ -157,8 +138,8 @@ function renderAscensionTower(towerId) {
                 mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%); 
             }
             
-            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; position: relative; z-index: 25; }
-            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 35; cursor: pointer; transition: all 0.3s ease; }
+            .keystone-icon { font-size: 3.5rem; transition: all 0.5s ease; }
+            .minor-keystone-node { width: 14px; height: 14px; border-radius: 50%; z-index: 25; cursor: pointer; transition: all 0.3s ease; }
             .minor-keystone-node:hover { transform: scale(1.3); }
         </style>
 
@@ -166,9 +147,7 @@ function renderAscensionTower(towerId) {
             
             <button class="zoom-btn" style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; padding: 6px 12px; z-index: 100; cursor: pointer; border: 1px solid ${data.color}; color: ${data.color}; background: transparent; text-shadow: 0 0 5px ${data.color}; box-shadow: inset 0 0 8px ${data.color}33, 0 0 8px ${data.color}33;" onclick="renderVoidPantheon()">[ SEVER ]</button>
 
-            ${wiresSvgHtml}
-
-            <div class="zenith-apex-tower" ${allMajorsUnlocked ? `onclick="openAscensionModal(${towerId}, ${!!ascensionUnlocked})"` : ''}>${factionSvg}</div>
+            <div class="zenith-apex-tower">${factionSvg}</div>
             
             <div style="position: absolute; top: 26vh; width: 100%; color: #fff; font-size: 0.8rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 25; pointer-events: none;">
                 AVAILABLE OFFERINGS: <span style="color: #fff; font-weight: bold; font-size: 1rem;">${state.offerings}</span>
@@ -181,9 +160,6 @@ function renderAscensionTower(towerId) {
                     const currentSector = Math.min(Math.floor(progress / 6), 4);
                     const spireHeight = 30 + (progress / 30) * 52; 
                     const isMaxed = checkMajor(d.k) !== '#000';
-                    
-                    // [ FIXED ] Prevents an already-bought Major Keystone from prompting you to spend another 50 Offerings
-                    const isMajorNext = progress === 30 && !isMaxed;
 
                     return `
                         <div class="tower-wrapper" style="--t-color: ${data.color};">
@@ -193,15 +169,18 @@ function renderAscensionTower(towerId) {
                                 
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div class="keystone-icon" 
-                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${isMajorNext})" 
-                                         style="cursor: pointer; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
+                                         onclick="openOfferingModal('${d.k}', ${towerId}, 'MAJOR', 0, 0, ${progress === 30})" 
+                                         style="cursor: ${progress === 30 ? 'pointer' : 'default'}; color: ${isMaxed ? data.color : '#444'}; text-shadow: ${isMaxed ? `0 0 25px ${data.color}` : 'none'};">
                                          ${d.icon}
                                     </div>
                                 </div>
 
-                                <div style="flex: 1; position: relative; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; padding: 15px 0;">
-                                    <div style="position: absolute; width: 2px; height: 100%; background: #333; z-index: 1;"></div>
-                                    <div style="position: absolute; bottom: 0; width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
+                                <div style="flex: 1; position: relative; width: 100%; margin: 15px 0;">
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: 100%; background: #333; z-index: 1;"></div>
+                                    
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: ${Math.min((currentSector + 1) * 20, 100)}%; background: ${data.color}; opacity: 0.3; box-shadow: 0 0 5px ${data.color}; z-index: 1; transition: height 0.5s ease;"></div>
+                                    
+                                    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; height: ${(progress / 30) * 100}%; background: ${data.color}; box-shadow: 0 0 10px ${data.color}; z-index: 2; transition: height 0.5s ease;"></div>
                                     
                                     ${[0, 1, 2, 3, 4].map(i => {
                                         const isCompleted = progress >= (i + 1) * 6;
@@ -213,7 +192,7 @@ function renderAscensionTower(towerId) {
                                         return `
                                             <div class="minor-keystone-node" 
                                                  onclick="openConstellation('${d.k}', ${towerId}, ${i})"
-                                                 style="position: relative; z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
+                                                 style="position: absolute; bottom: ${(i + 1) * 20}%; left: 50%; transform: translate(-50%, 50%); z-index: 30; border: 2px solid ${nodeColor}; background: ${bg}; ${glow}">
                                             </div>
                                         `;
                                     }).join('')}
