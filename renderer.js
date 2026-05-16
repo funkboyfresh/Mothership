@@ -1022,11 +1022,31 @@ function renderNexus(container) {
         <div class="target-lock warp-transition" style="justify-content: flex-start; padding-top: 20px; position: relative;">
             <button class="subtask-remove-minimal" style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: #ff9900; text-shadow: 0 0 10px rgba(255, 153, 0, 0.5);" onclick="state.level = 1; render();">×</button>
             <div class="view-level-title" style="margin-top:0; color: #ff9900; text-shadow: 0 0 8px rgba(255, 153, 0, 0.5);">INTERNAL HUB // QUARTERS</div>
-            <h1 class="view-main-title">The Nexus</h1>
+            <h1 class="view-main-title" style="margin-bottom: 10px;">The Nexus</h1>
             
-            <div class="terminal-console" style="width: 95%; max-width: 500px; padding: 30px 10px; text-align: center; border-color: #ff9900; box-shadow: inset 0 0 15px rgba(255, 153, 0, 0.05);">
-                <div style="color: #ff9900; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">[ FACILITY UNDER CONSTRUCTION ]</div>
-                <div style="font-size: 0.7rem; opacity: 0.7; line-height: 1.5;">The Cryo-Chamber, Comm Array, and Archives will be installed here in a future update.</div>
+            <div style="font-size: 0.65rem; color: #aaa; letter-spacing: 2px; margin-bottom: 25px; text-transform: uppercase;">
+                Ship Internal Systems & Crew Management
+            </div>
+
+            <div class="terminal-console" style="width: 90%; max-width: 450px; margin-bottom: 15px; border-color: #00e5ff; cursor: pointer; transition: all 0.3s;" onclick="openCryoSetupModal()" onmouseover="this.style.boxShadow='inset 0 0 15px rgba(0, 229, 255, 0.2)'" onmouseout="this.style.boxShadow='inset 0 0 10px rgba(0, 0, 0, 0.5)'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="color: #00e5ff; font-weight: bold; letter-spacing: 3px; font-size: 0.9rem;">[ CRYO-CHAMBER ]</div>
+                        <div style="font-size: 0.6rem; opacity: 0.7; margin-top: 5px;">ENTER DEEP FOCUS & INITIATE AUTOPILOT</div>
+                    </div>
+                    <div style="font-size: 2rem; color: #00e5ff; opacity: 0.5;">❄</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 450px;">
+                <div class="terminal-console" style="margin: 0; border-color: #ffd700; cursor: pointer;" onclick="showSoftWarning('ARCHIVES: DATA CORRUPTED. AWAITING RESTORATION.')">
+                    <div style="color: #ffd700; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-align: center;">[ ARCHIVES ]</div>
+                    <div style="font-size: 0.55rem; opacity: 0.7; margin-top: 8px; text-align: center;">MISSION HISTORY</div>
+                </div>
+                <div class="terminal-console" style="margin: 0; border-color: #ff00ff; cursor: pointer;" onclick="showSoftWarning('COMM ARRAY: NO INCOMING TRANSMISSIONS.')">
+                    <div style="color: #ff00ff; font-weight: bold; letter-spacing: 2px; font-size: 0.75rem; text-align: center;">[ COMM ARRAY ]</div>
+                    <div style="font-size: 0.55rem; opacity: 0.7; margin-top: 8px; text-align: center;">INCOMING DIRECTIVES</div>
+                </div>
             </div>
         </div>
     `;
