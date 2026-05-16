@@ -4,10 +4,23 @@
  */
 
 const PLANET_BIOMES = [
+    // The Original 4
     { id: 'MAGMA', color: '#ff3366', bg: 'radial-gradient(circle at bottom, #3a0008 0%, #000000 80%)' },
     { id: 'ICE', color: '#00e5ff', bg: 'radial-gradient(circle at bottom, #001a22 0%, #000000 80%)' },
     { id: 'CYBER', color: '#00ff88', bg: 'radial-gradient(circle at bottom, #002211 0%, #000000 80%)' },
-    { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' }
+    { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' },
+    
+    // The Expanded 10
+    { id: 'TOXIC', color: '#ccff00', bg: 'radial-gradient(circle at bottom, #1a3300 0%, #000000 80%)' },     // Acid oceans / Corrosive
+    { id: 'CRYSTAL', color: '#ff66cc', bg: 'radial-gradient(circle at bottom, #330033 0%, #000000 80%)' },   // Fractal glass / Prismatic
+    { id: 'DUNE', color: '#ffaa00', bg: 'radial-gradient(circle at bottom, #331a00 0%, #000000 80%)' },      // Desert / Sandworm territory
+    { id: 'ABYSSAL', color: '#0066ff', bg: 'radial-gradient(circle at bottom, #000a33 0%, #000000 80%)' },   // Deep water / High pressure
+    { id: 'SPORE', color: '#b266ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' },     // Fungal overgrowth / Bioluminescent
+    { id: 'FERROUS', color: '#cc5500', bg: 'radial-gradient(circle at bottom, #330a00 0%, #000000 80%)' },   // Rust / Metallic scrap world
+    { id: 'FALLOUT', color: '#bfff00', bg: 'radial-gradient(circle at bottom, #1a2200 0%, #000000 80%)' },   // Irradiated / Nuclear wasteland
+    { id: 'ECLIPSE', color: '#e0e0e0', bg: 'radial-gradient(circle at bottom, #111111 0%, #000000 80%)' },   // Shadow world / Monochrome
+    { id: 'PLASMA', color: '#7700ff', bg: 'radial-gradient(circle at bottom, #110033 0%, #000000 80%)' },    // Electrical storms / Volatile
+    { id: 'CHRONOS', color: '#ffe55c', bg: 'radial-gradient(circle at bottom, #332b00 0%, #000000 80%)' }    // Golden age / Temporal ruins
 ];
 
 let focusState = {
@@ -16,6 +29,10 @@ let focusState = {
     timeRemaining: 0,
     sessionTotalDuration: 0,
     sessionMultiplier: 1.0,
+    
+    // [ FIXED ] Absolute Time Tracking for Screen Locks
+    targetEndTime: 0,
+    lastRewardTime: 0,
     
     // Campaign Persistence (Saves between sessions)
     campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0, // Out of 90
@@ -77,10 +94,15 @@ function openCryoSetupModal() {
 function launchCryoStasis(minutes, multiplier, btnElement) {
     btnElement.closest('.modal-overlay').remove();
     
-    // For fast testing, you can change 'minutes * 60' to a hardcoded low number like '5'
     focusState.isActive = true;
     focusState.sessionTotalDuration = minutes;
-    focusState.timeRemaining = minutes * 1; 
+    
+    // [ FIXED ] Set absolute timestamps in milliseconds
+    const now = Date.now();
+    focusState.targetEndTime = now + (minutes * 60 * 1000);
+    focusState.lastRewardTime = now;
+    
+    focusState.timeRemaining = minutes * 60; 
     focusState.sessionMultiplier = multiplier;
     focusState.sessionEnergy = 0;
     focusState.sessionScrap = 0;
@@ -91,25 +113,40 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
 }
 
 function cryoTick() {
-    focusState.timeRemaining--;
+    const now = Date.now();
     
-    // Passive Resource Generation (Every 60 seconds)
-    if (focusState.timeRemaining % 60 === 0 && focusState.timeRemaining !== focusState.sessionTotalDuration * 60) {
+    // 1. Calculate precise remaining time
+    const remainingMs = focusState.targetEndTime - now;
+    focusState.timeRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
+    
+    // 2. Clamp the reward calculation to the timer's max limit 
+    // (Prevents over-rewarding if they open the app 3 days later)
+    const currentTickTime = Math.min(now, focusState.targetEndTime);
+    const elapsedSinceReward = currentTickTime - focusState.lastRewardTime;
+    
+    // How many full 60-second chunks have passed?
+    const rewardTicks = Math.floor(elapsedSinceReward / 60000);
+    
+    if (rewardTicks > 0) {
+        // Grant rewards instantly for the exact number of missed minutes
+        for (let i = 0; i < rewardTicks; i++) {
+            let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
+            let tickScrap = Math.floor(5 * focusState.sessionMultiplier);
+            
+            if (state.pantheon['tower_1_ascension']) { 
+                tickScrap = Math.floor(tickScrap * 1.25); 
+            }
+            
+            focusState.sessionEnergy += tickEnergy;
+            focusState.sessionScrap += tickScrap;
+        }
         
-        // Base Tick
-        let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
-        let tickScrap = Math.floor(5 * focusState.sessionMultiplier);
-        
-        // Pantheon Hooks (To be implemented fully later)
-        if (state.pantheon['tower_1_ascension']) { tickScrap = Math.floor(tickScrap * 1.25); }
-        
-        focusState.sessionEnergy += tickEnergy;
-        focusState.sessionScrap += tickScrap;
-        
+        // Move the reward tracker forward precisely
+        focusState.lastRewardTime += (rewardTicks * 60000);
         updateCryoReadout();
     }
     
-    // Update Clock UI
+    // 3. Update Clock UI
     const mins = Math.floor(focusState.timeRemaining / 60);
     const secs = focusState.timeRemaining % 60;
     const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -117,7 +154,7 @@ function cryoTick() {
     const clockEl = document.getElementById('cryo-clock');
     if (clockEl) clockEl.innerText = timeStr;
     
-    // Timer Complete!
+    // 4. Timer Complete!
     if (focusState.timeRemaining <= 0) {
         clearInterval(focusState.timerInterval);
         focusState.isActive = false;
@@ -128,14 +165,13 @@ function cryoTick() {
         let isApexEvent = false;
         if (focusState.campaignProgress >= 90) {
             isApexEvent = true;
-            focusState.campaignProgress = 0; // Reset for next planet
-            focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)]; // Roll new biome
+            focusState.campaignProgress = 0; 
+            focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)]; 
         }
         
         localStorage.setItem('campaignProgress', focusState.campaignProgress);
         localStorage.setItem('currentBiome', JSON.stringify(focusState.currentBiome));
         
-        // Hand off to the Minigame Manager
         if (typeof triggerMinigameEncounter === 'function') {
             triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
         } else {
