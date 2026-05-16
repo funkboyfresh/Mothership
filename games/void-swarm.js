@@ -1,6 +1,6 @@
 /**
- * VOID-SWARM.JS
- * Pure Canvas Vector Physics Loop Simulation Module.
+ * VOID-SWARM.JS [ UPGRADED HYBRID ENGINE ]
+ * Handles modular DOM starfighter tracking, kinetic feedback grids, and resource collection magnets.
  */
 
 const voidSwarm = {
@@ -15,12 +15,20 @@ const voidSwarm = {
     biome: null,
     isApexEvent: false,
     
-    // Arrays
-    player: { x: 0, y: 0, radius: 18, speed: 8, angle: 0 },
+    // Hybrid DOM Overlay Trackers
+    playerElement: null,
+    viewportElement: null,
+    
+    // Entity Matrix Pools
+    player: { x: 0, y: 0, radius: 30, speed: 9, angle: 0 },
     projectiles: [],
     enemies: [],
     particles: [],
+    collectibles: [], // Dropped material chunks
+    floatingTexts: [], // Floating visual indicator nodes
     
+    // Kinetic Feedback Counters
+    screenShakeIntensity: 0,
     mouse: { x: 0, y: 0 }
 };
 
@@ -31,18 +39,44 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.isApexEvent = isApex;
     this.ammoPool = ammo;
     this.bonusScrapEarned = 0;
+    this.screenShakeIntensity = 0;
     
     this.projectiles = [];
     this.enemies = [];
     this.particles = [];
+    this.collectibles = [];
+    this.floatingTexts = [];
     
     this.resizeCanvas();
+    
     this.player.x = this.canvas.width / 2;
     this.player.y = this.canvas.height / 2;
     this.mouse.x = this.canvas.width / 2;
     this.mouse.y = this.canvas.height / 2;
     
-    // Bind Action Observers
+    // Inject the actual user modular ship SVG configuration wrapper dynamically
+    this.viewportElement = document.getElementById('minigame-viewport');
+    if (this.viewportElement) {
+        this.playerElement = document.createElement('div');
+        this.playerElement.id = 'minigame-player-ship';
+        this.playerElement.style.cssText = `
+            position: absolute; width: 80px; height: 80px;
+            left: 0; top: 0; z-index: 10002; pointer-events: none;
+            filter: drop-shadow(0 0 15px ${this.biome.color});
+            transform-origin: center center; will-change: transform;
+        `;
+        
+        // Render user custom ship parts
+        if (typeof drawModularShip === 'function' && typeof state !== 'undefined' && state.shipParts) {
+            drawModularShip(this.playerElement, state.shipParts);
+        } else {
+            // Safe fallback layout indicator block if global profile states fail to map
+            this.playerElement.innerHTML = `<div style="width:100%; height:100%; background:${this.biome.color}; clip-path:polygon(100% 50%, 0 0, 20% 50%, 0 100%);"></div>`;
+        }
+        this.viewportElement.appendChild(this.playerElement);
+    }
+    
+    // Bind Event Handlers
     this._moveRef = (e) => {
         const rect = this.canvas.getBoundingClientRect();
         this.mouse.x = e.clientX - rect.left;
@@ -61,7 +95,6 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.canvas.addEventListener('touchmove', this._touchRef);
     window.addEventListener('resize', this._resizeRef);
     
-    // Ignition Animation Sequence
     this.loopActive = true;
     this.executeSimulationLoop();
 };
@@ -82,56 +115,72 @@ voidSwarm.executeSimulationLoop = function() {
 };
 
 voidSwarm.updatePhysics = function() {
-    // 1. Interpolate Player Vector Heading
+    // 1. Move Player Starfighter Towards Tracking Coordinates
     let dx = this.mouse.x - this.player.x;
     let dy = this.mouse.y - this.player.y;
     let dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (dist > 5) {
+    if (dist > 4) {
         this.player.x += (dx / dist) * this.player.speed;
         this.player.y += (dy / dist) * this.player.speed;
         this.player.angle = Math.atan2(dy, dx);
     }
     
-    // 2. Automated Weapon Engine Fire Operations
-    if (this.ammoPool > 0 && Math.random() < 0.15) {
+    // Map internal engine coordinates directly to absolute hardware-accelerated CSS transforms
+    if (this.playerElement) {
+        const offsetX = this.player.x - 40; // Offset half element width (40px) to center perfectly
+        const offsetY = this.player.y - 40; // Offset half element height (40px) to center perfectly
+        const radToDeg = this.player.angle * (180 / Math.PI);
+        this.playerElement.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) rotate(${radToDeg}deg)`;
+    }
+    
+    // 2. Weapon Engine Systems Discharge
+    if (this.ammoPool > 0 && Math.random() < 0.18) {
         this.ammoPool--;
         const hudAmmo = document.getElementById('game-hud-ammo');
         if (hudAmmo) hudAmmo.innerText = this.ammoPool;
         
+        // Fire alternating twin-linked offset weapon positions
+        const sideOffset = Math.random() > 0.5 ? 12 : -12;
+        const bx = this.player.x + Math.cos(this.player.angle + Math.PI/2) * sideOffset;
+        const by = this.player.y + Math.sin(this.player.angle + Math.PI/2) * sideOffset;
+
         this.projectiles.push({
-            x: this.player.x,
-            y: this.player.y,
-            vx: Math.cos(this.player.angle) * 13,
-            vy: Math.sin(this.player.angle) * 13,
-            radius: 3.5
+            x: bx, y: by,
+            vx: Math.cos(this.player.angle) * 15,
+            vy: Math.sin(this.player.angle) * 15,
+            radius: 3
         });
     }
     
-    // 3. Handle Enemy Swarm Procedural Spawning Cycles
-    let spawnRate = this.isApexEvent ? 0.08 : 0.04;
-    if (this.enemies.length < 45 && Math.random() < spawnRate) {
+    // 3. Spawning Varied Swarm Matrix Enemy Types
+    let spawnRate = this.isApexEvent ? 0.09 : 0.05;
+    if (this.enemies.length < 50 && Math.random() < spawnRate) {
         let edge = Math.floor(Math.random() * 4);
         let sx, sy;
         
-        if (edge === 0) { sx = Math.random() * this.canvas.width; sy = -20; }
-        else if (edge === 1) { sx = this.canvas.width + 20; sy = Math.random() * this.canvas.height; }
-        else if (edge === 2) { sx = Math.random() * this.canvas.width; sy = this.canvas.height + 20; }
-        else { sx = -20; sy = Math.random() * this.canvas.height; }
+        if (edge === 0) { sx = Math.random() * this.canvas.width; sy = -30; }
+        else if (edge === 1) { sx = this.canvas.width + 30; sy = Math.random() * this.canvas.height; }
+        else if (edge === 2) { sx = Math.random() * this.canvas.width; sy = this.canvas.height + 30; }
+        else { sx = -30; sy = Math.random() * this.canvas.height; }
         
         let shape = 'CIRCLE';
         if (this.biome.id === 'CRYSTAL' || this.biome.id === 'FERROUS') shape = 'TRIANGLE';
         if (this.biome.id === 'CYBER' || this.biome.id === 'PLASMA') shape = 'SQUARE';
 
+        // Introduce heavy armored entity variant configurations
+        const isElite = Math.random() < (this.isApexEvent ? 0.35 : 0.12);
+
         this.enemies.push({
             x: sx, y: sy, shape: shape,
-            radius: Math.random() * 8 + 12,
-            speed: Math.random() * 2 + (this.isApexEvent ? 2.5 : 1.5),
-            hp: this.isApexEvent ? 3 : 1
+            isElite: isElite,
+            radius: isElite ? 24 : 12,
+            speed: isElite ? 1.5 : (Math.random() * 2 + (this.isApexEvent ? 2.5 : 1.5)),
+            hp: isElite ? 4 : 1
         });
     }
     
-    // 4. Process Weapon Vector Adjustments
+    // 4. Update Weapon Vector Trajectories
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
         let p = this.projectiles[i];
         p.x += p.vx; p.y += p.vy;
@@ -140,7 +189,7 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // 5. Matrix Collision Tracking Algorithms
+    // 5. Update Swarm Paths & Laser Intersections
     for (let i = this.enemies.length - 1; i >= 0; i--) {
         let e = this.enemies[i];
         let edx = this.player.x - e.x;
@@ -160,14 +209,30 @@ voidSwarm.updatePhysics = function() {
                 this.projectiles.splice(j, 1);
                 e.hp--;
                 
+                // Add micro-flash particle impact hits
+                this.particles.push({
+                    x: p.x, y: p.y,
+                    vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
+                    radius: 2, alpha: 1, color: '#ffffff'
+                });
+                
                 if (e.hp <= 0) {
-                    this.detonateExplosion(e.x, e.y);
+                    this.detonateExplosion(e.x, e.y, e.isElite ? 22 : 12);
                     
-                    let reward = Math.round((Math.random() * 4 + 2) * (this.isApexEvent ? 3.0 : 1.0));
-                    this.bonusScrapEarned += reward;
+                    // Activate screen shake vector based on engine size values
+                    this.screenShakeIntensity = Math.min(15, this.screenShakeIntensity + (e.isElite ? 8 : 4));
                     
-                    const hudScrap = document.getElementById('game-hud-scrap');
-                    if (hudScrap) hudScrap.innerText = `+${this.bonusScrapEarned} SCRAP`;
+                    // Spawn magnetic drift scrap fragments instead of auto-awarding numbers instantly
+                    const fragmentSpawns = e.isElite ? 4 : 1;
+                    for(let f = 0; f < fragmentSpawns; f++) {
+                        this.collectibles.push({
+                            x: e.x + (Math.random() - 0.5) * 15,
+                            y: e.y + (Math.random() - 0.5) * 15,
+                            vx: (Math.random() - 0.5) * 5,
+                            vy: (Math.random() - 0.5) * 5,
+                            value: Math.round((Math.random() * 4 + 3) * (this.isApexEvent ? 3.0 : 1.0))
+                        });
+                    }
                     
                     this.enemies.splice(i, 1);
                     break;
@@ -176,24 +241,75 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // 6. Fade Floating Particles
+    // 6. Process Scrap Magnet Pull Metrics
+    for (let i = this.collectibles.length - 1; i >= 0; i--) {
+        let c = this.collectibles[i];
+        
+        // Add residual space drag friction
+        c.x += c.vx; c.y += c.vy;
+        c.vx *= 0.95; c.vy *= 0.95;
+        
+        let cdx = this.player.x - c.x;
+        let cdy = this.player.y - c.y;
+        let cdist = Math.sqrt(cdx * cdx + cdy * cdy);
+        
+        // Magnet Core Range: 220px
+        if (cdist < 220) {
+            let pullForce = (220 - cdist) / 15; // Accelerate speed values closer to the hull coordinates
+            c.x += (cdx / cdist) * pullForce;
+            c.y += (cdy / cdist) * pullForce;
+        }
+        
+        // Hull Impact Collection Check
+        if (cdist < this.player.radius + 8) {
+            this.bonusScrapEarned += c.value;
+            
+            // Push indicators to Floating Combat Text engine pool array
+            this.floatingTexts.push({
+                x: c.x, y: c.y - 10,
+                text: `+${c.value}`,
+                alpha: 1,
+                color: 'var(--captured)'
+            });
+            
+            const hudScrap = document.getElementById('game-hud-scrap');
+            if (hudScrap) hudScrap.innerText = `+${this.bonusScrapEarned} SCRAP`;
+            
+            this.collectibles.splice(i, 1);
+        }
+    }
+    
+    // 7. Update Fade Timers for Particles & Text Popups
     for (let i = this.particles.length - 1; i >= 0; i--) {
         let pt = this.particles[i];
         pt.x += pt.vx; pt.y += pt.vy;
-        pt.alpha -= 0.03;
+        pt.alpha -= 0.025;
         if (pt.alpha <= 0) this.particles.splice(i, 1);
+    }
+    
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+        let t = this.floatingTexts[i];
+        t.y -= 0.8; // Floating upwards
+        t.alpha -= 0.02;
+        if (t.alpha <= 0) this.floatingTexts.splice(i, 1);
+    }
+    
+    // Decay screen shake vector decay parameters
+    if (this.screenShakeIntensity > 0) {
+        this.screenShakeIntensity *= 0.9;
+        if (this.screenShakeIntensity < 0.2) this.screenShakeIntensity = 0;
     }
 };
 
-voidSwarm.detonateExplosion = function(x, y) {
-    for (let i = 0; i < 12; i++) {
+voidSwarm.detonateExplosion = function(x, y, count) {
+    for (let i = 0; i < count; i++) {
         let angle = Math.random() * Math.PI * 2;
-        let speed = Math.random() * 4 + 2;
+        let speed = Math.random() * 5 + 2;
         this.particles.push({
             x: x, y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            radius: Math.random() * 2.5 + 1,
+            radius: Math.random() * 3 + 1,
             alpha: 1,
             color: this.biome.color
         });
@@ -202,14 +318,25 @@ voidSwarm.detonateExplosion = function(x, y) {
 
 voidSwarm.drawScene = function() {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const canvas = this.canvas;
     
-    // Particle Render Passes
+    ctx.save();
+    
+    // Handle Engine Screenshake Offset Matrices
+    if (this.screenShakeIntensity > 0) {
+        let shakeX = (Math.random() - 0.5) * this.screenShakeIntensity;
+        let shakeY = (Math.random() - 0.5) * this.screenShakeIntensity;
+        ctx.translate(shakeX, shakeY);
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 1. Draw Float Core Dust Particles
     this.particles.forEach(pt => {
         ctx.save();
         ctx.globalAlpha = pt.alpha;
         ctx.fillStyle = pt.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = pt.color === '#ffffff' ? 0 : 8;
         ctx.shadowColor = pt.color;
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
@@ -217,11 +344,31 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // Plasma Bolt Render Passes
+    // 2. Draw Magnetic Scrap Core Material Drops
+    this.collectibles.forEach(c => {
+        ctx.save();
+        ctx.fillStyle = 'var(--captured)';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'var(--captured)';
+        ctx.beginPath();
+        // Draw rotating diamond geometric configurations
+        ctx.moveTo(c.x, c.y - 5);
+        ctx.lineTo(c.x + 4, c.y);
+        ctx.lineTo(c.x, c.y + 5);
+        ctx.lineTo(c.x - 4, c.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    });
+    
+    // 3. Draw Laser Weapon Projectiles
     this.projectiles.forEach(p => {
         ctx.save();
         ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = this.biome.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -229,13 +376,13 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // Hostile Geometry Render Passes
+    // 4. Draw Swarm Matrix Enemies
     this.enemies.forEach(e => {
         ctx.save();
         ctx.strokeStyle = this.biome.color;
-        ctx.lineWidth = 2;
-        ctx.fillStyle = `${this.biome.color}15`;
-        ctx.shadowBlur = 12;
+        ctx.lineWidth = e.isElite ? 3 : 2;
+        ctx.fillStyle = e.isElite ? `${this.biome.color}35` : `${this.biome.color}15`;
+        ctx.shadowBlur = e.isElite ? 18 : 10;
         ctx.shadowColor = this.biome.color;
         ctx.beginPath();
         
@@ -252,29 +399,43 @@ voidSwarm.drawScene = function() {
         
         ctx.fill();
         ctx.stroke();
+        
+        // Add internal tech core patterns to elite variants
+        if (e.isElite) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.radius * 0.4, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         ctx.restore();
     });
     
-    // Starfighter Geometry Render Pass
-    ctx.save();
-    ctx.translate(this.player.x, this.player.y);
-    ctx.rotate(this.player.angle);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = this.biome.color;
-    ctx.beginPath();
-    ctx.moveTo(22, 0);
-    ctx.lineTo(-14, -14);
-    ctx.lineTo(-7, 0);
-    ctx.lineTo(-14, 14);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    // 5. Draw Floating Data Indicators (Text Damage Counters)
+    this.floatingTexts.forEach(t => {
+        ctx.save();
+        ctx.globalAlpha = t.alpha;
+        ctx.fillStyle = t.color;
+        ctx.font = 'bold 11px monospace';
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#000000';
+        ctx.textAlign = 'center';
+        ctx.fillText(t.text, t.x, t.y);
+        ctx.restore();
+    });
+    
+    ctx.restore(); // Clear structural shake modifications from context memory stacks
 };
 
 voidSwarm.terminate = function() {
     this.loopActive = false;
     cancelAnimationFrame(this.rafId);
+    
+    // Clear DOM Ship Overlay Elements safely from scene structures
+    if (this.playerElement) {
+        this.playerElement.remove();
+        this.playerElement = null;
+    }
     
     if (this.canvas) {
         this.canvas.removeEventListener('mousemove', this._moveRef);
