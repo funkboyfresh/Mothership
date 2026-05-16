@@ -35,8 +35,9 @@
  */
 
 /**
- * MINIGAME-MANAGER.JS
- * Intercepts focus completions, sets up viewport frameworks, and handles reward distributions.
+ * MINIGAME-MANAGER.JS [ STAGING DECK BUILD ]
+ * Introduces pre-engagement command menus, autopilot tactical retreat buyouts (60%), 
+ * and managed script initialization triggers.
  */
 
 let minigameManager = {
@@ -55,8 +56,8 @@ let minigameManager = {
 function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     if (typeof exitCryoMode === 'function') exitCryoMode(); 
     
-    // 1. Hydrate Manager Exchange Parameters
-    minigameManager.isActive = true;
+    // 1. Hydrate Manager Parameters (Keep loop active flag false until menu confirms)
+    minigameManager.isActive = false;
     minigameManager.timer = 30;
     minigameManager.ammoPool = energy || 100;
     minigameManager.baseScrapPayload = scrap || 0;
@@ -75,7 +76,7 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     `;
     
     canvasContainer.innerHTML = `
-        <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10005; font-family: monospace;">
+        <div id="minigame-top-hud" style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10005; font-family: monospace; opacity: 0.3; transition: opacity 0.5s;">
             <div>
                 <div style="color: ${minigameManager.biome.color}; font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;">
                     ${minigameManager.isApexEvent ? 'APEX EVENT CRITICAL' : 'ENCOUNTER ACTIVE'} // BIOME: ${minigameManager.biome.id}
@@ -90,7 +91,7 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
             </div>
         </div>
 
-        <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10005; font-family: monospace; background: rgba(0,0,0,0.6); padding: 12px 20px; border-radius: 4px; border: 1px solid ${minigameManager.biome.color}33;">
+        <div id="minigame-bottom-hud" style="position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10005; font-family: monospace; background: rgba(0,0,0,0.6); padding: 12px 20px; border-radius: 4px; border: 1px solid ${minigameManager.biome.color}33; opacity: 0.3; transition: opacity 0.5s;">
             <div style="display: flex; gap: 30px;">
                 <div>
                     <span style="font-size: 0.6rem; color: #aaa; display:block;">ENERGY AMMO</span>
@@ -104,11 +105,51 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
             <div style="font-size: 0.6rem; color: #666; letter-spacing: 1px;">GUIDE STARFIGHTER VIA CURSOR POSITION // AUTO-WEAPON DISCHARGE</div>
         </div>
 
+        <div id="minigame-ready-menu" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10008; background: rgba(0,0,5,0.7); font-family: monospace;">
+            <div class="modal-content" style="border: 1px solid ${minigameManager.biome.color}; background: #000; padding: 30px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 40px ${minigameManager.biome.color}44; border-radius: 4px;">
+                <div style="color: ${minigameManager.biome.color}; font-size: 0.7rem; letter-spacing: 4px; font-weight: bold; margin-bottom: 5px;">TACTICAL ENGAGEMENT RECON</div>
+                <h2 style="font-size: 1.3rem; color: #fff; margin: 0 0 15px 0; letter-spacing: 1px;">PRE-FLIGHT BRIEFING</h2>
+                
+                <div class="terminal-console" style="text-align: left; padding: 15px; border-color: ${minigameManager.biome.color}33; background: rgba(0,0,0,0.5); margin-bottom: 25px; line-height: 1.7; font-size: 0.75rem; color: #bbb;">
+                    <div>> DESCENT TARGET: <span style="color:${minigameManager.biome.color}; font-weight:bold;">${minigameManager.biome.id} BIOME</span></div>
+                    <div>> VAULTED HARVEST: <span style="color:#fff;">+${minigameManager.baseScrapPayload} SCRAP</span></div>
+                    <div>> FIREPOWER AMMO: <span style="color:var(--accent); font-weight:bold;">${minigameManager.ammoPool} ENERGY</span></div>
+                    <div style="margin-top: 8px; border-top: 1px dashed #333; padding-top: 8px; font-size: 0.7rem; opacity: 0.8; color: #aaa;">
+                        Hostile vector readings detected. Choose navigation response protocols below.
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button type="button" onclick="startMinigameCombat()" style="width: 100%; padding: 14px; background: ${minigameManager.biome.color}; color: #000; font-weight: bold; border: none; font-size: 0.85rem; letter-spacing: 2px; box-shadow: 0 0 15px ${minigameManager.biome.color}; cursor: pointer; border-radius: 2px; transition: all 0.2s;">
+                        LAUNCH COMBAT MANEUVER
+                    </button>
+                    <button type="button" onclick="executeAutopilotRetreat()" style="width: 100%; padding: 11px; background: transparent; border: 1px solid #555; color: #aaa; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; border-radius: 2px; transition: all 0.3s;" onmouseover="this.style.color='#ff3366'; this.style.borderColor='#ff3366';" onmouseout="this.style.color='#aaa'; this.style.borderColor='#555';">
+                        AUTOPILOT COURIER RETREAT (60% YIELD)
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <canvas id="minigame-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
     `;
     
     document.body.appendChild(canvasContainer);
+}
+
+// --- ACTIVE ENCOUNTER IGNITION TRIGGER ---
+
+function startMinigameCombat() {
+    // 1. Remove the menu overlay and fade in background HUD controls
+    const readyMenu = document.getElementById('minigame-ready-menu');
+    if (readyMenu) readyMenu.remove();
     
+    const topHud = document.getElementById('minigame-top-hud');
+    const bottomHud = document.getElementById('minigame-bottom-hud');
+    if (topHud) topHud.style.opacity = "1";
+    if (bottomHud) bottomHud.style.opacity = "1";
+    
+    // 2. Bind elements and execute canvas physics script loop loops
+    minigameManager.isActive = true;
     const canvas = document.getElementById('minigame-canvas');
     const ctx = canvas.getContext('2d');
     
@@ -116,6 +157,7 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
         voidSwarm.init(canvas, ctx, minigameManager.biome, minigameManager.isApexEvent, minigameManager.ammoPool);
     }
     
+    // 3. Begin main tracking interval clock loop
     minigameManager.timerInterval = setInterval(() => {
         minigameManager.timer--;
         
@@ -127,6 +169,56 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
         }
     }, 1000);
 }
+
+// --- OPTION B: AUTOPILOT COURIER RETREAT (60% BUYOUT) ---
+
+function executeAutopilotRetreat() {
+    // 1. Compute 60% penalty buyout values
+    const retreatScrapYield = Math.floor(minigameManager.baseScrapPayload * 0.6);
+    
+    // 2. Safely process state banking profiles
+    if (typeof state !== 'undefined') {
+        state.scrap += retreatScrapYield;
+        
+        // Retain 100% of ammunition assets (Unfired during retreat flight)
+        if (minigameManager.isApexEvent && typeof addEnergy === 'function') {
+            addEnergy(minigameManager.ammoPool);
+        } else {
+            state.energy += minigameManager.ammoPool;
+        }
+    }
+    
+    if (typeof save === 'function') save();
+    if (typeof updateHUD === 'function') updateHUD();
+    
+    // 3. Clear active viewports instantly
+    const viewport = document.getElementById('minigame-viewport');
+    if (viewport) viewport.remove();
+    
+    // 4. Render specialized retreat summary card
+    const summary = document.createElement('div');
+    summary.className = 'modal-overlay warp-transition';
+    summary.style.cssText = `display: flex; z-index: 10010; font-family: monospace; background: rgba(0,0,3,0.9);`;
+    
+    summary.innerHTML = `
+        <div class="modal-content" style="border: 1px solid #ff3366; background: #000; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 40px rgba(255, 51, 102, 0.25);">
+            <div style="color: #ff3366; font-size: 0.7rem; letter-spacing: 3px; font-weight: bold; margin-bottom: 5px;">TACTICAL EVASION COMPLETE</div>
+            <h2 class="view-main-title" style="font-size: 1.3rem; color: #fff; margin-bottom: 20px;">RETREAT MANEUVER LOG</h2>
+            
+            <div class="terminal-console" style="text-align: left; padding: 15px; border-color: #ff336644; background: rgba(0,0,0,0.4); margin-bottom: 25px; line-height: 1.6; font-size: 0.75rem; color: #ccc;">
+                <div>> FLIGHT LOG: <span style="color:#ff3366; font-weight:bold;">SAFE SYSTEM RETREAT</span></div>
+                <div>> BASE JUMP MATERIAL SACRIFICE: <span style="color:#888;">-40% LOOT FORFEIT</span></div>
+                <div style="border-top: 1px dashed #ff336633; margin: 8px 0; padding-top: 8px;">> SECURED ESCAPE PAYLOAD: <span style="color:var(--captured); font-weight:bold;">+${retreatScrapYield} SCRAP</span></div>
+                <div>> RETAINED SYSTEM RESERVES: <span style="color:var(--accent); font-weight:bold;">+${minigameManager.ammoPool} ENERGY</span></div>
+            </div>
+            
+            <button type="button" class="action-btn" onclick="teardownMinigameOverlay(this)" style="width: 100%; padding: 12px; background: transparent; border: 1px solid #ff3366; color: #ff3366; font-weight: bold; font-size: 0.85rem; letter-spacing: 2px; box-shadow: inset 0 0 10px rgba(255, 51, 102, 0.1); cursor: pointer; border-radius: 2px;">RETURN TO BRIDGE</button>
+        </div>
+    `;
+    document.body.appendChild(summary);
+}
+
+// --- STANDARD COMBAT WRAP-UP ---
 
 function wrapUpActiveEncounter() {
     minigameManager.isActive = false;
@@ -142,8 +234,6 @@ function wrapUpActiveEncounter() {
     if (typeof state !== 'undefined') {
         state.scrap += totalScrapSecured;
         
-        // --- [ DIRECTIVE 2: CONDITIONAL LEVELING LOCK ] ---
-        // Retained energy ammo handles leveling checks ONLY during specialized Apex instances
         if (minigameManager.isApexEvent && typeof addEnergy === 'function') {
             addEnergy(minigameManager.ammoPool);
         } else {
