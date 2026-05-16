@@ -80,7 +80,7 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
     // For fast testing, you can change 'minutes * 60' to a hardcoded low number like '5'
     focusState.isActive = true;
     focusState.sessionTotalDuration = minutes;
-    focusState.timeRemaining = minutes * 60; 
+    focusState.timeRemaining = minutes * 1; 
     focusState.sessionMultiplier = multiplier;
     focusState.sessionEnergy = 0;
     focusState.sessionScrap = 0;
