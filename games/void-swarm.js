@@ -1,6 +1,6 @@
 /**
- * VOID-SWARM.JS [ UPGRADED HYBRID ENGINE ]
- * Handles modular DOM starfighter tracking, kinetic feedback grids, and resource collection magnets.
+ * VOID-SWARM.JS [ INTEL-TARGETING AUTOMATION BUILD ]
+ * Implements high-volume ammunition overcharges and nearest-threat tracking fire vectors.
  */
 
 const voidSwarm = {
@@ -24,11 +24,12 @@ const voidSwarm = {
     projectiles: [],
     enemies: [],
     particles: [],
-    collectibles: [], // Dropped material chunks
-    floatingTexts: [], // Floating visual indicator nodes
+    collectibles: [], 
+    floatingTexts: [], 
     
-    // Kinetic Feedback Counters
+    // Kinetic Feedback & Economy Buffers
     screenShakeIntensity: 0,
+    ammoSuperchargeMultiplier: 5, // 5x Ammo multiplier during battle!
     mouse: { x: 0, y: 0 }
 };
 
@@ -37,7 +38,11 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.ctx = ctx;
     this.biome = biome;
     this.isApexEvent = isApex;
-    this.ammoPool = ammo;
+    
+    // --- [ AMMO CORE SUPERCHARGE ] ---
+    // Massively scale up the starting ammo pool so the player can let loose
+    this.ammoPool = (ammo || 100) * this.ammoSuperchargeMultiplier;
+    
     this.bonusScrapEarned = 0;
     this.screenShakeIntensity = 0;
     
@@ -54,7 +59,10 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.mouse.x = this.canvas.width / 2;
     this.mouse.y = this.canvas.height / 2;
     
-    // Inject the actual user modular ship SVG configuration wrapper dynamically
+    // Update the HUD counter instantly to show the supercharged pool
+    const hudAmmo = document.getElementById('game-hud-ammo');
+    if (hudAmmo) hudAmmo.innerText = this.ammoPool;
+    
     this.viewportElement = document.getElementById('minigame-viewport');
     if (this.viewportElement) {
         this.playerElement = document.createElement('div');
@@ -66,17 +74,14 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
             transform-origin: center center; will-change: transform;
         `;
         
-        // Render user custom ship parts
         if (typeof drawModularShip === 'function' && typeof state !== 'undefined' && state.shipParts) {
             drawModularShip(this.playerElement, state.shipParts);
         } else {
-            // Safe fallback layout indicator block if global profile states fail to map
             this.playerElement.innerHTML = `<div style="width:100%; height:100%; background:${this.biome.color}; clip-path:polygon(100% 50%, 0 0, 20% 50%, 0 100%);"></div>`;
         }
         this.viewportElement.appendChild(this.playerElement);
     }
     
-    // Bind Event Handlers
     this._moveRef = (e) => {
         const rect = this.canvas.getBoundingClientRect();
         this.mouse.x = e.clientX - rect.left;
@@ -115,7 +120,7 @@ voidSwarm.executeSimulationLoop = function() {
 };
 
 voidSwarm.updatePhysics = function() {
-    // 1. Move Player Starfighter Towards Tracking Coordinates
+    // 1. Move Player Starfighter Towards Tracking Mouse/Touch Coordinates
     let dx = this.mouse.x - this.player.x;
     let dy = this.mouse.y - this.player.y;
     let dist = Math.sqrt(dx * dx + dy * dy);
@@ -126,36 +131,55 @@ voidSwarm.updatePhysics = function() {
         this.player.angle = Math.atan2(dy, dx);
     }
     
-    // Map internal engine coordinates directly to absolute hardware-accelerated CSS transforms
     if (this.playerElement) {
-        const offsetX = this.player.x - 40; // Offset half element width (40px) to center perfectly
-        const offsetY = this.player.y - 40; // Offset half element height (40px) to center perfectly
+        const offsetX = this.player.x - 40; 
+        const offsetY = this.player.y - 40; 
         const radToDeg = this.player.angle * (180 / Math.PI);
         this.playerElement.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) rotate(${radToDeg}deg)`;
     }
     
-    // 2. Weapon Engine Systems Discharge
-    if (this.ammoPool > 0 && Math.random() < 0.18) {
+    // --- [ 2. NEAREST-TARGET INTERCEPT LOGIC ] ---
+    let closestEnemy = null;
+    let minDist = Infinity;
+    
+    for (let e of this.enemies) {
+        let edx = e.x - this.player.x;
+        let edy = e.y - this.player.y;
+        let d = Math.sqrt(edx * edx + edy * edy);
+        if (d < minDist) {
+            minDist = d;
+            closestEnemy = e;
+        }
+    }
+    
+    // Determine gun baseline trajectory vector (Lock onto closest threat, or default to ship heading)
+    let fireAngle = this.player.angle;
+    if (closestEnemy) {
+        fireAngle = Math.atan2(closestEnemy.y - this.player.y, closestEnemy.x - this.player.x);
+    }
+    
+    // High-Volume Weapon Discharge (Increased fire check rate to 35% probability per frame)
+    if (this.ammoPool > 0 && Math.random() < 0.35) {
         this.ammoPool--;
         const hudAmmo = document.getElementById('game-hud-ammo');
         if (hudAmmo) hudAmmo.innerText = this.ammoPool;
         
-        // Fire alternating twin-linked offset weapon positions
-        const sideOffset = Math.random() > 0.5 ? 12 : -12;
-        const bx = this.player.x + Math.cos(this.player.angle + Math.PI/2) * sideOffset;
-        const by = this.player.y + Math.sin(this.player.angle + Math.PI/2) * sideOffset;
+        // Twin-linked offset calculations tracking the dynamic target solution angle
+        const sideOffset = Math.random() > 0.5 ? 14 : -14;
+        const bx = this.player.x + Math.cos(fireAngle + Math.PI/2) * sideOffset;
+        const by = this.player.y + Math.sin(fireAngle + Math.PI/2) * sideOffset;
 
         this.projectiles.push({
             x: bx, y: by,
-            vx: Math.cos(this.player.angle) * 15,
-            vy: Math.sin(this.player.angle) * 15,
-            radius: 3
+            vx: Math.cos(fireAngle) * 16, // Accelerated plasma speeds for true intercept trajectories
+            vy: Math.sin(fireAngle) * 16,
+            radius: 3.5
         });
     }
     
     // 3. Spawning Varied Swarm Matrix Enemy Types
-    let spawnRate = this.isApexEvent ? 0.09 : 0.05;
-    if (this.enemies.length < 50 && Math.random() < spawnRate) {
+    let spawnRate = this.isApexEvent ? 0.12 : 0.07; // Increased enemy counts to keep up with targeting
+    if (this.enemies.length < 60 && Math.random() < spawnRate) {
         let edge = Math.floor(Math.random() * 4);
         let sx, sy;
         
@@ -168,8 +192,7 @@ voidSwarm.updatePhysics = function() {
         if (this.biome.id === 'CRYSTAL' || this.biome.id === 'FERROUS') shape = 'TRIANGLE';
         if (this.biome.id === 'CYBER' || this.biome.id === 'PLASMA') shape = 'SQUARE';
 
-        // Introduce heavy armored entity variant configurations
-        const isElite = Math.random() < (this.isApexEvent ? 0.35 : 0.12);
+        const isElite = Math.random() < (this.isApexEvent ? 0.40 : 0.15);
 
         this.enemies.push({
             x: sx, y: sy, shape: shape,
@@ -209,7 +232,6 @@ voidSwarm.updatePhysics = function() {
                 this.projectiles.splice(j, 1);
                 e.hp--;
                 
-                // Add micro-flash particle impact hits
                 this.particles.push({
                     x: p.x, y: p.y,
                     vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
@@ -218,12 +240,9 @@ voidSwarm.updatePhysics = function() {
                 
                 if (e.hp <= 0) {
                     this.detonateExplosion(e.x, e.y, e.isElite ? 22 : 12);
-                    
-                    // Activate screen shake vector based on engine size values
                     this.screenShakeIntensity = Math.min(15, this.screenShakeIntensity + (e.isElite ? 8 : 4));
                     
-                    // Spawn magnetic drift scrap fragments instead of auto-awarding numbers instantly
-                    const fragmentSpawns = e.isElite ? 4 : 1;
+                    const fragmentSpawns = e.isElite ? 5 : 1;
                     for(let f = 0; f < fragmentSpawns; f++) {
                         this.collectibles.push({
                             x: e.x + (Math.random() - 0.5) * 15,
@@ -245,7 +264,6 @@ voidSwarm.updatePhysics = function() {
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
         let c = this.collectibles[i];
         
-        // Add residual space drag friction
         c.x += c.vx; c.y += c.vy;
         c.vx *= 0.95; c.vy *= 0.95;
         
@@ -253,18 +271,15 @@ voidSwarm.updatePhysics = function() {
         let cdy = this.player.y - c.y;
         let cdist = Math.sqrt(cdx * cdx + cdy * cdy);
         
-        // Magnet Core Range: 220px
-        if (cdist < 220) {
-            let pullForce = (220 - cdist) / 15; // Accelerate speed values closer to the hull coordinates
+        if (cdist < 240) {
+            let pullForce = (240 - cdist) / 12; 
             c.x += (cdx / cdist) * pullForce;
             c.y += (cdy / cdist) * pullForce;
         }
         
-        // Hull Impact Collection Check
         if (cdist < this.player.radius + 8) {
             this.bonusScrapEarned += c.value;
             
-            // Push indicators to Floating Combat Text engine pool array
             this.floatingTexts.push({
                 x: c.x, y: c.y - 10,
                 text: `+${c.value}`,
@@ -289,12 +304,11 @@ voidSwarm.updatePhysics = function() {
     
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
         let t = this.floatingTexts[i];
-        t.y -= 0.8; // Floating upwards
+        t.y -= 0.8; 
         t.alpha -= 0.02;
         if (t.alpha <= 0) this.floatingTexts.splice(i, 1);
     }
     
-    // Decay screen shake vector decay parameters
     if (this.screenShakeIntensity > 0) {
         this.screenShakeIntensity *= 0.9;
         if (this.screenShakeIntensity < 0.2) this.screenShakeIntensity = 0;
@@ -322,7 +336,6 @@ voidSwarm.drawScene = function() {
     
     ctx.save();
     
-    // Handle Engine Screenshake Offset Matrices
     if (this.screenShakeIntensity > 0) {
         let shakeX = (Math.random() - 0.5) * this.screenShakeIntensity;
         let shakeY = (Math.random() - 0.5) * this.screenShakeIntensity;
@@ -353,7 +366,6 @@ voidSwarm.drawScene = function() {
         ctx.shadowBlur = 6;
         ctx.shadowColor = 'var(--captured)';
         ctx.beginPath();
-        // Draw rotating diamond geometric configurations
         ctx.moveTo(c.x, c.y - 5);
         ctx.lineTo(c.x + 4, c.y);
         ctx.lineTo(c.x, c.y + 5);
@@ -400,7 +412,6 @@ voidSwarm.drawScene = function() {
         ctx.fill();
         ctx.stroke();
         
-        // Add internal tech core patterns to elite variants
         if (e.isElite) {
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1;
@@ -424,14 +435,17 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    ctx.restore(); // Clear structural shake modifications from context memory stacks
+    ctx.restore(); 
 };
 
 voidSwarm.terminate = function() {
     this.loopActive = false;
     cancelAnimationFrame(this.rafId);
     
-    // Clear DOM Ship Overlay Elements safely from scene structures
+    // --- [ RECONCILE STAGE REWARDS ] ---
+    // Rescale the ammunition count cleanly back to standard numbers before returning payload control
+    this.ammoPool = Math.ceil(this.ammoPool / this.ammoSuperchargeMultiplier);
+    
     if (this.playerElement) {
         this.playerElement.remove();
         this.playerElement = null;
