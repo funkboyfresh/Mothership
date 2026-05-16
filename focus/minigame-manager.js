@@ -53,7 +53,7 @@ let minigameManager = {
 };
 
 function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
-    exitCryoMode(); // Close focus screen
+    if (typeof exitCryoMode === 'function') exitCryoMode(); 
     
     // 1. Hydrate Manager Exchange Parameters
     minigameManager.isActive = true;
@@ -109,7 +109,6 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     
     document.body.appendChild(canvasContainer);
     
-    // 3. Extract Canvas Elements and initialize the specified simulation script module
     const canvas = document.getElementById('minigame-canvas');
     const ctx = canvas.getContext('2d');
     
@@ -117,7 +116,6 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
         voidSwarm.init(canvas, ctx, minigameManager.biome, minigameManager.isApexEvent, minigameManager.ammoPool);
     }
     
-    // 4. Fire Manager Timing Intervals
     minigameManager.timerInterval = setInterval(() => {
         minigameManager.timer--;
         
@@ -134,18 +132,19 @@ function wrapUpActiveEncounter() {
     minigameManager.isActive = false;
     clearInterval(minigameManager.timerInterval);
     
-    // Extract residual data caches directly out of the simulation loop
     if (typeof voidSwarm !== 'undefined') {
         voidSwarm.terminate();
         minigameManager.bonusScrapEarned = voidSwarm.bonusScrapEarned;
         minigameManager.ammoPool = voidSwarm.ammoPool;
     }
     
-    // Reconcile and add yields directly to global profile state banks
     const totalScrapSecured = minigameManager.baseScrapPayload + minigameManager.bonusScrapEarned;
     if (typeof state !== 'undefined') {
-        state.scrap += minigameManager.baseScrapPayload + minigameManager.bonusScrapEarned;
-        if (typeof addEnergy === 'function') {
+        state.scrap += totalScrapSecured;
+        
+        // --- [ DIRECTIVE 2: CONDITIONAL LEVELING LOCK ] ---
+        // Retained energy ammo handles leveling checks ONLY during specialized Apex instances
+        if (minigameManager.isApexEvent && typeof addEnergy === 'function') {
             addEnergy(minigameManager.ammoPool);
         } else {
             state.energy += minigameManager.ammoPool;
@@ -155,7 +154,6 @@ function wrapUpActiveEncounter() {
     if (typeof save === 'function') save();
     if (typeof updateHUD === 'function') updateHUD();
     
-    // Display payload summary modal
     const summary = document.createElement('div');
     summary.className = 'modal-overlay warp-transition';
     summary.style.cssText = `display: flex; z-index: 10010; font-family: monospace; background: rgba(0,0,3,0.9);`;
