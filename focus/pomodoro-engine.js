@@ -1,6 +1,6 @@
 /**
  * POMODORO-ENGINE.JS
- * Handles the Planetary Campaign, Focus Timers, and Passive Resource Generation.
+ * Handles the Cryo-Stasis (Focus) Timer, Planetary Campaigns, and Resource Harvesting.
  */
 
 const PLANET_BIOMES = [
@@ -17,18 +17,18 @@ let focusState = {
     sessionTotalDuration: 0,
     sessionMultiplier: 1.0,
     
-    // Campaign Persistence
+    // Campaign Persistence (Saves between sessions)
     campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0, // Out of 90
     currentBiome: JSON.parse(localStorage.getItem('currentBiome')) || PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)],
     
-    // Session Earnings (Volatile)
+    // Session Earnings (Volatile Minigame Ammo)
     sessionEnergy: 0,
     sessionScrap: 0
 };
 
 // --- INITIALIZATION ---
 
-function openFocusSetupModal() {
+function openCryoSetupModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
     modal.style.display = 'flex';
@@ -36,37 +36,37 @@ function openFocusSetupModal() {
     const progressPct = (focusState.campaignProgress / 90) * 100;
     
     modal.innerHTML = `
-        <div class="modal-content" style="border: 1px solid ${focusState.currentBiome.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 400px; border-radius: 4px;">
-            <div class="view-level-title" style="color: ${focusState.currentBiome.color}; text-shadow: 0 0 10px ${focusState.currentBiome.color};">PLANETARY DESCENT</div>
-            <h2 class="view-main-title">BIOME: ${focusState.currentBiome.id}</h2>
+        <div class="modal-content" style="border: 1px solid ${focusState.currentBiome.color}; background: rgba(0,0,5,0.95); padding: 25px; width: 90%; max-width: 400px; box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px ${focusState.currentBiome.color}22; border-radius: 4px;">
+            <div class="view-level-title" style="color: ${focusState.currentBiome.color}; text-shadow: 0 0 10px ${focusState.currentBiome.color}; margin-top: 0;">CRYO-STASIS // PLANETARY DESCENT</div>
+            <h2 class="view-main-title" style="margin-bottom: 5px;">BIOME: ${focusState.currentBiome.id}</h2>
             
             <div class="progress-wrapper" style="width: 100%; margin: 15px 0; border-color: ${focusState.currentBiome.color};">
                 <div class="progress-bar-container">
                     <div class="progress-fill" style="width: ${progressPct}%; background: ${focusState.currentBiome.color}; box-shadow: 0 0 10px ${focusState.currentBiome.color};"></div>
                 </div>
-                <div class="progress-text" style="color: ${focusState.currentBiome.color};">${focusState.campaignProgress} / 90 MINUTES TO APEX EVENT</div>
+                <div class="progress-text" style="color: ${focusState.currentBiome.color};">${focusState.campaignProgress} / 90 MIN TO APEX EVENT</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
-                <button class="mod-btn" onclick="launchFocus(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn" onclick="launchCryoStasis(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff;">
                     <div style="font-size: 1.2rem; font-weight: bold;">15 MIN</div>
-                    <div style="font-size: 0.55rem; opacity: 0.6;">1.0x REWARDS</div>
+                    <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.0x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchFocus(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn" onclick="launchCryoStasis(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff;">
                     <div style="font-size: 1.2rem; font-weight: bold;">30 MIN</div>
-                    <div style="font-size: 0.55rem; opacity: 0.6;">1.25x REWARDS</div>
+                    <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.25x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchFocus(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn" onclick="launchCryoStasis(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff;">
                     <div style="font-size: 1.2rem; font-weight: bold;">60 MIN</div>
-                    <div style="font-size: 0.55rem; opacity: 0.6;">1.6x REWARDS</div>
+                    <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.6x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchFocus(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33;">
+                <button class="mod-btn" onclick="launchCryoStasis(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33;">
                     <div style="font-size: 1.2rem; font-weight: bold;">90 MIN</div>
-                    <div style="font-size: 0.55rem; opacity: 0.6;">2.0x REWARDS</div>
+                    <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">2.0x REWARDS</div>
                 </button>
             </div>
             
-            <button class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; margin-top: 15px; padding: 10px; background: transparent; border: 1px solid #555; color: #888;">[ ABORT ]</button>
+            <button class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; margin-top: 15px; padding: 10px; background: transparent; border: 1px solid #555; color: #888; border-radius: 2px;">[ ABORT SEQUENCE ]</button>
         </div>
     `;
     document.body.appendChild(modal);
@@ -74,44 +74,39 @@ function openFocusSetupModal() {
 
 // --- CORE ENGINE ---
 
-function launchFocus(minutes, multiplier, btnElement) {
-    // Close modal
+function launchCryoStasis(minutes, multiplier, btnElement) {
     btnElement.closest('.modal-overlay').remove();
     
-    // Set State
+    // For fast testing, you can change 'minutes * 60' to a hardcoded low number like '5'
     focusState.isActive = true;
     focusState.sessionTotalDuration = minutes;
-    focusState.timeRemaining = minutes * 60; // In seconds
+    focusState.timeRemaining = minutes * 60; 
     focusState.sessionMultiplier = multiplier;
     focusState.sessionEnergy = 0;
     focusState.sessionScrap = 0;
     
-    // Trigger Atmospheric Entry UI
-    renderFocusUI();
+    renderCryoUI();
     
-    // Start Loop
-    focusState.timerInterval = setInterval(focusTick, 1000);
+    focusState.timerInterval = setInterval(cryoTick, 1000);
 }
 
-function focusTick() {
+function cryoTick() {
     focusState.timeRemaining--;
     
     // Passive Resource Generation (Every 60 seconds)
-    if (focusState.timeRemaining % 60 === 0) {
-        // Base generation
-        let tickEnergy = 10;
-        let tickScrap = 5;
+    if (focusState.timeRemaining % 60 === 0 && focusState.timeRemaining !== focusState.sessionTotalDuration * 60) {
         
-        // Apply Genesis Sphere Pantheon Buffs (Tower 1) if active
-        // (Assuming checking state.pantheon directly or via a helper)
-        if (state.pantheon['tower_1_ascension']) {
-            tickScrap = Math.floor(tickScrap * 1.25);
-        }
+        // Base Tick
+        let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
+        let tickScrap = Math.floor(5 * focusState.sessionMultiplier);
+        
+        // Pantheon Hooks (To be implemented fully later)
+        if (state.pantheon['tower_1_ascension']) { tickScrap = Math.floor(tickScrap * 1.25); }
         
         focusState.sessionEnergy += tickEnergy;
         focusState.sessionScrap += tickScrap;
         
-        updateFocusReadout();
+        updateCryoReadout();
     }
     
     // Update Clock UI
@@ -119,7 +114,7 @@ function focusTick() {
     const secs = focusState.timeRemaining % 60;
     const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     
-    const clockEl = document.getElementById('focus-clock');
+    const clockEl = document.getElementById('cryo-clock');
     if (clockEl) clockEl.innerText = timeStr;
     
     // Timer Complete!
@@ -127,46 +122,45 @@ function focusTick() {
         clearInterval(focusState.timerInterval);
         focusState.isActive = false;
         
-        // Advance Campaign
+        // Advance Planetary Campaign
         focusState.campaignProgress += focusState.sessionTotalDuration;
         
-        let isApex = false;
+        let isApexEvent = false;
         if (focusState.campaignProgress >= 90) {
-            isApex = true;
-            focusState.campaignProgress = 0; // Reset for next planetary descent
-            // Roll new biome for next time
-            focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)];
+            isApexEvent = true;
+            focusState.campaignProgress = 0; // Reset for next planet
+            focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)]; // Roll new biome
         }
         
         localStorage.setItem('campaignProgress', focusState.campaignProgress);
         localStorage.setItem('currentBiome', JSON.stringify(focusState.currentBiome));
         
-        // Trigger Minigame Manager (To be built next)
+        // Hand off to the Minigame Manager
         if (typeof triggerMinigameEncounter === 'function') {
-            triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApex, focusState.sessionEnergy);
+            triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
         } else {
-            alert(`Timer Complete! Earned ${focusState.sessionEnergy} Energy. (Minigame Manager Not Linked Yet)`);
-            exitFocusMode();
+            alert(`Cryo-Stasis Complete!\n\nBanked Energy: ${focusState.sessionEnergy}\nBanked Scrap: ${focusState.sessionScrap}\n\n(Minigame Manager Not Linked Yet)`);
+            exitCryoMode();
         }
     }
 }
 
 // --- UI RENDERER ---
 
-function renderFocusUI() {
+function renderCryoUI() {
     const app = document.getElementById('app');
     
-    const focusContainer = document.createElement('div');
-    focusContainer.id = 'focus-mode-container';
-    focusContainer.className = 'warp-transition';
-    focusContainer.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'cryo-mode-container';
+    container.className = 'warp-transition';
+    container.style.cssText = `
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         background: ${focusState.currentBiome.bg}; 
         z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center;
         overflow: hidden;
     `;
     
-    // The Parallax Planetary Surface (Scrolls down)
+    // Parallax Planetary Surface (Scrolls down)
     const surface = document.createElement('div');
     surface.style.cssText = `
         position: absolute; top: -100%; left: 0; width: 100%; height: 200%;
@@ -176,65 +170,62 @@ function renderFocusUI() {
         z-index: 1;
     `;
     
-    // Inject the CSS animation dynamically
     const style = document.createElement('style');
     style.innerHTML = `
-        @keyframes surface-scroll {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(40px); }
-        }
-        .focus-hud { z-index: 10; position: relative; text-align: center; }
+        @keyframes surface-scroll { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
+        .cryo-hud { z-index: 10; position: relative; text-align: center; }
     `;
-    focusContainer.appendChild(style);
+    container.appendChild(style);
+    container.appendChild(surface);
     
-    focusContainer.appendChild(surface);
-    
-    // The Hero Ship (Uses your modular SVG logic)
+    // Modular Ship (Autopilot mode)
     const shipWrapper = document.createElement('div');
-    shipWrapper.style.cssText = `position: absolute; bottom: 20%; width: 120px; height: 120px; z-index: 5; filter: drop-shadow(0 0 15px ${focusState.currentBiome.color});`;
+    shipWrapper.style.cssText = `position: absolute; bottom: 15%; width: 140px; height: 140px; z-index: 5; filter: drop-shadow(0 0 20px ${focusState.currentBiome.color}); pointer-events: none;`;
     if (typeof drawModularShip === 'function') {
         drawModularShip(shipWrapper, state.shipParts);
     }
-    focusContainer.appendChild(shipWrapper);
+    container.appendChild(shipWrapper);
     
-    // The HUD
-    focusContainer.insertAdjacentHTML('beforeend', `
-        <div class="focus-hud">
-            <div style="font-size: 0.7rem; letter-spacing: 3px; color: ${focusState.currentBiome.color}; margin-bottom: 10px;">DEEP FOCUS ENGAGED</div>
-            <div id="focus-clock" style="font-size: 4rem; font-weight: bold; font-family: monospace; color: #fff; text-shadow: 0 0 20px ${focusState.currentBiome.color};">
+    // HUD overlay
+    container.insertAdjacentHTML('beforeend', `
+        <div class="cryo-hud">
+            <div style="font-size: 0.75rem; letter-spacing: 4px; color: ${focusState.currentBiome.color}; margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px ${focusState.currentBiome.color};">CRYO-STASIS ACTIVE</div>
+            
+            <div id="cryo-clock" style="font-size: 4.5rem; font-weight: bold; font-family: monospace; color: #fff; text-shadow: 0 0 20px ${focusState.currentBiome.color}; margin: 10px 0;">
                 ${focusState.sessionTotalDuration.toString().padStart(2, '0')}:00
             </div>
-            <div id="focus-readout" style="margin-top: 20px; font-size: 0.8rem; color: #aaa; display: flex; gap: 20px; justify-content: center;">
-                <span>ENERGY: 0</span>
-                <span>SCRAP: 0</span>
+            
+            <div id="cryo-readout" style="margin-top: 20px; font-size: 0.8rem; font-weight: bold; display: flex; gap: 20px; justify-content: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 4px; border: 1px solid ${focusState.currentBiome.color}44;">
+                <span style="color: var(--accent);">ENERGY: 0</span>
+                <span style="color: var(--captured);">SCRAP: 0</span>
             </div>
             
-            <button onclick="abortFocus()" style="margin-top: 40px; background: transparent; border: 1px solid #555; color: #888; padding: 8px 16px; font-size: 0.6rem; letter-spacing: 2px; border-radius: 2px; cursor: pointer;">[ ABORT MISSION ]</button>
+            <button onclick="abortCryoStasis()" style="margin-top: 50px; background: rgba(0,0,0,0.8); border: 1px solid #555; color: #888; padding: 10px 20px; font-size: 0.6rem; letter-spacing: 2px; border-radius: 2px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.color='#ff3366'; this.style.borderColor='#ff3366';" onmouseout="this.style.color='#888'; this.style.borderColor='#555';">[ EMERGENCY THAW ]</button>
         </div>
     `);
     
-    app.appendChild(focusContainer);
+    app.appendChild(container);
 }
 
-function updateFocusReadout() {
-    const readout = document.getElementById('focus-readout');
+function updateCryoReadout() {
+    const readout = document.getElementById('cryo-readout');
     if (readout) {
         readout.innerHTML = `
-            <span style="color: var(--accent);">ENERGY BANKED: ${focusState.sessionEnergy}</span>
-            <span style="color: var(--captured);">SCRAP BANKED: ${focusState.sessionScrap}</span>
+            <span style="color: var(--accent); text-shadow: 0 0 5px var(--accent-glow);">ENERGY: ${focusState.sessionEnergy}</span>
+            <span style="color: var(--captured); text-shadow: 0 0 5px var(--captured);">SCRAP: ${focusState.sessionScrap}</span>
         `;
     }
 }
 
-function abortFocus() {
-    if(confirm("ABORT DESCENT? All banked Energy and Scrap will be lost.")) {
+function abortCryoStasis() {
+    if(confirm("INITIATE EMERGENCY THAW?\n\nYou will wake up early. All Energy and Scrap gathered this session will be lost.")) {
         clearInterval(focusState.timerInterval);
         focusState.isActive = false;
-        exitFocusMode();
+        exitCryoMode();
     }
 }
 
-function exitFocusMode() {
-    const container = document.getElementById('focus-mode-container');
+function exitCryoMode() {
+    const container = document.getElementById('cryo-mode-container');
     if (container) container.remove();
 }
