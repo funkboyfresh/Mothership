@@ -155,21 +155,34 @@ function cryoTick() {
     const rewardTicks = Math.floor(elapsedSinceReward / 500); //TODO: REVERT THIS 500 BACK TO 6000
     
     if (rewardTicks > 0) {
-        // Grant rewards instantly for the exact number of missed minutes
+        // Grant rewards for the exact number of missed minutes
         for (let i = 0; i < rewardTicks; i++) {
             let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
-            let tickScrap = Math.floor(5 * focusState.sessionMultiplier);
+            let totalTickScrap = Math.floor(5 * focusState.sessionMultiplier);
             
             if (state.pantheon['tower_1_ascension']) { 
-                tickScrap = Math.floor(tickScrap * 1.25); 
+                totalTickScrap = Math.floor(totalTickScrap * 1.25); 
             }
             
+            // --- [ NEW ] THE DRIP-FEED SPLIT ---
+            // 20% of Scrap goes immediately to your global bank (minimum 1)
+            let immediateScrap = Math.max(1, Math.floor(totalTickScrap * 0.2));
+            let vaultedScrap = totalTickScrap - immediateScrap;
+            
+            // Direct deposit
+            state.scrap += immediateScrap;
+            
+            // Vaulted ammo for the minigame
             focusState.sessionEnergy += tickEnergy;
-            focusState.sessionScrap += tickScrap;
+            focusState.sessionScrap += vaultedScrap;
         }
         
+        // Save the global state in the background so you don't lose the drip-feed if you force-close the app
+        if (typeof save === 'function') save();
+        if (typeof updateHUD === 'function') updateHUD();
+        
         // Move the reward tracker forward precisely
-        focusState.lastRewardTime += (rewardTicks * 60000);
+        focusState.lastRewardTime += (rewardTicks * 60000); // TODO: Change back to 60000 after testing!
         updateCryoReadout();
     }
     
