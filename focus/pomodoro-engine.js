@@ -68,6 +68,11 @@ function selectCryoTimer(minutes, multiplier, btnElement) {
 // --- INITIALIZATION ---
 
 function openCryoSetupModal() {
+    // Re-verify biome configuration exists safely on load
+    if (!focusState.currentBiome || !focusState.currentBiome.color) {
+        focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)];
+    }
+
     focusState.selectedDuration = 90;
     focusState.selectedMultiplier = 2.0;
 
@@ -90,27 +95,27 @@ function openCryoSetupModal() {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
-                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
+                <button type="button" class="mod-btn timer-select-btn" onclick="selectCryoTimer(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">15 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.0x REWARDS</div>
                 </button>
-                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
+                <button type="button" class="mod-btn timer-select-btn" onclick="selectCryoTimer(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">30 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.25x REWARDS</div>
                 </button>
-                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
+                <button type="button" class="mod-btn timer-select-btn" onclick="selectCryoTimer(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">60 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.6x REWARDS</div>
                 </button>
-                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33; transition: all 0.3s;">
+                <button type="button" class="mod-btn timer-select-btn" onclick="selectCryoTimer(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">90 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">2.0x REWARDS</div>
                 </button>
             </div>
             
             <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
-                <button class="success-btn" onclick="launchCryoStasis(focusState.selectedDuration, focusState.selectedMultiplier, this)" style="width: 100%; padding: 12px; background: ${focusState.currentBiome.color}; color: #000; font-weight: bold; font-size: 0.9rem; letter-spacing: 2px; border: none; box-shadow: 0 0 15px ${focusState.currentBiome.color}; border-radius: 2px; cursor: pointer;">INITIATE DESCENT</button>
-                <button class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #555; color: #888; border-radius: 2px; font-size: 0.7rem; letter-spacing: 1px;">[ ABORT SEQUENCE ]</button>
+                <button type="button" class="success-btn" onclick="launchCryoStasis(focusState.selectedDuration, focusState.selectedMultiplier, this)" style="width: 100%; padding: 12px; background: ${focusState.currentBiome.color}; color: #000; font-weight: bold; font-size: 0.9rem; letter-spacing: 2px; border: none; box-shadow: 0 0 15px ${focusState.currentBiome.color}; border-radius: 2px; cursor: pointer;">INITIATE DESCENT</button>
+                <button type="button" class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #555; color: #888; border-radius: 2px; font-size: 0.7rem; letter-spacing: 1px;">[ ABORT SEQUENCE ]</button>
             </div>
         </div>
     `;
@@ -120,7 +125,9 @@ function openCryoSetupModal() {
 // --- CORE ENGINE ---
 
 function launchCryoStasis(minutes, multiplier, btnElement) {
-    btnElement.closest('.modal-overlay').remove();
+    if (btnElement && btnElement.closest('.modal-overlay')) {
+        btnElement.closest('.modal-overlay').remove();
+    }
     
     focusState.isActive = true;
     focusState.sessionTotalDuration = minutes;
@@ -128,11 +135,9 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
     const now = Date.now();
     focusState.targetStartTime = now;
     
-    // --- [ FAST TESTING SPEED CONFIG ] ---
-    // Here, 1 'minute' selection inside the modal becomes exactly 1 real second on the clock.
+    // Fast testing conversion bounds
     focusState.targetEndTime = now + (minutes * 1 * 1000); 
     focusState.timeRemaining = minutes * 1;  
-    // -------------------------------------
     
     focusState.lastRewardTime = now;
     focusState.sessionMultiplier = multiplier;
@@ -147,15 +152,12 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
 function cryoTick() {
     const now = Date.now();
     
-    // 1. Calculate precise remaining time
     const remainingMs = focusState.targetEndTime - now;
     focusState.timeRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
     
-    // 2. Background Passive Data Generation (Simulates a tick every single second for visual pacing)
     const currentTickTime = Math.min(now, focusState.targetEndTime);
     const elapsedSinceReward = currentTickTime - focusState.lastRewardTime;
     
-    // In testing, match the rewards process loop speed to look at 1-second chunks
     const rewardTicks = Math.floor(elapsedSinceReward / 1000); 
     
     if (rewardTicks > 0) {
@@ -163,17 +165,16 @@ function cryoTick() {
             let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
             let totalTickScrap = Math.floor(5 * focusState.sessionMultiplier);
             
-            if (state.pantheon['tower_1_ascension']) { 
+            // Hardened object fallback check for ascension states
+            if (state && state.pantheon && state.pantheon['tower_1_ascension']) { 
                 totalTickScrap = Math.floor(totalTickScrap * 1.25); 
             }
             
-            // Drip feed 20% to bank instantly
             let immediateScrap = Math.max(1, Math.floor(totalTickScrap * 0.2));
             let vaultedScrap = totalTickScrap - immediateScrap;
             
-            state.scrap += immediateScrap;
+            if (state) state.scrap += immediateScrap;
             
-            // Load cargo array vaults
             focusState.sessionEnergy += tickEnergy;
             focusState.sessionScrap += vaultedScrap;
         }
@@ -184,10 +185,8 @@ function cryoTick() {
         focusState.lastRewardTime += (rewardTicks * 1000); 
     }
     
-    // 3. Update Smooth Proportional Counter HUD displays
     updateCryoReadout();
     
-    // 4. Update Clock UI Display
     const mins = Math.floor(focusState.timeRemaining / 60);
     const secs = focusState.timeRemaining % 60;
     const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -195,7 +194,6 @@ function cryoTick() {
     const clockEl = document.getElementById('cryo-clock');
     if (clockEl) clockEl.innerText = timeStr;
     
-    // 5. Timer Complete!
     if (focusState.timeRemaining <= 0) {
         clearInterval(focusState.timerInterval);
         focusState.isActive = false;
@@ -231,10 +229,8 @@ function updateCryoReadout() {
     const totalDurationMs = focusState.targetEndTime - focusState.targetStartTime;
     const elapsedMs = Math.max(0, currentTickTime - focusState.targetStartTime);
     
-    // Determine the precise float percentage progress of time passed
     const progressRatio = totalDurationMs > 0 ? Math.min(1, elapsedMs / totalDurationMs) : 0;
 
-    // Linear interpolation math to scale counter text values incrementally from 0 to total
     const displayEnergy = Math.floor(focusState.sessionEnergy * progressRatio);
     const displayScrap = Math.floor(focusState.sessionScrap * progressRatio);
 
@@ -242,6 +238,64 @@ function updateCryoReadout() {
         <span style="color: var(--accent); text-shadow: 0 0 5px var(--accent-glow);">ENERGY: ${displayEnergy}</span>
         <span style="color: var(--captured); text-shadow: 0 0 5px var(--captured);">SCRAP: ${displayScrap}</span>
     `;
+}
+
+// --- UI RENDERER ---
+
+function renderCryoUI() {
+    // [ FIXED ] Append directly to document.body to bypass inner layout occlusion layers
+    const container = document.createElement('div');
+    container.id = 'cryo-mode-container';
+    container.className = 'warp-transition';
+    container.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+        background: ${focusState.currentBiome.bg}; 
+        z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        overflow: hidden;
+    `;
+    
+    const surface = document.createElement('div');
+    surface.style.cssText = `
+        position: absolute; top: -100%; left: 0; width: 100%; height: 200%;
+        background-image: linear-gradient(transparent 50%, ${focusState.currentBiome.color}22 50%);
+        background-size: 100% 40px;
+        animation: surface-scroll 2s linear infinite;
+        z-index: 1;
+    `;
+    
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes surface-scroll { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
+        .cryo-hud { z-index: 10; position: relative; text-align: center; }
+    `;
+    container.appendChild(style);
+    container.appendChild(surface);
+    
+    const shipWrapper = document.createElement('div');
+    shipWrapper.style.cssText = `position: absolute; bottom: 15%; width: 140px; height: 140px; z-index: 5; filter: drop-shadow(0 0 20px ${focusState.currentBiome.color}); pointer-events: none;`;
+    if (typeof drawModularShip === 'function') {
+        drawModularShip(shipWrapper, state.shipParts);
+    }
+    container.appendChild(shipWrapper);
+    
+    container.insertAdjacentHTML('beforeend', `
+        <div class="cryo-hud">
+            <div style="font-size: 0.75rem; letter-spacing: 4px; color: ${focusState.currentBiome.color}; margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px ${focusState.currentBiome.color};">CRYO-STASIS ACTIVE</div>
+            
+            <div id="cryo-clock" style="font-size: 4.5rem; font-weight: bold; font-family: monospace; color: #fff; text-shadow: 0 0 20px ${focusState.currentBiome.color}; margin: 10px 0;">
+                ${focusState.sessionTotalDuration.toString().padStart(2, '0')}:00
+            </div>
+            
+            <div id="cryo-readout" style="margin-top: 20px; font-size: 0.8rem; font-weight: bold; display: flex; gap: 20px; justify-content: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 4px; border: 1px solid ${focusState.currentBiome.color}44;">
+                <span style="color: var(--accent);">ENERGY: 0</span>
+                <span style="color: var(--captured);">SCRAP: 0</span>
+            </div>
+            
+            <button type="button" onclick="abortCryoStasis()" style="margin-top: 50px; background: rgba(0,0,0,0.8); border: 1px solid #555; color: #888; padding: 10px 20px; font-size: 0.6rem; letter-spacing: 2px; border-radius: 2px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.color='#ff3366'; this.style.borderColor='#ff3366';" onmouseout="this.style.color='#888'; this.style.borderColor='#555';">[ EMERGENCY THAW ]</button>
+        </div>
+    `);
+    
+    document.body.appendChild(container);
 }
 
 function abortCryoStasis() {
