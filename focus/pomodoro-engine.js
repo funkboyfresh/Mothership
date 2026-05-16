@@ -99,10 +99,10 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
     
     // [ FIXED ] Set absolute timestamps in milliseconds
     const now = Date.now();
-    focusState.targetEndTime = now + (minutes * 60 * 1000);
+    focusState.targetEndTime = now + (minutes * 1 * 1000); //TODO: REVERT THIS 1 BACK TO 60
     focusState.lastRewardTime = now;
     
-    focusState.timeRemaining = minutes * .5; 
+    focusState.timeRemaining = minutes * 1;  //TODO: REVERT THIS 1 BACK TO 60
     focusState.sessionMultiplier = multiplier;
     focusState.sessionEnergy = 0;
     focusState.sessionScrap = 0;
@@ -125,7 +125,7 @@ function cryoTick() {
     const elapsedSinceReward = currentTickTime - focusState.lastRewardTime;
     
     // How many full 60-second chunks have passed?
-    const rewardTicks = Math.floor(elapsedSinceReward / 60000);
+    const rewardTicks = Math.floor(elapsedSinceReward / 500); //TODO: REVERT THIS 500 BACK TO 6000
     
     if (rewardTicks > 0) {
         // Grant rewards instantly for the exact number of missed minutes
