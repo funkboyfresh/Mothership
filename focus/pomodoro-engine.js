@@ -194,7 +194,7 @@ function cryoTick() {
     const clockEl = document.getElementById('cryo-clock');
     if (clockEl) clockEl.innerText = timeStr;
     
-    if (focusState.timeRemaining <= 0) {
+if (focusState.timeRemaining <= 0) {
         clearInterval(focusState.timerInterval);
         focusState.isActive = false;
         
@@ -213,9 +213,34 @@ function cryoTick() {
         if (typeof triggerMinigameEncounter === 'function') {
             triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
         } else {
-            alert(`Cryo-Stasis Complete!\n\nBanked Energy: ${focusState.sessionEnergy}\nBanked Scrap: ${focusState.sessionScrap}\n\n(Minigame Manager Not Linked Yet)`);
+            // --- [ FIXED ] FALLBACK VALUATION UNLOADING ---
+            // Secure the 80% vault inside the global hangar bank so it isn't lost
+            state.scrap += focusState.sessionScrap;
+            
+            if (typeof addEnergy === 'function') {
+                addEnergy(focusState.sessionEnergy);
+            } else {
+                state.energy += focusState.sessionEnergy;
+            }
+            
+            // Save state modifications
+            if (typeof save === 'function') save();
+            if (typeof updateHUD === 'function') updateHUD();
+
+            // Calculate historical total extraction values for manifest clarity
+            const totalScrapExtracted = Math.round(focusState.sessionScrap / 0.8);
+            const totalDripFedToBank = totalScrapExtracted - focusState.sessionScrap;
+
+            alert(`CRYO-STASIS COMPLETE // CARGO MANIFEST\n\n` +
+                  `> Total Energy Harvested: +${focusState.sessionEnergy} EN\n` +
+                  `> Total Scrap Extracted:  +${totalScrapExtracted} SCR\n` +
+                  `  └─ Drip-Fed during flight (20%): +${totalDripFedToBank} SCR\n` +
+                  `  └─ Unloaded from Vault now (80%): +${focusState.sessionScrap} SCR\n\n` +
+                  `All payload variations successfully secured in Hangar reserves.`);
+                  
             exitCryoMode();
         }
+    }
     }
 }
 
