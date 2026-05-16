@@ -34,13 +34,17 @@ let focusState = {
     targetEndTime: 0,
     lastRewardTime: 0,
     
-    // [ NEW ] Temporary Selection Tracking for the Modal
+    // Temporary Selection Tracking for the Modal
     selectedDuration: 90,
     selectedMultiplier: 2.0,
     
     // Campaign Persistence (Saves between sessions)
     campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0, // Out of 90
-    // ... rest of state
+    currentBiome: JSON.parse(localStorage.getItem('currentBiome')) || PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)],
+    
+    // Session Earnings (Volatile Minigame Ammo)
+    sessionEnergy: 0,
+    sessionScrap: 0
 };
 
 // --- UI HELPERS ---
