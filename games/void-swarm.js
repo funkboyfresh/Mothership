@@ -1,6 +1,6 @@
 /**
- * VOID-SWARM.JS [ INTEL-TARGETING AUTOMATION BUILD ]
- * Implements high-volume ammunition overcharges and nearest-threat tracking fire vectors.
+ * VOID-SWARM.JS
+ * Pure Canvas Vector Physics Loop Simulation Module with 15% Swarm Dampening applied.
  */
 
 const voidSwarm = {
@@ -29,7 +29,7 @@ const voidSwarm = {
     
     // Kinetic Feedback & Economy Buffers
     screenShakeIntensity: 0,
-    ammoSuperchargeMultiplier: 5, // 5x Ammo multiplier during battle!
+    ammoSuperchargeMultiplier: 5, 
     mouse: { x: 0, y: 0 }
 };
 
@@ -39,10 +39,7 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.biome = biome;
     this.isApexEvent = isApex;
     
-    // --- [ AMMO CORE SUPERCHARGE ] ---
-    // Massively scale up the starting ammo pool so the player can let loose
     this.ammoPool = (ammo || 100) * this.ammoSuperchargeMultiplier;
-    
     this.bonusScrapEarned = 0;
     this.screenShakeIntensity = 0;
     
@@ -59,7 +56,6 @@ voidSwarm.init = function(canvas, ctx, biome, isApex, ammo) {
     this.mouse.x = this.canvas.width / 2;
     this.mouse.y = this.canvas.height / 2;
     
-    // Update the HUD counter instantly to show the supercharged pool
     const hudAmmo = document.getElementById('game-hud-ammo');
     if (hudAmmo) hudAmmo.innerText = this.ammoPool;
     
@@ -120,7 +116,6 @@ voidSwarm.executeSimulationLoop = function() {
 };
 
 voidSwarm.updatePhysics = function() {
-    // 1. Move Player Starfighter Towards Tracking Mouse/Touch Coordinates
     let dx = this.mouse.x - this.player.x;
     let dy = this.mouse.y - this.player.y;
     let dist = Math.sqrt(dx * dx + dy * dy);
@@ -138,7 +133,6 @@ voidSwarm.updatePhysics = function() {
         this.playerElement.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) rotate(${radToDeg}deg)`;
     }
     
-    // --- [ 2. NEAREST-TARGET INTERCEPT LOGIC ] ---
     let closestEnemy = null;
     let minDist = Infinity;
     
@@ -152,33 +146,29 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // Determine gun baseline trajectory vector (Lock onto closest threat, or default to ship heading)
     let fireAngle = this.player.angle;
     if (closestEnemy) {
         fireAngle = Math.atan2(closestEnemy.y - this.player.y, closestEnemy.x - this.player.x);
     }
     
-    // High-Volume Weapon Discharge (Increased fire check rate to 35% probability per frame)
     if (this.ammoPool > 0 && Math.random() < 0.35) {
         this.ammoPool--;
         const hudAmmo = document.getElementById('game-hud-ammo');
         if (hudAmmo) hudAmmo.innerText = this.ammoPool;
         
-        // Twin-linked offset calculations tracking the dynamic target solution angle
         const sideOffset = Math.random() > 0.5 ? 14 : -14;
         const bx = this.player.x + Math.cos(fireAngle + Math.PI/2) * sideOffset;
         const by = this.player.y + Math.sin(fireAngle + Math.PI/2) * sideOffset;
 
         this.projectiles.push({
             x: bx, y: by,
-            vx: Math.cos(fireAngle) * 16, // Accelerated plasma speeds for true intercept trajectories
+            vx: Math.cos(fireAngle) * 16, 
             vy: Math.sin(fireAngle) * 16,
             radius: 3.5
         });
     }
     
-    // 3. Spawning Varied Swarm Matrix Enemy Types
-    let spawnRate = this.isApexEvent ? 0.12 : 0.07; // Increased enemy counts to keep up with targeting
+    let spawnRate = this.isApexEvent ? 0.12 : 0.07; 
     if (this.enemies.length < 60 && Math.random() < spawnRate) {
         let edge = Math.floor(Math.random() * 4);
         let sx, sy;
@@ -193,17 +183,21 @@ voidSwarm.updatePhysics = function() {
         if (this.biome.id === 'CYBER' || this.biome.id === 'PLASMA') shape = 'SQUARE';
 
         const isElite = Math.random() < (this.isApexEvent ? 0.40 : 0.15);
+        
+        // --- [ DIRECTIVE 1: SWARM MOVEMENT DAMPENED BY 15% ] ---
+        // Base movement components multiplied by 0.85
+        let enemySpeed = isElite ? 1.5 : (Math.random() * 2 + (this.isApexEvent ? 2.5 : 1.5));
+        let dampenedSpeed = enemySpeed * 0.85;
 
         this.enemies.push({
             x: sx, y: sy, shape: shape,
             isElite: isElite,
             radius: isElite ? 24 : 12,
-            speed: isElite ? 1.5 : (Math.random() * 2 + (this.isApexEvent ? 2.5 : 1.5)),
+            speed: dampenedSpeed,
             hp: isElite ? 4 : 1
         });
     }
     
-    // 4. Update Weapon Vector Trajectories
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
         let p = this.projectiles[i];
         p.x += p.vx; p.y += p.vy;
@@ -212,7 +206,6 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // 5. Update Swarm Paths & Laser Intersections
     for (let i = this.enemies.length - 1; i >= 0; i--) {
         let e = this.enemies[i];
         let edx = this.player.x - e.x;
@@ -260,7 +253,6 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // 6. Process Scrap Magnet Pull Metrics
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
         let c = this.collectibles[i];
         
@@ -294,7 +286,6 @@ voidSwarm.updatePhysics = function() {
         }
     }
     
-    // 7. Update Fade Timers for Particles & Text Popups
     for (let i = this.particles.length - 1; i >= 0; i--) {
         let pt = this.particles[i];
         pt.x += pt.vx; pt.y += pt.vy;
@@ -344,7 +335,6 @@ voidSwarm.drawScene = function() {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // 1. Draw Float Core Dust Particles
     this.particles.forEach(pt => {
         ctx.save();
         ctx.globalAlpha = pt.alpha;
@@ -357,7 +347,6 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // 2. Draw Magnetic Scrap Core Material Drops
     this.collectibles.forEach(c => {
         ctx.save();
         ctx.fillStyle = 'var(--captured)';
@@ -376,7 +365,6 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // 3. Draw Laser Weapon Projectiles
     this.projectiles.forEach(p => {
         ctx.save();
         ctx.fillStyle = '#ffffff';
@@ -388,7 +376,6 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // 4. Draw Swarm Matrix Enemies
     this.enemies.forEach(e => {
         ctx.save();
         ctx.strokeStyle = this.biome.color;
@@ -422,7 +409,6 @@ voidSwarm.drawScene = function() {
         ctx.restore();
     });
     
-    // 5. Draw Floating Data Indicators (Text Damage Counters)
     this.floatingTexts.forEach(t => {
         ctx.save();
         ctx.globalAlpha = t.alpha;
@@ -442,8 +428,6 @@ voidSwarm.terminate = function() {
     this.loopActive = false;
     cancelAnimationFrame(this.rafId);
     
-    // --- [ RECONCILE STAGE REWARDS ] ---
-    // Rescale the ammunition count cleanly back to standard numbers before returning payload control
     this.ammoPool = Math.ceil(this.ammoPool / this.ammoSuperchargeMultiplier);
     
     if (this.playerElement) {
