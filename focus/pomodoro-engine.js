@@ -102,7 +102,7 @@ function launchCryoStasis(minutes, multiplier, btnElement) {
     focusState.targetEndTime = now + (minutes * 60 * 1000);
     focusState.lastRewardTime = now;
     
-    focusState.timeRemaining = minutes * 60; 
+    focusState.timeRemaining = minutes * .5; 
     focusState.sessionMultiplier = multiplier;
     focusState.sessionEnergy = 0;
     focusState.sessionScrap = 0;
