@@ -30,22 +30,46 @@ let focusState = {
     sessionTotalDuration: 0,
     sessionMultiplier: 1.0,
     
-    // [ FIXED ] Absolute Time Tracking for Screen Locks
+    // Absolute Time Tracking for Screen Locks
     targetEndTime: 0,
     lastRewardTime: 0,
     
+    // [ NEW ] Temporary Selection Tracking for the Modal
+    selectedDuration: 90,
+    selectedMultiplier: 2.0,
+    
     // Campaign Persistence (Saves between sessions)
     campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0, // Out of 90
-    currentBiome: JSON.parse(localStorage.getItem('currentBiome')) || PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)],
-    
-    // Session Earnings (Volatile Minigame Ammo)
-    sessionEnergy: 0,
-    sessionScrap: 0
+    // ... rest of state
 };
+
+// --- UI HELPERS ---
+function selectCryoTimer(minutes, multiplier, btnElement) {
+    // Update State
+    focusState.selectedDuration = minutes;
+    focusState.selectedMultiplier = multiplier;
+    
+    // Reset all buttons
+    const buttons = document.querySelectorAll('.timer-select-btn');
+    buttons.forEach(btn => {
+        btn.style.borderColor = '#555';
+        btn.style.color = '#fff';
+        btn.style.boxShadow = 'none';
+    });
+    
+    // Highlight the clicked button
+    btnElement.style.borderColor = focusState.currentBiome.color;
+    btnElement.style.color = focusState.currentBiome.color;
+    btnElement.style.boxShadow = `inset 0 0 10px ${focusState.currentBiome.color}33`;
+}
 
 // --- INITIALIZATION ---
 
 function openCryoSetupModal() {
+    // Reset selection to default 90-minute payload whenever modal opens
+    focusState.selectedDuration = 90;
+    focusState.selectedMultiplier = 2.0;
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay warp-transition';
     modal.style.display = 'flex';
@@ -65,25 +89,28 @@ function openCryoSetupModal() {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
-                <button class="mod-btn" onclick="launchCryoStasis(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(15, 1.0, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">15 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.0x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchCryoStasis(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(30, 1.25, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">30 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.25x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchCryoStasis(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff;">
+                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(60, 1.6, this)" style="padding: 15px; border-color: #555; color: #fff; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">60 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">1.6x REWARDS</div>
                 </button>
-                <button class="mod-btn" onclick="launchCryoStasis(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33;">
+                <button class="mod-btn timer-select-btn" onclick="selectCryoTimer(90, 2.0, this)" style="padding: 15px; border-color: ${focusState.currentBiome.color}; color: ${focusState.currentBiome.color}; box-shadow: inset 0 0 10px ${focusState.currentBiome.color}33; transition: all 0.3s;">
                     <div style="font-size: 1.2rem; font-weight: bold;">90 MIN</div>
                     <div style="font-size: 0.55rem; opacity: 0.6; margin-top: 4px;">2.0x REWARDS</div>
                 </button>
             </div>
             
-            <button class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; margin-top: 15px; padding: 10px; background: transparent; border: 1px solid #555; color: #888; border-radius: 2px;">[ ABORT SEQUENCE ]</button>
+            <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="success-btn" onclick="launchCryoStasis(focusState.selectedDuration, focusState.selectedMultiplier, this)" style="width: 100%; padding: 12px; background: ${focusState.currentBiome.color}; color: #000; font-weight: bold; font-size: 0.9rem; letter-spacing: 2px; border: none; box-shadow: 0 0 15px ${focusState.currentBiome.color}; border-radius: 2px; cursor: pointer;">INITIATE DESCENT</button>
+                <button class="action-btn" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #555; color: #888; border-radius: 2px; font-size: 0.7rem; letter-spacing: 1px;">[ ABORT SEQUENCE ]</button>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
