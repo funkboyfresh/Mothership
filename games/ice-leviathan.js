@@ -1,6 +1,6 @@
 /**
- * ICE-LEVIATHAN.JS [ HARDENED DIAGNOSTIC BUILD ]
- * HTML5 Canvas gravity physics peg-breaking engine with explicit color mappings and click-to-launch overrides.
+ * ICE-LEVIATHAN.JS [ COMPILED STABLE RE-BUILD ]
+ * Gravity peg-shattering engine utilizing native color blocks and hardened variable boundaries.
  */
 
 const iceLeviathan = {
@@ -19,15 +19,15 @@ const iceLeviathan = {
     playerElement: null,
     viewportElement: null,
     
-    // Vectors
-    player: { x: 0, y: 55, radius: 30, angle: 0 },
+    // Physical Vector Matrices
+    player: { x: 0, y: 60, radius: 30, angle: 0 },
     probes: [],    
     pegs: [],      
     particles: [], 
     collectibles: [],
     floatingTexts: [],
     
-    gravity: 0.24,
+    gravity: 0.25,
     mouse: { x: 0, y: 0 }
 };
 
@@ -37,7 +37,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.ctx = ctx;
         this.biome = biome;
         this.isApexEvent = isApex;
-        this.ammoPool = (ammo || 20) * 5; // Apply ammunition overcharge grid
+        this.ammoPool = (ammo || 20) * 5; 
         this.bonusScrapEarned = 0;
         
         this.probes = [];
@@ -51,27 +51,26 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.mouse.x = this.canvas.width / 2;
         this.mouse.y = this.canvas.height / 2;
         
-        // Populate Peg Matrix Array
+        // Stagger grid generation relative to compiled browser layout bounds
         const rows = this.isApexEvent ? 6 : 4;
         const cols = 9;
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                const staggerX = (r % 2 === 0) ? 30 : -30;
+                const staggerX = (r % 2 === 0) ? 25 : -25;
                 const px = (this.canvas.width / (cols + 1)) * (c + 1) + staggerX;
-                const py = 160 + (r * 65);
+                const py = 180 + (r * 65);
                 
-                if (px > 50 && px < this.canvas.width - 50) {
+                if (px > 40 && px < this.canvas.width - 40) {
                     this.pegs.push({
                         x: px, y: py,
-                        radius: Math.random() * 4 + 11,
-                        hp: this.isApexEvent ? 2 : 1,
-                        maxHp: this.isApexEvent ? 2 : 1
+                        radius: 12,
+                        hp: this.isApexEvent ? 2 : 1
                     });
                 }
             }
         }
         
-        // Mount starfighter HTML layer element override
+        // Append actual ship DOM asset layer center top
         this.viewportElement = document.getElementById('minigame-viewport');
         if (this.viewportElement) {
             this.playerElement = document.createElement('div');
@@ -90,13 +89,12 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
             this.viewportElement.appendChild(this.playerElement);
         }
         
-        // Bind Input Directives
+        // Mount Operational Scanners
         this._moveRef = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
             this.mouse.y = e.clientY - rect.top;
         };
-        // Add Manual Launch Link on Click input!
         this._clickRef = () => this.manuallyDeployProbe();
         this._resizeRef = () => this.resizeCanvas();
         
@@ -107,7 +105,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.loopActive = true;
         this.executeSimulationLoop();
     } catch (err) {
-        alert("CRITICAL ERROR IN GRAVITY LAUNCHER INITIALIZATION:\n" + err.message);
+        alert("GRAVITY ENGINE LAUNCH FAIL:\n" + err.message);
     }
 };
 
@@ -122,7 +120,7 @@ iceLeviathan.manuallyDeployProbe = function() {
         y: this.player.y + Math.sin(this.player.angle) * 45,
         vx: Math.cos(this.player.angle) * 10,
         vy: Math.sin(this.player.angle) * 10,
-        radius: 7.5
+        radius: 7
     });
 };
 
@@ -134,14 +132,9 @@ iceLeviathan.resizeCanvas = function() {
 
 iceLeviathan.executeSimulationLoop = function() {
     if (!this.loopActive) return;
-    try {
-        this.updatePhysics();
-        this.drawScene();
-        this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
-    } catch (err) {
-        this.loopActive = false;
-        alert("GRAVITY LOOP CRASH DEPLOYED:\n" + err.message);
-    }
+    this.updatePhysics();
+    this.drawScene();
+    this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
 };
 
 iceLeviathan.updatePhysics = function() {
@@ -156,19 +149,19 @@ iceLeviathan.updatePhysics = function() {
         this.playerElement.style.transform = `translate3d(${ox}px, ${oy}px, 0) rotate(${rot}deg)`;
     }
     
-    // Ambient Background Auto fire tracking
-    if (this.ammoPool > 0 && this.probes.length < 3 && Math.random() < 0.03) {
+    // Automated ambient baseline drop calculations
+    if (this.ammoPool > 0 && this.probes.length < 2 && Math.random() < 0.02) {
         this.manuallyDeployProbe();
     }
     
-    // Probe Physics Calculations
+    // Elastic Bounce Grid Solvers
     for (let i = this.probes.length - 1; i >= 0; i--) {
         let p = this.probes[i];
-        p.vy += this.gravity; 
+        p.vy += this.gravity;
         p.x += p.vx; p.y += p.vy;
         
-        if (p.x < p.radius) { p.x = p.radius; p.vx *= -0.85; }
-        if (p.x > this.canvas.width - p.radius) { p.x = this.canvas.width - p.radius; p.vx *= -0.85; }
+        if (p.x < p.radius) { p.x = p.radius; p.vx *= -0.8; }
+        if (p.x > this.canvas.width - p.radius) { p.x = this.canvas.width - p.radius; p.vx *= -0.8; }
         
         if (p.y > this.canvas.height + 20) {
             this.probes.splice(i, 1);
@@ -188,21 +181,19 @@ iceLeviathan.updatePhysics = function() {
                 p.x = peg.x + nx * (p.radius + peg.radius);
                 p.y = peg.y + ny * (p.radius + peg.radius);
                 
-                let dotProduct = p.vx * nx + p.vy * ny;
-                p.vx = (p.vx - 2 * dotProduct * nx) * 0.85;
-                p.vy = (p.vy - 2 * dotProduct * ny) * 0.85;
+                let dot = p.vx * nx + p.vy * ny;
+                p.vx = (p.vx - 2 * dot * nx) * 0.8;
+                p.vy = (p.vy - 2 * dot * ny) * 0.8;
                 
                 peg.hp--;
                 
                 if (peg.hp <= 0) {
                     this.triggerPegExplosion(peg.x, peg.y);
-                    
                     this.collectibles.push({
                         x: peg.x, y: peg.y,
-                        vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * -4,
-                        value: Math.round((Math.random() * 5 + 4) * (this.isApexEvent ? 3.0 : 1.0))
+                        vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * -3,
+                        value: Math.round((Math.random() * 4 + 4) * (this.isApexEvent ? 3.0 : 1.0))
                     });
-                    
                     this.pegs.splice(j, 1);
                 }
                 break;
@@ -210,7 +201,7 @@ iceLeviathan.updatePhysics = function() {
         }
     }
     
-    // Magnetic deflector returns (Pulls fragments cleanly back to top starfighter)
+    // Deflector Vacuum Snares
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
         let c = this.collectibles[i];
         c.x += c.vx; c.y += c.vy;
@@ -220,13 +211,13 @@ iceLeviathan.updatePhysics = function() {
         let cdy = this.player.y - c.y;
         let cdist = Math.sqrt(cdx * cdx + cdy * cdy);
         
-        if (cdist < 500) {
-            let pull = (500 - cdist) / 12;
+        if (cdist < 550) {
+            let pull = (550 - cdist) / 10;
             c.x += (cdx / cdist) * pull;
             c.y += (cdy / cdist) * pull;
         }
         
-        if (cdist < 50) {
+        if (cdist < 45) {
             this.bonusScrapEarned += c.value;
             this.floatingTexts.push({ x: c.x, y: c.y - 10, text: `+${c.value}`, alpha: 1 });
             
@@ -237,24 +228,23 @@ iceLeviathan.updatePhysics = function() {
         }
     }
     
-    // Process FX Arrays decay
     for (let i = this.particles.length - 1; i >= 0; i--) {
         let pt = this.particles[i];
-        pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.08;
-        pt.alpha -= 0.025;
+        pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.05;
+        pt.alpha -= 0.02;
         if (pt.alpha <= 0) this.particles.splice(i, 1);
     }
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
         let t = this.floatingTexts[i];
-        t.y -= 0.7; t.alpha -= 0.02;
+        t.y -= 0.6; t.alpha -= 0.02;
         if (t.alpha <= 0) this.floatingTexts.splice(i, 1);
     }
 };
 
 iceLeviathan.triggerPegExplosion = function(x, y) {
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 10; i++) {
         let a = Math.random() * Math.PI * 2;
-        let s = Math.random() * 4 + 2;
+        let s = Math.random() * 3 + 2;
         this.particles.push({
             x: x, y: y,
             vx: Math.cos(a) * s, vy: Math.sin(a) * s,
@@ -268,47 +258,44 @@ iceLeviathan.drawScene = function() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // 1. Aim Vector Targeting Guideline
+    // 1. Aim Rail Target Guides
     ctx.save();
     ctx.strokeStyle = this.biome.color;
-    ctx.globalAlpha = 0.15;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 5]);
+    ctx.globalAlpha = 0.2;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(this.player.x, this.player.y);
-    ctx.lineTo(this.player.x + Math.cos(this.player.angle) * 400, this.player.y + Math.sin(this.player.angle) * 400);
+    ctx.lineTo(this.player.x + Math.cos(this.player.angle) * 350, this.player.y + Math.sin(this.player.angle) * 350);
     ctx.stroke();
     ctx.restore();
     
-    // 2. Frozen Core Crystals (Peg Board)
+    // 2. Frozen Nodes (Solid Render configuration prevents alpha calculation bugs)
     this.pegs.forEach(peg => {
         ctx.save();
         ctx.strokeStyle = this.biome.color;
         ctx.lineWidth = 2;
-        ctx.fillStyle = peg.hp > 1 ? `${this.biome.color}55` : `${this.biome.color}15`;
-        ctx.shadowBlur = 6; ctx.shadowColor = this.biome.color;
+        ctx.fillStyle = '#050515';
         ctx.beginPath();
         ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
         ctx.restore();
     });
     
-    // 3. Falling Gravity Matrix Probes
+    // 3. Falling Probes
     this.probes.forEach(p => {
         ctx.save();
         ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 10; ctx.shadowColor = this.biome.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     });
     
-    // 4. Material Diamond Collectors [ FIXED STYLING TO HEX COLOR ]
+    // 4. Diamonds Collectors
     this.collectibles.forEach(c => {
         ctx.save();
-        ctx.fillStyle = '#ffaa00'; // Pure explicit hex instead of CSS variable token
-        ctx.shadowBlur = 4; ctx.shadowColor = '#ffaa00';
+        ctx.fillStyle = '#ffaa00';
         ctx.beginPath();
         ctx.rect(c.x - 4, c.y - 4, 8, 8);
         ctx.fill();
@@ -323,10 +310,10 @@ iceLeviathan.drawScene = function() {
         ctx.restore();
     });
     
-    // 6. Floating Text Indicators [ FIXED STYLING TO HEX COLOR ]
+    // 6. Value counters
     this.floatingTexts.forEach(t => {
         ctx.save(); ctx.globalAlpha = t.alpha;
-        ctx.fillStyle = '#00ff88'; // Pure explicit hex color profile
+        ctx.fillStyle = '#00ff88';
         ctx.font = 'bold 12px monospace';
         ctx.textAlign = 'center';
         ctx.fillText(t.text, t.x, t.y);
