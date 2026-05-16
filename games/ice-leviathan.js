@@ -1,6 +1,6 @@
 /**
- * ICE-LEVIATHAN.JS [ COMPILED STABLE RE-BUILD ]
- * Gravity peg-shattering engine utilizing native color blocks and hardened variable boundaries.
+ * ICE-LEVIATHAN.JS [ DIAGNOSTIC FRAME BUILD ]
+ * Gravity peg-shattering engine equipped with loud async exception telemetry trackers.
  */
 
 const iceLeviathan = {
@@ -35,7 +35,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
     try {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.biome = biome;
+        this.biome = biome || { id: 'ICE', color: '#00e5ff' };
         this.isApexEvent = isApex;
         this.ammoPool = (ammo || 20) * 5; 
         this.bonusScrapEarned = 0;
@@ -58,7 +58,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
             for (let c = 0; c < cols; c++) {
                 const staggerX = (r % 2 === 0) ? 25 : -25;
                 const px = (this.canvas.width / (cols + 1)) * (c + 1) + staggerX;
-                const py = 180 + (r * 65);
+                const py = 160 + (r * 65);
                 
                 if (px > 40 && px < this.canvas.width - 40) {
                     this.pegs.push({
@@ -89,7 +89,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
             this.viewportElement.appendChild(this.playerElement);
         }
         
-        // Mount Operational Scanners
+        // Mount Operational Event Listeners
         this._moveRef = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
@@ -105,7 +105,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.loopActive = true;
         this.executeSimulationLoop();
     } catch (err) {
-        alert("GRAVITY ENGINE LAUNCH FAIL:\n" + err.message);
+        alert("CRITICAL SYNC FAILURE DURING GRAVITY INIT BLOCK:\n" + err.message);
     }
 };
 
@@ -132,9 +132,18 @@ iceLeviathan.resizeCanvas = function() {
 
 iceLeviathan.executeSimulationLoop = function() {
     if (!this.loopActive) return;
-    this.updatePhysics();
-    this.drawScene();
-    this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
+    
+    // --- [ HARDENED LOGGING FRAME MONITOR ] ---
+    try {
+        this.updatePhysics();
+        this.drawScene();
+        this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
+    } catch (frameError) {
+        this.loopActive = false;
+        alert("CRITICAL RENDER THREAD CRASH INSIDE GRAVITY FRAME STEP:\n" + 
+              frameError.message + "\n\nStack Trace:\n" + frameError.stack);
+    }
+    // ------------------------------------------
 };
 
 iceLeviathan.updatePhysics = function() {
@@ -149,12 +158,10 @@ iceLeviathan.updatePhysics = function() {
         this.playerElement.style.transform = `translate3d(${ox}px, ${oy}px, 0) rotate(${rot}deg)`;
     }
     
-    // Automated ambient baseline drop calculations
     if (this.ammoPool > 0 && this.probes.length < 2 && Math.random() < 0.02) {
         this.manuallyDeployProbe();
     }
     
-    // Elastic Bounce Grid Solvers
     for (let i = this.probes.length - 1; i >= 0; i--) {
         let p = this.probes[i];
         p.vy += this.gravity;
@@ -201,7 +208,6 @@ iceLeviathan.updatePhysics = function() {
         }
     }
     
-    // Deflector Vacuum Snares
     for (let i = this.collectibles.length - 1; i >= 0; i--) {
         let c = this.collectibles[i];
         c.x += c.vx; c.y += c.vy;
@@ -270,7 +276,7 @@ iceLeviathan.drawScene = function() {
     ctx.stroke();
     ctx.restore();
     
-    // 2. Frozen Nodes (Solid Render configuration prevents alpha calculation bugs)
+    // 2. Frozen Nodes
     this.pegs.forEach(peg => {
         ctx.save();
         ctx.strokeStyle = this.biome.color;
