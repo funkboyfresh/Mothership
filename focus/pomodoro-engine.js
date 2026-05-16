@@ -1,5 +1,5 @@
 /**
- * POMODORO-ENGINE.JS
+ * POMODORO-ENGINE.JS [ DIAGNOSTIC VERSION ]
  * Handles the Cryo-Stasis (Focus) Timer, Planetary Campaigns, and Resource Harvesting.
  */
 
@@ -11,16 +11,16 @@ const PLANET_BIOMES = [
     { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' },
     
     // The Expanded 10
-    { id: 'TOXIC', color: '#ccff00', bg: 'radial-gradient(circle at bottom, #1a3300 0%, #000000 80%)' },     // Acid oceans / Corrosive
-    { id: 'CRYSTAL', color: '#ff66cc', bg: 'radial-gradient(circle at bottom, #330033 0%, #000000 80%)' },   // Fractal glass / Prismatic
-    { id: 'DUNE', color: '#ffaa00', bg: 'radial-gradient(circle at bottom, #331a00 0%, #000000 80%)' },      // Desert / Sandworm territory
-    { id: 'ABYSSAL', color: '#0066ff', bg: 'radial-gradient(circle at bottom, #000a33 0%, #000000 80%)' },   // Deep water / High pressure
-    { id: 'SPORE', color: '#b266ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' },     // Fungal overgrowth / Bioluminescent
-    { id: 'FERROUS', color: '#cc5500', bg: 'radial-gradient(circle at bottom, #330a00 0%, #000000 80%)' },   // Rust / Metallic scrap world
-    { id: 'FALLOUT', color: '#bfff00', bg: 'radial-gradient(circle at bottom, #1a2200 0%, #000000 80%)' },   // Irradiated / Nuclear wasteland
-    { id: 'ECLIPSE', color: '#e0e0e0', bg: 'radial-gradient(circle at bottom, #111111 0%, #000000 80%)' },   // Shadow world / Monochrome
-    { id: 'PLASMA', color: '#7700ff', bg: 'radial-gradient(circle at bottom, #110033 0%, #000000 80%)' },    // Electrical storms / Volatile
-    { id: 'CHRONOS', color: '#ffe55c', bg: 'radial-gradient(circle at bottom, #332b00 0%, #000000 80%)' }    // Golden age / Temporal ruins
+    { id: 'TOXIC', color: '#ccff00', bg: 'radial-gradient(circle at bottom, #1a3300 0%, #000000 80%)' },
+    { id: 'CRYSTAL', color: '#ff66cc', bg: 'radial-gradient(circle at bottom, #330033 0%, #000000 80%)' },
+    { id: 'DUNE', color: '#ffaa00', bg: 'radial-gradient(circle at bottom, #331a00 0%, #000000 80%)' },
+    { id: 'ABYSSAL', color: '#0066ff', bg: 'radial-gradient(circle at bottom, #000a33 0%, #000000 80%)' },
+    { id: 'SPORE', color: '#b266ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' },
+    { id: 'FERROUS', color: '#cc5500', bg: 'radial-gradient(circle at bottom, #330a00 0%, #000000 80%)' },
+    { id: 'FALLOUT', color: '#bfff00', bg: 'radial-gradient(circle at bottom, #1a2200 0%, #000000 80%)' },
+    { id: 'ECLIPSE', color: '#e0e0e0', bg: 'radial-gradient(circle at bottom, #111111 0%, #000000 80%)' },
+    { id: 'PLASMA', color: '#7700ff', bg: 'radial-gradient(circle at bottom, #110033 0%, #000000 80%)' },
+    { id: 'CHRONOS', color: '#ffe55c', bg: 'radial-gradient(circle at bottom, #332b00 0%, #000000 80%)' }
 ];
 
 let focusState = {
@@ -30,25 +30,30 @@ let focusState = {
     sessionTotalDuration: 0,
     sessionMultiplier: 1.0,
     
-    // Absolute Time Tracking & Accumulation Bounds
     targetStartTime: 0,
     targetEndTime: 0,
     
-    // Selection Tracking for the Modal
     selectedDuration: 90,
     selectedMultiplier: 2.0,
     
-    // Hardened Tracking for Precise Drip Deposits
     dripScrapDeposited: 0,
     
-    // Campaign Persistence
-    campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0, // Out of 90
-    currentBiome: JSON.parse(localStorage.getItem('currentBiome')) || PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)],
+    campaignProgress: parseInt(localStorage.getItem('campaignProgress')) || 0,
+    currentBiome: null,
     
-    // Live Session Earnings (Volatile counters)
     sessionEnergy: 0,
     sessionScrap: 0
 };
+
+// Defensive load verification for the biome structure
+try {
+    focusState.currentBiome = JSON.parse(localStorage.getItem('currentBiome')) || PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)];
+    if (!focusState.currentBiome || !focusState.currentBiome.color || !focusState.currentBiome.bg) {
+        focusState.currentBiome = PLANET_BIOMES[0];
+    }
+} catch(e) {
+    focusState.currentBiome = PLANET_BIOMES[0];
+}
 
 // --- UI HELPERS ---
 function selectCryoTimer(minutes, multiplier, btnElement) {
@@ -62,9 +67,11 @@ function selectCryoTimer(minutes, multiplier, btnElement) {
         btn.style.boxShadow = 'none';
     });
     
-    btnElement.style.borderColor = focusState.currentBiome.color;
-    btnElement.style.color = focusState.currentBiome.color;
-    btnElement.style.boxShadow = `inset 0 0 10px ${focusState.currentBiome.color}33`;
+    if (btnElement && focusState.currentBiome) {
+        btnElement.style.borderColor = focusState.currentBiome.color;
+        btnElement.style.color = focusState.currentBiome.color;
+        btnElement.style.boxShadow = `inset 0 0 10px ${focusState.currentBiome.color}33`;
+    }
 }
 
 // --- INITIALIZATION ---
@@ -126,129 +133,127 @@ function openCryoSetupModal() {
 // --- CORE ENGINE ---
 
 function launchCryoStasis(minutes, multiplier, btnElement) {
-    if (btnElement && btnElement.closest('.modal-overlay')) {
-        btnElement.closest('.modal-overlay').remove();
+    try {
+        if (btnElement && btnElement.closest('.modal-overlay')) {
+            btnElement.closest('.modal-overlay').remove();
+        }
+        
+        focusState.isActive = true;
+        focusState.sessionTotalDuration = minutes || 90;
+        focusState.sessionMultiplier = multiplier || 1.0;
+        
+        const now = Date.now();
+        focusState.targetStartTime = now;
+        
+        // Fast testing conversion boundaries
+        focusState.targetEndTime = now + (focusState.sessionTotalDuration * 1 * 1000); 
+        focusState.timeRemaining = focusState.sessionTotalDuration * 1;  
+        
+        focusState.dripScrapDeposited = 0;
+        focusState.sessionEnergy = 0;
+        focusState.sessionScrap = 0;
+        
+        renderCryoUI();
+        
+        focusState.timerInterval = setInterval(cryoTick, 1000);
+    } catch (error) {
+        alert("CRITICAL ERROR DURING LAUNCH SEQUENCE:\n" + error.message + "\n\nStack:\n" + error.stack);
     }
-    
-    focusState.isActive = true;
-    focusState.sessionTotalDuration = minutes;
-    focusState.sessionMultiplier = multiplier;
-    
-    const now = Date.now();
-    focusState.targetStartTime = now;
-    
-    // --- [ FAST TESTING SPEED CONFIG ] ---
-    // 1 minute selection = 1 real second on the clock
-    focusState.targetEndTime = now + (minutes * 1 * 1000); 
-    focusState.timeRemaining = minutes * 1;  
-    // -------------------------------------
-    
-    focusState.dripScrapDeposited = 0;
-    focusState.sessionEnergy = 0;
-    focusState.sessionScrap = 0;
-    
-    renderCryoUI();
-    
-    focusState.timerInterval = setInterval(cryoTick, 1000);
 }
 
 function cryoTick() {
-    const now = Date.now();
-    
-    // 1. Calculate precise timeline metrics
-    const remainingMs = focusState.targetEndTime - now;
-    focusState.timeRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
-    
-    const currentTickTime = Math.min(now, focusState.targetEndTime);
-    const totalDurationMs = focusState.targetEndTime - focusState.targetStartTime;
-    const elapsedMs = Math.max(0, currentTickTime - focusState.targetStartTime);
-    
-    const progressRatio = totalDurationMs > 0 ? Math.min(1, elapsedMs / totalDurationMs) : 0;
-    
-    // 2. Compute Absolute Total Projected Payouts for this Campaign Session
-    let energyPerUnit = 10 * focusState.sessionMultiplier;
-    let scrapPerUnit = 5 * focusState.sessionMultiplier;
-    
-    if (state && state.pantheon && state.pantheon['tower_1_ascension']) { 
-        scrapPerUnit = Math.floor(scrapPerUnit * 1.25); 
-    }
-    
-    const totalSessionEnergy = energyPerUnit * focusState.sessionTotalDuration;
-    const totalSessionScrap = scrapPerUnit * focusState.sessionTotalDuration;
-    
-    // Split absolute values into clean 20% Drip and 80% Vault targets
-    const absoluteDripTarget = Math.floor(totalSessionScrap * 0.2);
-    const absoluteVaultTarget = totalSessionScrap - absoluteDripTarget;
-    
-    // 3. Absolute Real-Time Drip Payout Calculation
-    const currentExpectedDrip = Math.floor(absoluteDripTarget * progressRatio);
-    const dripToUnload = currentExpectedDrip - focusState.dripScrapDeposited;
-    
-    if (dripToUnload > 0) {
-        state.scrap += dripToUnload;
-        focusState.dripScrapDeposited += dripToUnload;
+    try {
+        const now = Date.now();
         
-        if (typeof save === 'function') save();
-        if (typeof updateHUD === 'function') updateHUD();
-    }
-    
-    // 4. Smoothly Scale Live HUD Vault Quantities
-    focusState.sessionEnergy = Math.floor(totalSessionEnergy * progressRatio);
-    focusState.sessionScrap = Math.floor(absoluteVaultTarget * progressRatio);
-    
-    updateCryoReadout();
-    
-    // 5. Update Clock Display
-    const mins = Math.floor(focusState.timeRemaining / 60);
-    const secs = focusState.timeRemaining % 60;
-    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    
-    const clockEl = document.getElementById('cryo-clock');
-    if (clockEl) clockEl.innerText = timeStr;
-    
-    // 6. Timer Complete Execution Hook
-    if (focusState.timeRemaining <= 0) {
-        clearInterval(focusState.timerInterval);
-        focusState.isActive = false;
+        const remainingMs = focusState.targetEndTime - now;
+        focusState.timeRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
         
-        focusState.campaignProgress += focusState.sessionTotalDuration;
+        const currentTickTime = Math.min(now, focusState.targetEndTime);
+        const totalDurationMs = focusState.targetEndTime - focusState.targetStartTime;
+        const elapsedMs = Math.max(0, currentTickTime - focusState.targetStartTime);
         
-        let isApexEvent = false;
-        if (focusState.campaignProgress >= 90) {
-            isApexEvent = true;
-            focusState.campaignProgress = 0; 
-            focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)]; 
+        const progressRatio = totalDurationMs > 0 ? Math.min(1, elapsedMs / totalDurationMs) : 0;
+        
+        let energyPerUnit = 10 * focusState.sessionMultiplier;
+        let scrapPerUnit = 5 * focusState.sessionMultiplier;
+        
+        if (state && state.pantheon && state.pantheon['tower_1_ascension']) { 
+            scrapPerUnit = Math.floor(scrapPerUnit * 1.25); 
         }
         
-        localStorage.setItem('campaignProgress', focusState.campaignProgress);
-        localStorage.setItem('currentBiome', JSON.stringify(focusState.currentBiome));
+        const totalSessionEnergy = energyPerUnit * focusState.sessionTotalDuration;
+        const totalSessionScrap = scrapPerUnit * focusState.sessionTotalDuration;
         
-        // Lock values to maximum targets for exact handover integrity
-        focusState.sessionEnergy = totalSessionEnergy;
-        focusState.sessionScrap = absoluteVaultTarget;
+        const absoluteDripTarget = Math.floor(totalSessionScrap * 0.2);
+        const absoluteVaultTarget = totalSessionScrap - absoluteDripTarget;
         
-        if (typeof triggerMinigameEncounter === 'function') {
-            triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
-        } else {
-            // Unload remaining 80% cargo vault directly if minigame manager isn't linked
-            state.scrap += focusState.sessionScrap;
-            
-            if (typeof addEnergy === 'function') {
-                addEnergy(focusState.sessionEnergy);
-            } else {
-                state.energy += focusState.sessionEnergy;
-            }
+        const currentExpectedDrip = Math.floor(absoluteDripTarget * progressRatio);
+        const dripToUnload = currentExpectedDrip - focusState.dripScrapDeposited;
+        
+        if (dripToUnload > 0 && typeof state !== 'undefined') {
+            state.scrap += dripToUnload;
+            focusState.dripScrapDeposited += dripToUnload;
             
             if (typeof save === 'function') save();
             if (typeof updateHUD === 'function') updateHUD();
-            
-            alert(`CRYO-STASIS COMPLETE // PAYLOAD MANIFEST\n\n` +
-                  `> Energy Banked: +${focusState.sessionEnergy} EN\n` +
-                  `> Hangar Banked (80% Vault): +${focusState.sessionScrap} SCR\n` +
-                  `> In-Flight Drip (20% Feed): +${focusState.dripScrapDeposited} SCR\n\n` +
-                  `All assets securely logged to primary systems.`);
-            exitCryoMode();
         }
+        
+        focusState.sessionEnergy = Math.floor(totalSessionEnergy * progressRatio);
+        focusState.sessionScrap = Math.floor(absoluteVaultTarget * progressRatio);
+        
+        updateCryoReadout();
+        
+        const mins = Math.floor(focusState.timeRemaining / 60);
+        const secs = focusState.timeRemaining % 60;
+        const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        const clockEl = document.getElementById('cryo-clock');
+        if (clockEl) clockEl.innerText = timeStr;
+        
+        if (focusState.timeRemaining <= 0) {
+            clearInterval(focusState.timerInterval);
+            focusState.isActive = false;
+            
+            focusState.campaignProgress += focusState.sessionTotalDuration;
+            
+            let isApexEvent = false;
+            if (focusState.campaignProgress >= 90) {
+                isApexEvent = true;
+                focusState.campaignProgress = 0; 
+                focusState.currentBiome = PLANET_BIOMES[Math.floor(Math.random() * PLANET_BIOMES.length)]; 
+            }
+            
+            localStorage.setItem('campaignProgress', focusState.campaignProgress);
+            localStorage.setItem('currentBiome', JSON.stringify(focusState.currentBiome));
+            
+            focusState.sessionEnergy = totalSessionEnergy;
+            focusState.sessionScrap = absoluteVaultTarget;
+            
+            if (typeof triggerMinigameEncounter === 'function') {
+                triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
+            } else {
+                if (typeof state !== 'undefined') state.scrap += focusState.sessionScrap;
+                
+                if (typeof addEnergy === 'function') {
+                    addEnergy(focusState.sessionEnergy);
+                } else if (typeof state !== 'undefined') {
+                    state.energy += focusState.sessionEnergy;
+                }
+                
+                if (typeof save === 'function') save();
+                if (typeof updateHUD === 'function') updateHUD();
+                
+                alert(`CRYO-STASIS COMPLETE // PAYLOAD MANIFEST\n\n` +
+                      `> Energy Banked: +${focusState.sessionEnergy} EN\n` +
+                      `> Hangar Banked (80% Vault): +${focusState.sessionScrap} SCR\n` +
+                      `> In-Flight Drip (20% Feed): +${focusState.dripScrapDeposited} SCR\n\n` +
+                      `All assets securely logged to primary systems.`);
+                exitCryoMode();
+            }
+        }
+    } catch (tickError) {
+        clearInterval(focusState.timerInterval);
+        alert("RUNTIME EXCEPTION DETECTED DURING CRYO TICK:\n" + tickError.message);
     }
 }
 
@@ -259,6 +264,68 @@ function updateCryoReadout() {
             <span style="color: var(--accent); text-shadow: 0 0 5px var(--accent-glow);">ENERGY: ${focusState.sessionEnergy}</span>
             <span style="color: var(--captured); text-shadow: 0 0 5px var(--captured);">SCRAP: ${focusState.sessionScrap}</span>
         `;
+    }
+}
+
+function renderCryoUI() {
+    try {
+        const container = document.createElement('div');
+        container.id = 'cryo-mode-container';
+        container.className = 'warp-transition';
+        container.style.cssText = `
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: ${focusState.currentBiome.bg}; 
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        `;
+        
+        const surface = document.createElement('div');
+        surface.style.cssText = `
+            position: absolute; top: -100%; left: 0; width: 100%; height: 200%;
+            background-image: linear-gradient(transparent 50%, ${focusState.currentBiome.color}22 50%);
+            background-size: 100% 40px;
+            animation: surface-scroll 2s linear infinite;
+            z-index: 1;
+        `;
+        
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes surface-scroll { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
+            .cryo-hud { z-index: 10; position: relative; text-align: center; }
+        `;
+        container.appendChild(style);
+        container.appendChild(surface);
+        
+        const shipWrapper = document.createElement('div');
+        shipWrapper.style.cssText = `position: absolute; bottom: 15%; width: 140px; height: 140px; z-index: 5; filter: drop-shadow(0 0 20px ${focusState.currentBiome.color}); pointer-events: none;`;
+        
+        if (typeof drawModularShip === 'function' && typeof state !== 'undefined' && state.shipParts) {
+            drawModularShip(shipWrapper, state.shipParts);
+        }
+        container.appendChild(shipWrapper);
+        
+        const durationStr = (focusState.sessionTotalDuration || 90).toString().padStart(2, '0');
+        
+        container.insertAdjacentHTML('beforeend', `
+            <div class="cryo-hud">
+                <div style="font-size: 0.75rem; letter-spacing: 4px; color: ${focusState.currentBiome.color}; margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px ${focusState.currentBiome.color};">CRYO-STASIS ACTIVE</div>
+                
+                <div id="cryo-clock" style="font-size: 4.5rem; font-weight: bold; font-family: monospace; color: #fff; text-shadow: 0 0 20px ${focusState.currentBiome.color}; margin: 10px 0;">
+                    ${durationStr}:00
+                </div>
+                
+                <div id="cryo-readout" style="margin-top: 20px; font-size: 0.8rem; font-weight: bold; display: flex; gap: 20px; justify-content: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 4px; border: 1px solid ${focusState.currentBiome.color}44;">
+                    <span style="color: var(--accent);">ENERGY: 0</span>
+                    <span style="color: var(--captured);">SCRAP: 0</span>
+                </div>
+                
+                <button type="button" onclick="abortCryoStasis()" style="margin-top: 50px; background: rgba(0,0,0,0.8); border: 1px solid #555; color: #888; padding: 10px 20px; font-size: 0.6rem; letter-spacing: 2px; border-radius: 2px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.color='#ff3366'; this.style.borderColor='#ff3366';" onmouseout="this.style.color='#888'; this.style.borderColor='#555';">[ EMERGENCY THAW ]</button>
+            </div>
+        `);
+        
+        document.body.appendChild(container);
+    } catch (renderError) {
+        alert("CRITICAL EXCEPTION IN RENDER CRYO UI BLOCK:\n" + renderError.message + "\n\nStack:\n" + renderError.stack);
     }
 }
 
