@@ -160,7 +160,6 @@ function cryoTick() {
     
     if (rewardTicks > 0) {
         for (let i = 0; i < rewardTicks; i++) {
-            // Distribute projected yields over selection blocks
             let tickEnergy = Math.floor(10 * focusState.sessionMultiplier);
             let totalTickScrap = Math.floor(5 * focusState.sessionMultiplier);
             
