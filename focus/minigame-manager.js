@@ -33,11 +33,9 @@
  * 16. Tactical Turn-Based (Deckbuilder) - Takes too long to build a satisfying engine.
  * 17. Command Deck (FTL Management) - Stressful UI management (putting out fires, rerouting power).
  */
-
 /**
- * MINIGAME-MANAGER.JS [ STAGING DECK BUILD ]
- * Introduces pre-engagement command menus, autopilot tactical retreat buyouts (60%), 
- * and managed script initialization triggers.
+ * MINIGAME-MANAGER.JS [ DYNAMIC ROUTER BUILD ]
+ * Orchestrates encounters, provides pre-flight staging overlays, and select game modules.
  */
 
 let minigameManager = {
@@ -50,13 +48,17 @@ let minigameManager = {
     bonusScrapEarned: 0,
     ammoPool: 0,
     biome: null,
-    isApexEvent: false
+    isApexEvent: false,
+    
+    // Current Active Script Reference Binding
+    activeGame: null,
+    gameTitle: "UNKNOWN OUTPOST"
 };
 
 function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     if (typeof exitCryoMode === 'function') exitCryoMode(); 
     
-    // 1. Hydrate Manager Parameters (Keep loop active flag false until menu confirms)
+    // 1. Hydrate Manager Parameters
     minigameManager.isActive = false;
     minigameManager.timer = 30;
     minigameManager.ammoPool = energy || 100;
@@ -65,6 +67,20 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     minigameManager.isApexEvent = isApex;
     minigameManager.biome = (typeof focusState !== 'undefined' && focusState.currentBiome) ? focusState.currentBiome : { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' };
     
+    // --- [ DYNAMIC GAME MODULE ROUTER ] ---
+    const bid = minigameManager.biome.id;
+    if (bid === 'ICE' || bid === 'ABYSSAL' || bid === 'DUNE' || bid === 'CHRONOS') {
+        minigameManager.activeGame = (typeof iceLeviathan !== 'undefined') ? iceLeviathan : null;
+        minigameManager.gameTitle = "LEVIATHAN GRAVITY LAUNCHER";
+    } else if (bid === 'CRYSTAL' || bid === 'SPORE' || bid === 'FERROUS' || bid === 'ECLIPSE') {
+        minigameManager.activeGame = (typeof crystalMatrix !== 'undefined') ? crystalMatrix : null;
+        minigameManager.gameTitle = "CRYSTAL ENERGY MATRIX";
+    } else {
+        minigameManager.activeGame = (typeof voidSwarm !== 'undefined') ? voidSwarm : null;
+        minigameManager.gameTitle = "VOID SWARM RESISTANCE";
+    }
+    // ---------------------------------------
+
     // 2. Generate Screen Viewport Layer Scaffold
     const canvasContainer = document.createElement('div');
     canvasContainer.id = 'minigame-viewport';
@@ -82,7 +98,7 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
                     ${minigameManager.isApexEvent ? 'APEX EVENT CRITICAL' : 'ENCOUNTER ACTIVE'} // BIOME: ${minigameManager.biome.id}
                 </div>
                 <div style="font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px; text-shadow: 0 0 10px ${minigameManager.biome.color};">
-                    VOID SWARM RESISTANCE
+                    ${minigameManager.gameTitle}
                 </div>
             </div>
             <div style="text-align: right;">
@@ -102,28 +118,28 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
                     <span id="game-hud-scrap" style="font-size: 1.2rem; font-weight: bold; color: var(--captured); text-shadow: 0 0 5px var(--captured);">+0 SCRAP</span>
                 </div>
             </div>
-            <div style="font-size: 0.6rem; color: #666; letter-spacing: 1px;">GUIDE STARFIGHTER VIA CURSOR POSITION // AUTO-WEAPON DISCHARGE</div>
+            <div id="game-instructions-text" style="font-size: 0.6rem; color: #666; letter-spacing: 1px;">ENGAGING SUB TASK PROCEDURES...</div>
         </div>
 
         <div id="minigame-ready-menu" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10008; background: rgba(0,0,5,0.7); font-family: monospace;">
             <div class="modal-content" style="border: 1px solid ${minigameManager.biome.color}; background: #000; padding: 30px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 40px ${minigameManager.biome.color}44; border-radius: 4px;">
                 <div style="color: ${minigameManager.biome.color}; font-size: 0.7rem; letter-spacing: 4px; font-weight: bold; margin-bottom: 5px;">TACTICAL ENGAGEMENT RECON</div>
-                <h2 style="font-size: 1.3rem; color: #fff; margin: 0 0 15px 0; letter-spacing: 1px;">PRE-FLIGHT BRIEFING</h2>
+                <h2 style="font-size: 1.3rem; color: #fff; margin: 0 0 15px 0; letter-spacing: 1px;">${minigameManager.gameTitle}</h2>
                 
                 <div class="terminal-console" style="text-align: left; padding: 15px; border-color: ${minigameManager.biome.color}33; background: rgba(0,0,0,0.5); margin-bottom: 25px; line-height: 1.7; font-size: 0.75rem; color: #bbb;">
                     <div>> DESCENT TARGET: <span style="color:${minigameManager.biome.color}; font-weight:bold;">${minigameManager.biome.id} BIOME</span></div>
                     <div>> VAULTED HARVEST: <span style="color:#fff;">+${minigameManager.baseScrapPayload} SCRAP</span></div>
                     <div>> FIREPOWER AMMO: <span style="color:var(--accent); font-weight:bold;">${minigameManager.ammoPool} ENERGY</span></div>
                     <div style="margin-top: 8px; border-top: 1px dashed #333; padding-top: 8px; font-size: 0.7rem; opacity: 0.8; color: #aaa;">
-                        Hostile vector readings detected. Choose navigation response protocols below.
+                        System arrays linked. Choose navigation response protocols below.
                     </div>
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button type="button" onclick="startMinigameCombat()" style="width: 100%; padding: 14px; background: ${minigameManager.biome.color}; color: #000; font-weight: bold; border: none; font-size: 0.85rem; letter-spacing: 2px; box-shadow: 0 0 15px ${minigameManager.biome.color}; cursor: pointer; border-radius: 2px; transition: all 0.2s;">
-                        LAUNCH COMBAT MANEUVER
+                    <button type="button" onclick="startMinigameCombat()" style="width: 100%; padding: 14px; background: ${minigameManager.biome.color}; color: #000; font-weight: bold; border: none; font-size: 0.85rem; letter-spacing: 2px; box-shadow: 0 0 15px ${minigameManager.biome.color}; cursor: pointer; border-radius: 2px;">
+                        LAUNCH OPERATIONS
                     </button>
-                    <button type="button" onclick="executeAutopilotRetreat()" style="width: 100%; padding: 11px; background: transparent; border: 1px solid #555; color: #aaa; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; border-radius: 2px; transition: all 0.3s;" onmouseover="this.style.color='#ff3366'; this.style.borderColor='#ff3366';" onmouseout="this.style.color='#aaa'; this.style.borderColor='#555';">
+                    <button type="button" onclick="executeAutopilotRetreat()" style="width: 100%; padding: 11px; background: transparent; border: 1px solid #555; color: #aaa; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; border-radius: 2px;">
                         AUTOPILOT COURIER RETREAT (60% YIELD)
                     </button>
                 </div>
@@ -136,10 +152,7 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     document.body.appendChild(canvasContainer);
 }
 
-// --- ACTIVE ENCOUNTER IGNITION TRIGGER ---
-
 function startMinigameCombat() {
-    // 1. Remove the menu overlay and fade in background HUD controls
     const readyMenu = document.getElementById('minigame-ready-menu');
     if (readyMenu) readyMenu.remove();
     
@@ -148,16 +161,26 @@ function startMinigameCombat() {
     if (topHud) topHud.style.opacity = "1";
     if (bottomHud) bottomHud.style.opacity = "1";
     
-    // 2. Bind elements and execute canvas physics script loop loops
     minigameManager.isActive = true;
     const canvas = document.getElementById('minigame-canvas');
     const ctx = canvas.getContext('2d');
     
-    if (typeof voidSwarm !== 'undefined') {
-        voidSwarm.init(canvas, ctx, minigameManager.biome, minigameManager.isApexEvent, minigameManager.ammoPool);
+    // Set text guidelines depending on routed script assignment
+    const instEl = document.getElementById('game-instructions-text');
+    if (instEl) {
+        if (minigameManager.gameTitle.includes("LEVIATHAN")) {
+            instEl.innerText = "CURSOR PATHS AIM LAUNCH RAIL // AUTO-DISCHARGE GRAVITY PROBES INTENSE CORE SHATTER";
+        } else if (minigameManager.gameTitle.includes("MATRIX")) {
+            instEl.innerText = "CLICK EXPANSIVE COLORED CRYSTAL CLUSTERS // DRAINS WEAPON SHIELDS FOR EXPLOSIVE RETURNS";
+        } else {
+            instEl.innerText = "GUIDE STARFIGHTER VIA CURSOR POSITION // AUTO-WEAPON DISCHARGE COUNTER TARGET THREATS";
+        }
+    }
+
+    if (minigameManager.activeGame) {
+        minigameManager.activeGame.init(canvas, ctx, minigameManager.biome, minigameManager.isApexEvent, minigameManager.ammoPool);
     }
     
-    // 3. Begin main tracking interval clock loop
     minigameManager.timerInterval = setInterval(() => {
         minigameManager.timer--;
         
@@ -170,17 +193,11 @@ function startMinigameCombat() {
     }, 1000);
 }
 
-// --- OPTION B: AUTOPILOT COURIER RETREAT (60% BUYOUT) ---
-
 function executeAutopilotRetreat() {
-    // 1. Compute 60% penalty buyout values
     const retreatScrapYield = Math.floor(minigameManager.baseScrapPayload * 0.6);
     
-    // 2. Safely process state banking profiles
     if (typeof state !== 'undefined') {
         state.scrap += retreatScrapYield;
-        
-        // Retain 100% of ammunition assets (Unfired during retreat flight)
         if (minigameManager.isApexEvent && typeof addEnergy === 'function') {
             addEnergy(minigameManager.ammoPool);
         } else {
@@ -191,11 +208,9 @@ function executeAutopilotRetreat() {
     if (typeof save === 'function') save();
     if (typeof updateHUD === 'function') updateHUD();
     
-    // 3. Clear active viewports instantly
     const viewport = document.getElementById('minigame-viewport');
     if (viewport) viewport.remove();
     
-    // 4. Render specialized retreat summary card
     const summary = document.createElement('div');
     summary.className = 'modal-overlay warp-transition';
     summary.style.cssText = `display: flex; z-index: 10010; font-family: monospace; background: rgba(0,0,3,0.9);`;
@@ -212,22 +227,20 @@ function executeAutopilotRetreat() {
                 <div>> RETAINED SYSTEM RESERVES: <span style="color:var(--accent); font-weight:bold;">+${minigameManager.ammoPool} ENERGY</span></div>
             </div>
             
-            <button type="button" class="action-btn" onclick="teardownMinigameOverlay(this)" style="width: 100%; padding: 12px; background: transparent; border: 1px solid #ff3366; color: #ff3366; font-weight: bold; font-size: 0.85rem; letter-spacing: 2px; box-shadow: inset 0 0 10px rgba(255, 51, 102, 0.1); cursor: pointer; border-radius: 2px;">RETURN TO BRIDGE</button>
+            <button type="button" class="action-btn" onclick="teardownMinigameOverlay(this)" style="width: 100%; padding: 12px; background: transparent; border: 1px solid #ff3366; color: #ff3366; font-weight: bold; font-size: 0.85rem; letter-spacing: 2px; cursor: pointer; border-radius: 2px;">RETURN TO BRIDGE</button>
         </div>
     `;
     document.body.appendChild(summary);
 }
 
-// --- STANDARD COMBAT WRAP-UP ---
-
 function wrapUpActiveEncounter() {
     minigameManager.isActive = false;
     clearInterval(minigameManager.timerInterval);
     
-    if (typeof voidSwarm !== 'undefined') {
-        voidSwarm.terminate();
-        minigameManager.bonusScrapEarned = voidSwarm.bonusScrapEarned;
-        minigameManager.ammoPool = voidSwarm.ammoPool;
+    if (minigameManager.activeGame) {
+        minigameManager.activeGame.terminate();
+        minigameManager.bonusScrapEarned = minigameManager.activeGame.bonusScrapEarned || 0;
+        minigameManager.ammoPool = minigameManager.activeGame.ammoPool || 0;
     }
     
     const totalScrapSecured = minigameManager.baseScrapPayload + minigameManager.bonusScrapEarned;
