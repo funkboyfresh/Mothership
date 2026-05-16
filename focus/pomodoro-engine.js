@@ -229,27 +229,28 @@ function cryoTick() {
             focusState.sessionEnergy = totalSessionEnergy;
             focusState.sessionScrap = absoluteVaultTarget;
             
-            if (typeof triggerMinigameEncounter === 'function') {
-                triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
-            } else {
-                if (typeof state !== 'undefined') state.scrap += focusState.sessionScrap;
-                
-                if (typeof addEnergy === 'function') {
-                    addEnergy(focusState.sessionEnergy);
-                } else if (typeof state !== 'undefined') {
-                    state.energy += focusState.sessionEnergy;
-                }
-                
-                if (typeof save === 'function') save();
-                if (typeof updateHUD === 'function') updateHUD();
-                
-                alert(`CRYO-STASIS COMPLETE // PAYLOAD MANIFEST\n\n` +
-                      `> Energy Banked: +${focusState.sessionEnergy} EN\n` +
-                      `> Hangar Banked (80% Vault): +${focusState.sessionScrap} SCR\n` +
-                      `> In-Flight Drip (20% Feed): +${focusState.dripScrapDeposited} SCR\n\n` +
-                      `All assets securely logged to primary systems.`);
-                exitCryoMode();
+           if (typeof triggerMinigameEncounter === 'function') {
+            triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
+        } else {
+            if (typeof state !== 'undefined') state.scrap += focusState.sessionScrap;
+            
+            // --- [ DIRECTIVE 2: STANDALONE ENGINE SAFEGUARD ] ---
+            if (isApexEvent && typeof addEnergy === 'function') {
+                addEnergy(focusState.sessionEnergy);
+            } else if (typeof state !== 'undefined') {
+                state.energy += focusState.sessionEnergy;
             }
+            
+            if (typeof save === 'function') save();
+            if (typeof updateHUD === 'function') updateHUD();
+            
+            alert(`CRYO-STASIS COMPLETE // PAYLOAD MANIFEST\n\n` +
+                  `> Energy Banked: +${focusState.sessionEnergy} EN\n` +
+                  `> Hangar Banked (80% Vault): +${focusState.sessionScrap} SCR\n` +
+                  `> In-Flight Drip (20% Feed): +${focusState.dripScrapDeposited} SCR\n\n` +
+                  `All assets securely logged to primary systems.`);
+            exitCryoMode();
+        }
         }
     } catch (tickError) {
         clearInterval(focusState.timerInterval);
