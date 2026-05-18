@@ -107,15 +107,14 @@ crystalMatrix.resizeCanvas = function() {
     }
 };
 
-crystalMatrix.executeSimulationLoop = function() {
+ccrystalMatrix.executeSimulationLoop = function() {
     if (!this.loopActive) return;
-    
-    // --- [ FIXED LAYOUT DIMENSION MATCHING LOOP ] ---
     try {
         this.frameCount++;
         
-        // Continuous layout dimension refresh removes flex layout 0px anomalies
-        this.resizeCanvas(); 
+        // --- [ RECONCILED RUNTIME FIXED ] ---
+        // Stripped out this.resizeCanvas() from the active 60FPS loop step.
+        // This prevents the browser engine from clearing out the crystal block map cell buffers every millisecond.
         
         this.updateAnimationArrays();
         this.drawScene();
