@@ -135,8 +135,9 @@ iceLeviathan.executeSimulationLoop = function() {
     try {
         this.frameCount++;
         
-        // Forced layout buffer sizing match removes 0px scaling collapse anomalies
-        this.resizeCanvas(); 
+        // --- [ FIXED: REDUNDANT RESIZE STRIPPED ] ---
+        // Removed this.resizeCanvas() from the 60 FPS animation loop.
+        // Re-allocating width/height here forces the browser to wipe the canvas clean every frame.
         
         this.updatePhysics();
         this.drawScene();
