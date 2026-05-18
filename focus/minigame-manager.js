@@ -58,6 +58,9 @@ let minigameManager = {
 function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     if (typeof exitCryoMode === 'function') exitCryoMode(); 
     
+function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap, biomeOverride) {
+    if (typeof exitCryoMode === 'function') exitCryoMode(); 
+    
     // 1. Hydrate Manager Parameters
     minigameManager.isActive = false;
     minigameManager.timer = 30;
@@ -65,9 +68,14 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
     minigameManager.baseScrapPayload = scrap || 0;
     minigameManager.bonusScrapEarned = 0;
     minigameManager.isApexEvent = isApex;
-    minigameManager.biome = (typeof focusState !== 'undefined' && focusState.currentBiome) ? focusState.currentBiome : { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' };
     
-// --- [ DYNAMIC GAME MODULE ROUTER ] ---
+    // --- [ SURGICAL FIX: APPLY BIOME OVERRIDE ] ---
+    // Prioritize the completed planet snapshot passed from the engine over the next target destination
+    minigameManager.customBiome = biomeOverride; // Just in case a tracking hook is needed
+    minigameManager.biome = biomeOverride || ((typeof focusState !== 'undefined' && focusState.currentBiome) ? focusState.currentBiome : { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' });
+
+    
+    // --- [ DYNAMIC GAME MODULE ROUTER ] ---
     const bid = minigameManager.biome.id;
     if (bid === 'ICE' || bid === 'ABYSSAL' || bid === 'DUNE' || bid === 'CHRONOS') {
         // LOUD TELEMETRY CHECK: Verifies if the file compiled or failed to load entirely
