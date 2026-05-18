@@ -107,22 +107,21 @@ crystalMatrix.resizeCanvas = function() {
     }
 };
 
-ccrystalMatrix.executeSimulationLoop = function() {
+crystalMatrix.executeSimulationLoop = function() {
     if (!this.loopActive) return;
     try {
         this.frameCount++;
         
-        // --- [ RECONCILED RUNTIME FIXED ] ---
-        // Stripped out this.resizeCanvas() from the active 60FPS loop step.
-        // This prevents the browser engine from clearing out the crystal block map cell buffers every millisecond.
+        // --- [ FIXED: REDUNDANT RESIZE STRIPPED ] ---
+        // Removed this.resizeCanvas() from the 60 FPS animation loop.
+        // Stripping this stops the loop from instantly clearing out the block map rendering array.
         
         this.updateAnimationArrays();
         this.drawScene();
         this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
     } catch (frameError) {
         this.loopActive = false;
-        alert("CRITICAL RENDER THREAD CRASH INSIDE CRYSTAL FRAME STEP:\n" + 
-              frameError.message + "\n\nStack Trace:\n" + frameError.stack);
+        alert("CRITICAL RENDER THREAD CRASH INSIDE CRYSTAL FRAME STEP:\n" + frameError.message);
     }
 };
 
