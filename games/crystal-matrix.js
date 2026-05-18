@@ -1,6 +1,6 @@
 /**
- * CRYSTAL-MATRIX.JS
- * HTML5 Canvas grid block extraction collapse simulation.
+ * CRYSTAL-MATRIX.JS [ DIAGNOSTIC FRAME BUILD ]
+ * HTML5 Canvas grid block extraction collapse engine equipped with active loop telemetry trackers.
  */
 
 const crystalMatrix = {
@@ -23,7 +23,7 @@ const crystalMatrix = {
     rows: 7,
     blockSize: 45,
     gridStartX: 0,
-    gridStartY: 120,
+    gridStartY: 130,
     
     particles: [],
     floatingTexts: [],
@@ -31,66 +31,65 @@ const crystalMatrix = {
 };
 
 crystalMatrix.init = function(canvas, ctx, biome, isApex, ammo) {
-    this.canvas = canvas;
-    this.ctx = ctx;
-    this.biome = biome;
-    this.isApexEvent = isApex;
-    this.ammoPool = ammo * 5; 
-    this.bonusScrapEarned = 0;
-    
-    this.particles = [];
-    this.floatingTexts = [];
-    this.grid = [];
-    
-    this.resizeCanvas();
-    
-    this.player.x = this.canvas.width / 2;
-    this.player.y = this.canvas.height - 60;
-    
-    this.gridStartX = (this.canvas.width - (this.cols * this.blockSize)) / 2;
-    
-    // Palette parameters matching biome aesthetic arrays
-    this.colorsList = [this.biome.color, '#ffffff', '#ffaa00', '#00ff88'];
-    
-    // Hydrate block map cells
-    for (let r = 0; r < this.rows; r++) {
-        this.grid[r] = [];
-        for (let c = 0; c < this.cols; c++) {
-            this.grid[r][c] = {
-                color: this.colorsList[Math.floor(Math.random() * this.colorsList.length)],
-                active: true
-            };
+    try {
+        this.canvas = canvas;
+        this.ctx = ctx;
+        this.biome = biome || { id: 'CRYSTAL', color: '#ff66cc' };
+        this.isApexEvent = isApex;
+        this.ammoPool = (ammo || 20) * 5; 
+        this.bonusScrapEarned = 0;
+        
+        this.particles = [];
+        this.floatingTexts = [];
+        this.grid = [];
+        
+        this.resizeCanvas();
+        
+        this.player.x = this.canvas.width / 2;
+        this.player.y = this.canvas.height - 65;
+        this.gridStartX = (this.canvas.width - (this.cols * this.blockSize)) / 2;
+        
+        this.colorsList = [this.biome.color, '#ffffff', '#ffaa00', '#00ff88'];
+        
+        for (let r = 0; r < this.rows; r++) {
+            this.grid[r] = [];
+            for (let c = 0; c < this.cols; c++) {
+                this.grid[r][c] = {
+                    color: this.colorsList[Math.floor(Math.random() * this.colorsList.length)],
+                    active: true
+                };
+            }
         }
-    }
-    
-    // Anchor Modular DOM Starfighter centered on bottom edge rails
-    this.viewportElement = document.getElementById('minigame-viewport');
-    if (this.viewportElement) {
-        this.playerElement = document.createElement('div');
-        this.playerElement.id = 'minigame-player-ship';
-        this.playerElement.style.cssText = `
-            position: absolute; width: 80px; height: 80px;
-            left: ${this.player.x - 40}px; top: ${this.player.y - 40}px; z-index: 10002; pointer-events: none;
-            filter: drop-shadow(0 0 15px ${this.biome.color});
-            will-change: transform;
-        `;
-        if (typeof drawModularShip === 'function' && typeof state !== 'undefined' && state.shipParts) {
-            drawModularShip(this.playerElement, state.shipParts);
-        } else {
-            this.playerElement.innerHTML = `<div style="width:100%; height:100%; background:${this.biome.color}; clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
+        
+        this.viewportElement = document.getElementById('minigame-viewport');
+        if (this.viewportElement) {
+            this.playerElement = document.createElement('div');
+            this.playerElement.id = 'minigame-player-ship';
+            this.playerElement.style.cssText = `
+                position: absolute; width: 80px; height: 80px;
+                left: ${this.player.x - 40}px; top: ${this.player.y - 40}px; z-index: 10002; pointer-events: none;
+                filter: drop-shadow(0 0 15px ${this.biome.color});
+                will-change: transform;
+            `;
+            if (typeof drawModularShip === 'function' && typeof state !== 'undefined' && state.shipParts) {
+                drawModularShip(this.playerElement, state.shipParts);
+            } else {
+                this.playerElement.innerHTML = `<div style="width:100%; height:100%; background:${this.biome.color}; clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></div>`;
+            }
+            this.viewportElement.appendChild(this.playerElement);
         }
-        this.viewportElement.appendChild(this.playerElement);
+        
+        this._clickRef = (e) => this.handleGridClick(e);
+        this._resizeRef = () => this.resizeCanvas();
+        
+        this.canvas.addEventListener('click', this._clickRef);
+        window.addEventListener('resize', this._resizeRef);
+        
+        this.loopActive = true;
+        this.executeSimulationLoop();
+    } catch(err) {
+        alert("CRITICAL SYNC FAILURE DURING CRYSTAL INIT BLOCK:\n" + err.message);
     }
-    
-    // Click extraction interactions
-    this._clickRef = (e) => this.handleGridClick(e);
-    this._resizeRef = () => this.resizeCanvas();
-    
-    this.canvas.addEventListener('click', this._clickRef);
-    window.addEventListener('resize', this._resizeRef);
-    
-    this.loopActive = true;
-    this.executeSimulationLoop();
 };
 
 crystalMatrix.resizeCanvas = function() {
@@ -106,9 +105,18 @@ crystalMatrix.resizeCanvas = function() {
 
 crystalMatrix.executeSimulationLoop = function() {
     if (!this.loopActive) return;
-    this.updateAnimationArrays();
-    this.drawScene();
-    this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
+    
+    // --- [ HARDENED LOGGING FRAME MONITOR ] ---
+    try {
+        this.updateAnimationArrays();
+        this.drawScene();
+        this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
+    } catch (frameError) {
+        this.loopActive = false;
+        alert("CRITICAL RENDER THREAD CRASH INSIDE CRYSTAL FRAME STEP:\n" + 
+              frameError.message + "\n\nStack Trace:\n" + frameError.stack);
+    }
+    // ------------------------------------------
 };
 
 crystalMatrix.handleGridClick = function(e) {
@@ -118,20 +126,17 @@ crystalMatrix.handleGridClick = function(e) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     
-    // Determine cell match conversions
     const c = Math.floor((mx - this.gridStartX) / this.blockSize);
     const r = Math.floor((my - this.gridStartY) / this.blockSize);
     
     if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) {
         const target = this.grid[r][c];
         if (target && target.active) {
-            // Run standard flood-fill collection check paths
             let cluster = [];
             this.findClusterNodes(r, c, target.color, cluster);
             
-            // Allow popping groups of 2 or more nodes
             if (cluster.length >= 2) {
-                this.ammoPool = Math.max(0, this.ammoPool - 5); // Deduct ammunition core buffer cost
+                this.ammoPool = Math.max(0, this.ammoPool - 5); 
                 const hudAmmo = document.getElementById('game-hud-ammo');
                 if (hudAmmo) hudAmmo.innerText = this.ammoPool;
                 
@@ -160,11 +165,8 @@ crystalMatrix.handleGridClick = function(e) {
 };
 
 crystalMatrix.findClusterNodes = function(r, c, color, cluster) {
-    // Check match lists bounds
     if (r < 0 || r >= this.rows || c < 0 || c >= this.cols) return;
     if (!this.grid[r][c].active || this.grid[r][c].color !== color) return;
-    
-    // Guard tracking configurations against duplicates
     if (cluster.some(n => n.r === r && n.c === c)) return;
     
     cluster.push({ r, c });
@@ -190,11 +192,12 @@ crystalMatrix.updateAnimationArrays = function() {
         let pt = this.particles[i];
         pt.x += pt.vx; pt.y += pt.vy;
         
-        // Gravity pull drift down to player vacuum anchors
         let dx = this.player.x - pt.x;
         let dy = this.player.y - pt.y;
         let d = Math.sqrt(dx * dx + dy * dy);
-        pt.x += (dx / d) * 1.5; pt.y += (dy / d) * 1.5;
+        if (d > 5) {
+            pt.x += (dx / d) * 2; pt.y += (dy / d) * 2;
+        }
         
         pt.alpha -= 0.015;
         if (pt.alpha <= 0) this.particles.splice(i, 1);
@@ -210,7 +213,6 @@ crystalMatrix.drawScene = function() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // 1. Render Matrix Board Nodes
     for (let r = 0; r < this.rows; r++) {
         for (let c = 0; c < this.cols; c++) {
             let b = this.grid[r][c];
@@ -219,12 +221,11 @@ crystalMatrix.drawScene = function() {
                 const by = this.gridStartY + r * this.blockSize;
                 
                 ctx.save();
-                ctx.strokeStyle = '#222233';
+                ctx.strokeStyle = '#111122';
                 ctx.lineWidth = 1;
                 ctx.fillStyle = b.color;
                 ctx.shadowBlur = 4; ctx.shadowColor = b.color;
                 ctx.beginPath();
-                // Draw rounded diamond layout blocks safely
                 ctx.rect(bx + 2, by + 2, this.blockSize - 4, this.blockSize - 4);
                 ctx.fill(); ctx.stroke();
                 ctx.restore();
@@ -232,19 +233,16 @@ crystalMatrix.drawScene = function() {
         }
     }
     
-    // 2. Fragment shards
     this.particles.forEach(pt => {
         ctx.save(); ctx.globalAlpha = pt.alpha;
         ctx.fillStyle = pt.color;
-        ctx.shadowBlur = 5; ctx.shadowColor = pt.color;
         ctx.beginPath(); ctx.rect(pt.x, pt.y, pt.size, pt.size); ctx.fill();
         ctx.restore();
     });
     
-    // 3. Texts popups
     this.floatingTexts.forEach(t => {
         ctx.save(); ctx.globalAlpha = t.alpha;
-        ctx.fillStyle = 'var(--captured)';
+        ctx.fillStyle = '#00ff88'; 
         ctx.font = 'bold 12px monospace';
         ctx.textAlign = 'center';
         ctx.fillText(t.text, t.x, t.y);
