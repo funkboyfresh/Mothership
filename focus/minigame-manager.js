@@ -55,9 +55,6 @@ let minigameManager = {
     gameTitle: "UNKNOWN OUTPOST"
 };
 
-function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap) {
-    if (typeof exitCryoMode === 'function') exitCryoMode(); 
-    
 function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap, biomeOverride) {
     if (typeof exitCryoMode === 'function') exitCryoMode(); 
     
@@ -70,27 +67,15 @@ function triggerMinigameEncounter(duration, multiplier, isApex, energy, scrap, b
     minigameManager.isApexEvent = isApex;
     
     // --- [ SURGICAL FIX: APPLY BIOME OVERRIDE ] ---
-    // Prioritize the completed planet snapshot passed from the engine over the next target destination
-    minigameManager.customBiome = biomeOverride; // Just in case a tracking hook is needed
+    // Prioritize the completed planet snapshot passed from the engine over active tracking state bounds
     minigameManager.biome = biomeOverride || ((typeof focusState !== 'undefined' && focusState.currentBiome) ? focusState.currentBiome : { id: 'VOID', color: '#a200ff', bg: 'radial-gradient(circle at bottom, #1a0033 0%, #000000 80%)' });
-
     
     // --- [ DYNAMIC GAME MODULE ROUTER ] ---
     const bid = minigameManager.biome.id;
     if (bid === 'ICE' || bid === 'ABYSSAL' || bid === 'DUNE' || bid === 'CHRONOS') {
-        // LOUD TELEMETRY CHECK: Verifies if the file compiled or failed to load entirely
-        if (typeof iceLeviathan === 'undefined') {
-            alert("TACTICAL ERROR: 'iceLeviathan' object is missing from browser memory!\n\n" +
-                  "Double-check your index.html script tags for a path typo or filename mismatch (e.g., ice-liviathan.js vs ice-leviathan.js).");
-        }
         minigameManager.activeGame = (typeof iceLeviathan !== 'undefined') ? iceLeviathan : null;
         minigameManager.gameTitle = "LEVIATHAN GRAVITY LAUNCHER";
     } else if (bid === 'CRYSTAL' || bid === 'SPORE' || bid === 'FERROUS' || bid === 'ECLIPSE') {
-        // LOUD TELEMETRY CHECK: Verifies if the crystal module compiled successfully
-        if (typeof crystalMatrix === 'undefined') {
-            alert("TACTICAL ERROR: 'crystalMatrix' object is missing from browser memory!\n\n" +
-                  "Verify that 'games/crystal-matrix.js' is linked correctly in your index.html script stack.");
-        }
         minigameManager.activeGame = (typeof crystalMatrix !== 'undefined') ? crystalMatrix : null;
         minigameManager.gameTitle = "CRYSTAL ENERGY MATRIX";
     } else {
