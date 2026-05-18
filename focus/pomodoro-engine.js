@@ -205,9 +205,15 @@ function cryoTick() {
         const clockEl = document.getElementById('cryo-clock');
         if (clockEl) clockEl.innerText = timeStr;
         
-        if (focusState.timeRemaining <= 0) {
+       if (focusState.timeRemaining <= 0) {
             clearInterval(focusState.timerInterval);
             focusState.isActive = false;
+            
+            // --- [ SURGICAL FIX: SNAPSHOT COMPLETED BIOME ] ---
+            // Capture the exact planet we just spent our focus block defending 
+            // before the campaign rollover randomizes our position away!
+            const finishedBiome = focusState.currentBiome;
+            
             focusState.campaignProgress += focusState.sessionTotalDuration;
             
             let isApexEvent = false;
@@ -224,11 +230,15 @@ function cryoTick() {
             focusState.sessionScrap = absoluteVaultTarget;
             
             if (typeof triggerMinigameEncounter === 'function') {
-                triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap);
+                // Pass finishedBiome along as the 6th configuration argument
+                triggerMinigameEncounter(focusState.sessionTotalDuration, focusState.sessionMultiplier, isApexEvent, focusState.sessionEnergy, focusState.sessionScrap, finishedBiome);
             } else {
                 if (typeof state !== 'undefined') state.scrap += focusState.sessionScrap;
-                if (typeof addEnergy === 'function') { addEnergy(focusState.sessionEnergy); }
-                else if (typeof state !== 'undefined') { state.energy += focusState.sessionEnergy; }
+                if (isApexEvent && typeof addEnergy === 'function') {
+                    addEnergy(focusState.sessionEnergy);
+                } else if (typeof state !== 'undefined') {
+                    state.energy += focusState.sessionEnergy;
+                }
                 if (typeof save === 'function') save();
                 if (typeof updateHUD === 'function') updateHUD();
                 exitCryoMode();
