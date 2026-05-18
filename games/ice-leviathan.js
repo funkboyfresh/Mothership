@@ -1,6 +1,6 @@
 /**
- * ICE-LEVIATHAN.JS [ DIAGNOSTIC FRAME BUILD ]
- * Gravity peg-shattering engine equipped with loud async exception telemetry trackers.
+ * ICE-LEVIATHAN.JS [ DIAGNOSTIC TELEMETRY RE-BUILD ]
+ * Gravity peg-shattering engine equipped with explicit resizing loops and canvas text indicators.
  */
 
 const iceLeviathan = {
@@ -8,6 +8,7 @@ const iceLeviathan = {
     ctx: null,
     loopActive: false,
     rafId: null,
+    frameCount: 0,
     
     // Core parameters
     ammoPool: 0,
@@ -39,6 +40,7 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.isApexEvent = isApex;
         this.ammoPool = (ammo || 20) * 5; 
         this.bonusScrapEarned = 0;
+        this.frameCount = 0;
         
         this.probes = [];
         this.pegs = [];
@@ -51,14 +53,14 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
         this.mouse.x = this.canvas.width / 2;
         this.mouse.y = this.canvas.height / 2;
         
-        // Stagger grid generation relative to compiled browser layout bounds
+        // Populate Peg grid arrays
         const rows = this.isApexEvent ? 6 : 4;
         const cols = 9;
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const staggerX = (r % 2 === 0) ? 25 : -25;
                 const px = (this.canvas.width / (cols + 1)) * (c + 1) + staggerX;
-                const py = 160 + (r * 65);
+                const py = 180 + (r * 65);
                 
                 if (px > 40 && px < this.canvas.width - 40) {
                     this.pegs.push({
@@ -70,7 +72,6 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
             }
         }
         
-        // Append actual ship DOM asset layer center top
         this.viewportElement = document.getElementById('minigame-viewport');
         if (this.viewportElement) {
             this.playerElement = document.createElement('div');
@@ -89,7 +90,6 @@ iceLeviathan.init = function(canvas, ctx, biome, isApex, ammo) {
             this.viewportElement.appendChild(this.playerElement);
         }
         
-        // Mount Operational Event Listeners
         this._moveRef = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
@@ -132,18 +132,19 @@ iceLeviathan.resizeCanvas = function() {
 
 iceLeviathan.executeSimulationLoop = function() {
     if (!this.loopActive) return;
-    
-    // --- [ HARDENED LOGGING FRAME MONITOR ] ---
     try {
+        this.frameCount++;
+        
+        // Forced layout buffer sizing match removes 0px scaling collapse anomalies
+        this.resizeCanvas(); 
+        
         this.updatePhysics();
         this.drawScene();
         this.rafId = requestAnimationFrame(() => this.executeSimulationLoop());
     } catch (frameError) {
         this.loopActive = false;
-        alert("CRITICAL RENDER THREAD CRASH INSIDE GRAVITY FRAME STEP:\n" + 
-              frameError.message + "\n\nStack Trace:\n" + frameError.stack);
+        alert("CRITICAL RENDER THREAD CRASH INSIDE GRAVITY FRAME STEP:\n" + frameError.message);
     }
-    // ------------------------------------------
 };
 
 iceLeviathan.updatePhysics = function() {
@@ -226,10 +227,8 @@ iceLeviathan.updatePhysics = function() {
         if (cdist < 45) {
             this.bonusScrapEarned += c.value;
             this.floatingTexts.push({ x: c.x, y: c.y - 10, text: `+${c.value}`, alpha: 1 });
-            
             const hudScrap = document.getElementById('game-hud-scrap');
             if (hudScrap) hudScrap.innerText = `+${this.bonusScrapEarned} SCRAP`;
-            
             this.collectibles.splice(i, 1);
         }
     }
@@ -264,7 +263,18 @@ iceLeviathan.drawScene = function() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // 1. Aim Rail Target Guides
+    // --- [ ACTIVE TELEMETRY HEARTBEAT INDICATORS ] ---
+    // Renders a distinct safety boundary card and string count directly onto the canvas view matrix
+    ctx.save();
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, this.canvas.width - 20, this.canvas.height - 20);
+    ctx.fillStyle = '#ffff00';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText(`[ LEVIATHAN CANVAS ACTIVE // LOOP HEARTBEAT FRAME: ${this.frameCount} ]`, 25, 95);
+    ctx.restore();
+    // --------------------------------------------------
+
     ctx.save();
     ctx.strokeStyle = this.biome.color;
     ctx.globalAlpha = 0.2;
@@ -276,7 +286,6 @@ iceLeviathan.drawScene = function() {
     ctx.stroke();
     ctx.restore();
     
-    // 2. Frozen Nodes
     this.pegs.forEach(peg => {
         ctx.save();
         ctx.strokeStyle = this.biome.color;
@@ -288,7 +297,6 @@ iceLeviathan.drawScene = function() {
         ctx.restore();
     });
     
-    // 3. Falling Probes
     this.probes.forEach(p => {
         ctx.save();
         ctx.fillStyle = '#ffffff';
@@ -298,7 +306,6 @@ iceLeviathan.drawScene = function() {
         ctx.restore();
     });
     
-    // 4. Diamonds Collectors
     this.collectibles.forEach(c => {
         ctx.save();
         ctx.fillStyle = '#ffaa00';
@@ -308,7 +315,6 @@ iceLeviathan.drawScene = function() {
         ctx.restore();
     });
     
-    // 5. Dust shards
     this.particles.forEach(pt => {
         ctx.save(); ctx.globalAlpha = pt.alpha;
         ctx.fillStyle = pt.color;
@@ -316,7 +322,6 @@ iceLeviathan.drawScene = function() {
         ctx.restore();
     });
     
-    // 6. Value counters
     this.floatingTexts.forEach(t => {
         ctx.save(); ctx.globalAlpha = t.alpha;
         ctx.fillStyle = '#00ff88';
